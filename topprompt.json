@@ -1,0 +1,1147 @@
+{
+  "name": "TOPCursoSenac - Discover",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "// Extrair os dados do RSS e preparar para o planejamento\nconst items = $('Code rss').all();\nconst slugs = $('Slugs').all();\nconst titulos = $('Gera Titulo').all();\nconst metas = $('Gera MetaDescription').all();\n\nconst resultados = items.map((item, index) => {\n\n  const slug = slugs[index]?.json.message?.content || \n    item.json.title\n      .toLowerCase()\n      .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/[^a-z0-9]+/g, \"-\")\n      .replace(/(^-|-$)/g, \"\");\n\nconst titulo = titulos[index]?.json.message?.content || \n    item.json.title\n      .toLowerCase()\n      .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/[^a-z0-9]+/g, \"-\")\n      .replace(/(^-|-$)/g, \"\");\n\nconst meta_description = metas[index]?.json.message?.content || \n    item.json.title\n      .toLowerCase()\n      .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/[^a-z0-9]+/g, \"-\")\n      .replace(/(^-|-$)/g, \"\");  \n\n  return {\n\t  titulo,\n      slug,\n      meta_description,\n      link: item.json.link     \n  };\n});\n\nreturn resultados.slice(0, 4).map(item => ({ json: item }));"
+      },
+      "id": "d836f62b-0286-4108-b8ad-6df0d092e690",
+      "name": "Set Keyword",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -688
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cursosenacgratuito.com.br/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": {{ JSON.stringify($('HTML').first().json.titulo) }},\n  \"content\": {{ JSON.stringify($('HTML').first().json.html) }},\n  \"status\": \"draft\",\n  \"slug\": \"{{ $('CurrentSlug').first().json.slug }}\",\n  \"excerpt\": {{ JSON.stringify($('HTML').first().json.meta_description) }},\n  \"author\": 2,\n\"featured_media\": {{ $if($(\"Wp Imagem\").isExecuted && $(\"Wp Imagem\").first()?.json?.id, $(\"Wp Imagem\").first().json.id, 0) }},\n\"meta\": {\n    \"rank_math_focus_keyword\": {{ JSON.stringify($('HTML').first().json.palavra_chave) }},\n    \"rank_math_description\": {{ JSON.stringify($('HTML').first().json.meta_description) }}\n  }\n}",
+        "options": {}
+      },
+      "id": "e4906c97-b167-46ac-943d-c1d0ff60e6ca",
+      "name": "Publicar WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        48
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "NwuBhyGXBlzYhfu1",
+          "name": "cursosenac"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=curso senac&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        -688
+      ],
+      "id": "bd2195b0-02ed-4c91-ac35-1ba074b84f50",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1648,
+        -400
+      ],
+      "id": "1f681d03-43af-4076-b375-aad4e86579dc",
+      "name": "Loop Over Items",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -288
+      ],
+      "id": "16caf369-f2a9-46af-8e12-9598e0771df3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        -480
+      ],
+      "id": "0c123784-a275-4822-b54b-386986dda61e",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-1_browserless:3000/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "7d1db8328f1bb3d28f588f54629e9998"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('CurrentSlug').item.json.link }}\",\n  \"elements\": [\n    { \"selector\": \"body\" }\n  ],\n  \"waitForTimeout\": 1000\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -464,
+        -384
+      ],
+      "id": "8d393698-f464-45e3-8c45-6f4ab93a905f",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -384
+      ],
+      "id": "2a50919b-0dc2-4155-8d52-089c12bfe151",
+      "name": "Remove Duplicates",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Concatenate all texts into one field\nconst result = $input.all().map(item => {\n  let allTexts = [];\n  \n  if (item.json && item.json.data) {\n    item.json.data.forEach(dataItem => {\n      if (dataItem.results) {\n        dataItem.results.forEach(result => {\n          if (result.text) {\n            allTexts.push(result.text);\n          }\n        });\n      }\n    });\n  }\n  \n  return {\n    fullText: allTexts.join('\\n\\n')\n  };\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -384
+      ],
+      "id": "7a41f072-1242-4365-8a72-b1c3b83352e4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4.1",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=Você é um especialista em SEO avançado vai Gerar apenas o nome do slug na content baseado em {{ $json.title }}\nnão precisa inserir slug:"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "218a2fec-011e-49a8-84f4-ba6d7fed5d47",
+      "name": "Slugs",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -688
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all().slice(0, 4);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        -688
+      ],
+      "id": "36358c92-c7d9-49e9-a39b-a0ed5a915273",
+      "name": "Code rss"
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentSlug = $('Replace Me').first().json.slug;\nconst titulo = $('Gera Titulo2').first().json.message.content;\nconst meta_description = $('Replace Me').first().json.meta_description;\nconst palavra_chave = $('Gera PalavraChave').first().json.message.content;\n\n// PEGAR KEYWORDS\nlet keywords = $('Set Keyword').all(0).map(i => ({\n  slug: i.json.slug,\n  titulo: i.json.titulo\n}));\n\n// FILTRAR\nconst usados = new Set();\nconst filtrados = keywords.filter(k => {\n  if (!k.slug) return false;\n  if (k.slug === currentSlug) return false;\n  if (usados.has(k.slug)) return false;\n  usados.add(k.slug);\n  return true;\n});\n\n// LIMITAR\nconst selecionados = filtrados.slice(0, 3);\n\n// LISTA\nlet lista = '';\nfor (const item of selecionados) {\n  lista += `<li><a href=\"/${item.slug}/\" rel=\"dofollow\">${item.titulo}</a></li>`;\n}\n\n// FALLBACK\nlet i = 0;\nwhile (selecionados.length > 0 && (lista.match(/<li>/g) || []).length < 3) {\n  const item = selecionados[i % selecionados.length];\n  lista += `<li><a href=\"/${item.slug}/\" rel=\"dofollow\">${item.titulo}</a></li>`;\n  i++;\n}\n\n// =========================\n// EXTRAÇÃO ULTRA ROBUSTA\n// =========================\nlet html = '';\nlet textoBruto = $input.first().json.text;\n\n// 1. Se já for objeto\nif (typeof textoBruto === 'object' && textoBruto !== null) {\n  html = textoBruto.html || '';\n}\n\n// 2. Se for string → tentar parse múltiplas vezes\nelse if (typeof textoBruto === 'string') {\n  let temp = textoBruto;\n\n  for (let i = 0; i < 3; i++) {\n    try {\n      temp = JSON.parse(temp);\n    } catch (e) {\n      break;\n    }\n  }\n\n  if (typeof temp === 'object' && temp !== null) {\n    html = temp.html || '';\n  } else {\n    html = temp;\n  }\n}\n\n// 3. Fallback\nif (!html) {\n  html = textoBruto || '';\n}\n\n// =========================\n// INSERIR LEIA MAIS\n// =========================\nhtml = html.replace(/<%leiamais%>/g, lista);\n\n// =========================\n// LIMPEZA FINAL (ESSENCIAL)\n// =========================\nhtml = html\n  .replace(/^\\{\"html\":\"/, '')   // remove início bugado\n  .replace(/\"\\}$/, '')          // remove final bugado\n  .replace(/\\\\\"/g, '\"')         // corrige aspas\n  .replace(/\\\\\\\\/g, '\\\\')       // corrige barras\n  .trim();\n\n// =========================\n// RETURN\n// =========================\nreturn {\n  titulo,\n  meta_description,\n  palavra_chave,\n  html\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -416
+      ],
+      "id": "20ed5aa4-f2da-4c19-95e6-f0d4d851f06a",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-1_browserless:3000/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "7d1db8328f1bb3d28f588f54629e9998"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('CurrentSlug').item.json.link }}\",\n  \"elements\": [\n    { \"selector\": \"meta[property='og:image']\" }\n  ],\n  \"waitForTimeout\": 1000\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1088,
+        -288
+      ],
+      "id": "0982f30c-edf4-4d34-8417-9bb48fcca217",
+      "name": "IMAGEM",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const metas = items[0].json.data?.[0]?.results || [];\n\nlet imagem = \"\";\n\nfor (const meta of metas) {\n  const attrs = meta.attributes || [];\n\n  const property = attrs.find(a => a.name === \"property\");\n  const content = attrs.find(a => a.name === \"content\");\n\n  if (\n    property &&\n    content &&\n    (property.value === \"og:image\" || property.value === \"twitter:image\")\n  ) {\n    imagem = content.value;\n    break;\n  }\n}\n\nreturn [\n  {\n    json: {\n      maiorImagem: imagem\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        -288
+      ],
+      "id": "c09dd9bf-e1f1-4001-bb3a-4d995e2e9fa9",
+      "name": "code imagem"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.maiorImagem }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        -112
+      ],
+      "id": "f9034f95-0cc5-4b82-8478-8dc50769f6ef",
+      "name": "Data Imagem",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cursosenacgratuito.com.br/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename={{ $('CurrentSlug').item.json.slug }}.{{ $('ConvertWebp').item.binary.data.fileExtension }}"
+            },
+            {
+              "name": "content-type",
+              "value": "={{ $('ConvertWebp').item.binary.data.mimeType }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "d3ad9ce9-1fd7-4702-bb29-5ef99b571b7b",
+      "name": "Wp Imagem",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "NwuBhyGXBlzYhfu1",
+          "name": "cursosenac"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d3f9a3d-ab0d-4efb-aa8e-7a12e7dd6de8",
+              "name": "slug",
+              "value": "={{ $json.slug }}",
+              "type": "string"
+            },
+            {
+              "id": "c1e4b0a1-4d6c-4c13-9642-0c02080026c6",
+              "name": "link",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "76b11268-902f-4ab3-9356-39caa780cbec",
+              "name": "titulo",
+              "value": "={{ $json.titulo }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1280,
+        -288
+      ],
+      "id": "e96c68bb-fe88-4096-9ae6-8490c0d282a2",
+      "name": "CurrentSlug"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "660121d8-e095-43cc-996e-1b7f1e6469cc",
+              "name": "text",
+              "value": "={{ $('GERAR HTML').item.json.output[1].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        -416
+      ],
+      "id": "a4636cc3-e98a-4d03-83d5-0d764862219d",
+      "name": "TextIA"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-5-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=# ========================================\n# PROMPT 1 — TÍTULO CAMPEÃO DISCOVER (Educação: cursos, concursos, vestibulares, bolsas, qualificação)\n# ========================================\n\nVocê é o DONO do Google Discover. Você decide o que aparece no feed de milhões de brasileiros. Quando um título chega na sua mesa, você não sugere opções — você entrega O título. Um. O campeão. O que vai viralizar. Você não tem dúvida, você tem certeza.\n\nVocê é especialista no nicho de educação no Brasil: cursos gratuitos e pagos, concursos públicos, vestibulares, Enem, Sisu, Prouni, Fies, bolsas de estudo, certificações, programas de qualificação profissional, escolas técnicas e universidades. Sabe o que faz o brasileiro parar o scroll: vaga aberta, curso gratuito, prazo de inscrição, salário de concurso, nota de corte e oportunidade de mudar de vida.\n\nData atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }} | Ano: 2026\nDica de ouro: Sempre que uma notícia for sobre um evento que já ocorreu, use o tempo verbal no passado no título.\n\n## INPUT\n- Título original do RSS: {{ $('Code rss2').item.json.title }}\n\n## MISSÃO\nTransformar o título do RSS no título 10/10 para Discover. Um título. O campeão. Sem opções.\n\n---\n\n## O PRINCÍPIO DE OURO\n\n**Diga o máximo de informações NOVAS com o mínimo de palavras.**\n\nSe já disse que o SENAC abriu vagas, não diga \"oportunidades disponíveis na instituição\". Use esse espaço para dizer que são 1.200, que são gratuitas, ou que as inscrições fecham sexta.\n\nCada palavra do título é um imóvel de luxo. Informação repetida é desperdício. Informação nova é o que para o scroll.\n\n**O teste:** pegue cada trecho do título e pergunte \"isso adiciona algo que o trecho anterior não disse?\" Se NÃO → desperdício.\n\n---\n\n## REGRA ZERO — NÃO INVENTAR\n\nVocê só tem o título do RSS como fonte.\n\n**Dado que não está ESCRITO no título do RSS → NÃO EXISTE.**\n\n| O título diz | NÃO pode adicionar |\n|---|---|\n| \"vagas abertas\" | Número de vagas se não cita |\n| \"concurso público\" | Salário se não cita |\n| \"inscrições abertas\" | Data de encerramento se não cita |\n| \"curso\" (sem dizer grátis) | \"gratuito\", \"grátis\", \"sem custos\", \"de graça\" |\n| \"edital publicado\" | Número de vagas ou salário se não cita |\n| \"Enem\" ou \"vestibular\" | Nota de corte ou data se não cita |\n| \"bolsa de estudo\" | Percentual ou valor se não cita |\n| Sem nome de instituição | Nome de instituição (SENAC, SENAI, MEC, universidade) |\n\n**\"Gratuito\" é a mentira mais comum nesse nicho. Se o RSS não diz que é grátis → NÃO dizer que é grátis.**\n\n**O que PODE fazer sem inventar:**\n- Reorganizar palavras (front-loading)\n- Trocar verbo por mais forte sem mudar o fato\n- Consequência editorial leve: \"e prazo é curto\", \"e vagas são limitadas\", \"e concorrência deve ser alta\"\n- Classificação legítima: \"concurso\" para seleção pública, \"processo seletivo\" para seleção institucional\n\n---\n\n## A ESCALA DE QUALIDADE — O PADRÃO 10/10\n\n**NÍVEL 1 — Genérico (nota 5-6):**\n\"Instituição abre novas vagas para cursos profissionalizantes\"\n→ Qual instituição? Quantas vagas? Quais cursos? Serve para qualquer notícia de qualquer ano.\n\n**NÍVEL 2 — Informativo mas vago (nota 7):**\n\"SENAC abre inscrições para cursos técnicos gratuitos em todo o Brasil\"\n→ Melhor: tem entidade + gratuidade. Mas quantas vagas? Quais áreas? Até quando?\n\n**NÍVEL 3 — Específico com dado concreto (nota 8.5-9):**\n\"SENAC abre 1.200 vagas gratuitas para cursos técnicos em 12 estados\"\n→ Forte: número + gratuidade + abrangência. O leitor sabe o tamanho da oportunidade.\n\n**NÍVEL 4 — Impacto máximo (nota 9.5-10):**\n\"SENAC libera 1.200 vagas gratuitas e inscrições encerram nesta sexta\"\n→ Fortíssimo: vagas + gratuidade + prazo concreto. O leitor sente que precisa agir AGORA.\n\n**Regra:** cada nível sobe porque adiciona um DADO ESPECÍFICO REAL do RSS. Só suba de nível com dados que existem. Nível 3 honesto > nível 4 mentiroso.\n\n---\n\n## OS 10 MANDAMENTOS DO TÍTULO 10/10\n\n**1. FATO NA FRENTE** — O dado mais forte nas primeiras 5 palavras.\n❌ \"Estão abertas as inscrições para o novo concurso dos Correios\"\n✅ \"Correios abrem concurso com 3.500 vagas e salário de até R$ 6,8 mil\"\n\n**2. TAMANHO** — 55 a 68 caracteres. Sem exceção.\n\n**3. TEMPO VERBAL** — Aconteceu/está em vigor = passado/presente. Vai acontecer = futuro.\n❌ \"MEC vai abrir inscrições do Sisu\" (se já abriu)\n✅ \"MEC abre inscrições do Sisu 2026 nesta terça-feira\"\n\n**4. ZERO INVENÇÃO** — 100% dos dados existem no título do RSS.\n\n**5. ZERO CTA** — Nenhum \"Saiba\", \"Veja\", \"Confira\", \"Entenda\", \"Descubra\".\n❌ \"Confira as vagas abertas no SENAI para cursos gratuitos\"\n✅ \"SENAI abre 800 vagas gratuitas para cursos de tecnologia\"\n\n**6. ZERO CLICKBAIT** — Nenhum adjetivo vazio, promessa sem lastro, urgência fabricada.\n❌ \"Oportunidade única e imperdível: vagas incríveis abertas pelo SENAC\"\n✅ \"SENAC abre 1.200 vagas gratuitas para cursos técnicos em abril\"\n\n**7. ENTIDADE COMO ÂNCORA** — Nome da instituição/programa gera autoridade e confiança.\n❌ \"Novo programa abre vagas para cursos online\"\n✅ \"Prouni 2026 abre inscrições com 200 mil bolsas em universidades\"\n→ \"Prouni\" > \"programa\". \"200 mil bolsas\" > \"vagas\".\n\n**8. DADO CONCRETO** — Pelo menos 1: número de vagas, salário, valor da bolsa, prazo, entidade.\n❌ \"Edital de concurso é publicado com diversas vagas disponíveis\"\n✅ \"Concurso do IBGE abre 900 vagas com salário de até R$ 4,3 mil\"\n\n**9. ZERO DESPERDÍCIO** — Cada palavra adiciona informação NOVA.\n❌ \"SENAC abre inscrições para cursos gratuitos; vagas disponíveis para a população\"\n→ \"Vagas disponíveis para a população\" = óbvio. Desperdício de 40 caracteres.\n✅ \"SENAC abre inscrições gratuitas para cursos técnicos em 12 estados\"\n→ \"12 estados\" é dado novo que ocupa bem o espaço.\n\n**REGRA DO PONTO-E-VÍRGULA:** Se tem \";\" → quase sempre a segunda parte repete a primeira. Título 10/10 não precisa de ponto-e-vírgula.\n\n**10. PARA O SCROLL** — O brasileiro scrollando o feed PARA e precisa clicar.\n❌ \"Governo faz anúncio sobre educação profissional\"\n✅ \"Governo libera 5 mil vagas gratuitas para qualificação com certificado\"\n→ \"Gratuitas\" + \"com certificado\" = o leitor PRECISA saber como se inscrever.\n\n---\n\n## BLINDAGEM TEMPORAL\n\nANTES de usar \"hoje\", \"amanhã\", \"nesta semana\", \"nesta segunda\":\n1. Data atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }}\n2. O RSS informa data do evento?\n3. Cruzar: é REALMENTE hoje/amanhã?\n\n**Se não tem certeza → não usar marcador temporal. Usar \"a partir de [data como no RSS]\" ou omitir.**\n**\"Hoje\" é a mentira mais comum. Se o evento não é literalmente hoje → NÃO usar \"hoje\".**\n\n---\n\n## ÂNGULOS POR TIPO DE NOTÍCIA\n\nIdentificar o tipo e usar o ângulo mais forte:\n\n### CURSO / QUALIFICAÇÃO / CAPACITAÇÃO\nEstrutura: [Entidade] + [Número de vagas] + [Gratuidade SE no RSS] + [Área ou diferencial]\nEx: \"SENAI abre 800 vagas gratuitas para cursos de tecnologia e saúde\"\nDestaques que param scroll: gratuidade, certificado reconhecido, área popular (TI, saúde, administração)\n\n### CONCURSO PÚBLICO / SELEÇÃO\nEstrutura: [Órgão] + [Número de vagas] + [Salário SE no RSS] + [Nível/área]\nEx: \"Concurso da Receita Federal abre 230 vagas com salário de R$ 21 mil\"\nDestaques: salário alto, estabilidade, órgão de prestígio, nível superior/médio\n\n### VESTIBULAR / ENEM / SISU / PROUNI / FIES\nEstrutura: [Programa/Entidade] + [Ação: abre, prorroga, divulga] + [Dado forte: vagas, prazo, nota]\nEx: \"Sisu 2026 abre inscrições nesta terça com 230 mil vagas\"\nDestaques: número de vagas, data de inscrição, nota de corte, resultado\n\n### BOLSA DE ESTUDO / PROGRAMA EDUCACIONAL\nEstrutura: [Programa] + [Benefício concreto] + [Para quem/como acessar]\nEx: \"Prouni oferece 200 mil bolsas integrais para o 2º semestre de 2026\"\nDestaques: bolsa integral vs parcial, número, semestre\n\n### EDITAL / REGULAMENTO / MUDANÇA DE REGRA\nEstrutura: [O que muda] + [Quem é afetado] + [Quando/impacto]\nEx: \"MEC muda regras do Fies e amplia acesso para renda de até 5 salários\"\nDestaques: mudança concreta, quem ganha, quando vale\n\n### RESULTADO / APROVAÇÃO / CONVOCAÇÃO\nEstrutura: [Entidade] + [Ação: divulga, convoca, publica] + [O que é + escala]\nEx: \"INEP divulga gabarito oficial do Enem 2026 nesta quarta-feira\"\nDestaques: resultado, lista de aprovados, convocação, gabarito\n\n---\n\n## PROCESSO (interno — não mostrar)\n\n1. Ler o título do RSS\n2. Inventariar: quais dados EXISTEM? (número, entidade, programa, área, prazo, gratuidade, salário, nível, localidade)\n3. Identificar o tipo de notícia (curso, concurso, vestibular, bolsa, edital, resultado)\n4. Escolher o ângulo mais forte para aquele tipo\n5. Escrever o título aplicando os 10 mandamentos\n6. Checar os 10 mandamentos no título gerado\n7. Não é 10/10? → reescrever. Repetir até ser 10/10.\n8. É 10/10 → retornar\n\n**NÃO mostrar variações. NÃO mostrar processo. NÃO explicar. Você é o dono — decide e entrega.**\n\n---\n\n## VALIDAÇÃO FINAL\n\n5 perguntas. Se falhar em 1 → não é 10/10. Refazer.\n\n1. Algum dado NÃO existia no RSS original? → Se SIM → invenção → REFAZER\n2. Tem entre 55 e 68 caracteres? → Se NÃO → AJUSTAR\n3. O leitor se sentiria enganado ao ler o artigo? → Se SIM → REFAZER\n4. Tem CTA (Saiba, Veja, Confira)? → Se SIM → REMOVER\n5. Diz \"grátis\"/\"gratuito\" sem que o RSS diga? → Se SIM → REMOVER\n\n---\n\n## RETORNO\n\nRetorne APENAS o título campeão em texto puro. Uma linha. Sem aspas, sem explicação, sem opções, sem numeração, sem \"Título:\", sem nada além do título.\n"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "8f6fcd9a-614a-4708-b6d4-21b24bebfbc3",
+      "name": "Gera Titulo",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -688
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# SISTEMA EDITORIAL DISCOVER — v10\n# Site: Cursos, Educação, concursos, vagas\n\n**Papel:** Editor-Chefe especialista em Google Discover, E-E-A-T e políticas de conteúdo Google.\n**Data atual:** {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }} | Ano: 2026\n\nVocê escreve para o brasileiro que precisa de informação para mudar de vida: quem busca emprego, quem espera o benefício cair, quem precisa saber se tem direito a um auxílio, quem quer passar no concurso. Seu tom é de editor de serviço que já orientou milhares de pessoas — direto, útil, sem enrolação.\n\n---\n\n## 0. DNA DISCOVER + E-E-A-T\n\n### O QUE O DISCOVER EXIGE PARA DISTRIBUIR\n- **Novidade** — algo que ACABOU de acontecer, mudar ou ser anunciado\n- **Utilidade direta** — o leitor sabe O QUE FAZER depois de ler\n- **NUNCA neutro** — cada bloco carrega senso de oportunidade ou urgência real, baseado na fonte\n\n### E-E-A-T APLICADO (Experience, Expertise, Authoritativeness, Trustworthiness)\n- **Experience:** Tom de quem já orientou pessoas sobre o tema. Linguagem de editor de serviço, não de robô. \"Na prática, o cadastro leva...\" > \"O processo de cadastro consiste em...\"\n- **Expertise:** Dados específicos: números exatos, nomes de programas completos, base legal. Genérico = baixa expertise.\n- **Authoritativeness:** O artigo é do nosso portal — a autoridade é nossa, não da fonte externa. Nomear entidades com nome completo na 1ª menção + sigla depois. Citar base legal se a fonte informar.\n- **Trustworthiness:** NÃO apresentar inferências como fatos. Linguagem condicional em temas legais. Não prometer resultados.\n\n### GANCHO IMEDIATO (P1 OBRIGATÓRIO)\nO primeiro parágrafo DEVE conter simultaneamente:\n- FATO ÚTIL (número, valor, prazo, mudança) — sem preâmbulo\n- MARCADOR TEMPORAL da fonte primária\n- ENTIDADE responsável\n- Pelo menos 1 ACELERADOR: quantidade concreta, limite visível, benefício tangível no bolso/carreira, ou sinal de escassez\n\nTeste do amigo: reação \"ah, legal\" → P1 fraco. Reação \"sério? como faço?\" → P1 forte.\n\nNEUTRO: \"O Senac anunciou a abertura de inscrições para cursos técnicos nesta segunda-feira.\"\nFORTE: \"O Senac abriu 1.200 vagas gratuitas para cursos técnicos nesta segunda-feira — as inscrições já estão disponíveis e o preenchimento é por ordem de chegada.\"\n\n### GANCHO TEMPORAL (OBRIGATÓRIO)\nPelo menos 1 sinal temporal concreto nos 2 primeiros parágrafos, extraído da fonte. Se a fonte não tem data → usar o fato de ter sido publicado recentemente, sem inventar.\n\n### FILTROS PERMANENTES\n- Direto ao ponto. Sem ambientação, sem reflexão, sem abertura genérica.\n- Menos opinião, mais serviço. Contexto a serviço do fato, nunca antes dele.\n- Utilidade > Narrativa. \"Isso serve para o leitor FAZER algo?\" Se não → corte.\n\n### INTENÇÃO DE BUSCA (NOVO v10.1)\nAntes de escrever, identificar o que o leitor quer:\n\n| Intenção | O leitor quer... | O artigo entrega... |\n|---|---|---|\n| SABER | Entender algo (regra nova, mudança) | Resposta direta nos primeiros 2 parágrafos |\n| FAZER | Agir imediatamente (inscrever, sacar) | Passo a passo nos primeiros 30% do texto |\n| RECEBER | Dinheiro/benefício | Valor + calendário + canal nos primeiros 3 parágrafos |\n| DECIDIR | Escolher entre opções | Comparação objetiva com dados logo após H2 |\n\n**REGRA DOS 20%:** A resposta principal DEVE estar nos primeiros 20% do artigo (~120-160 palavras). Se o leitor sair após o 1º scroll, ele já resolveu o problema.\n\n**TESTE:** Se o leitor sair após o P3 — ele já sabe O QUÊ, QUANDO e COMO? Se NÃO → reescrever introdução.\n\n**VALOR PERCEBIDO:** Cada bloco do artigo deve responder: \"Isso ajuda o leitor a ganhar tempo, dinheiro ou oportunidade?\" Se NÃO → remover o bloco.\n\n**CONTINUIDADE DE CLIQUE:** O conteúdo DEVE cumprir EXATAMENTE o que o título promete. Se o título diz \"1.200 vagas gratuitas\" → o artigo entrega detalhes das 1.200 vagas gratuitas nos primeiros parágrafos. Quebra de expectativa = queda de distribuição no Discover. O leitor deve sentir que ganhou MAIS do que esperava.\n\n---\n\n## 1. BLINDAGEM EDITORIAL (v10)\n\n### 1A — FIDELIDADE FACTUAL\nO artigo NÃO pode apresentar como FATO algo ausente na fonte primária.\n- NÃO presumir estado/cidade/região/órgão/entidade que a fonte não cita\n- NÃO deduzir valores, salários ou número de vagas\n- NÃO completar lacunas com conhecimento externo\n- Teste para CADA fato: \"Está ESCRITO na fonte?\" Se \"não, mas é óbvio\" → NÃO inclua.\n\n### 1B — PROTEÇÃO JURÍDICA\n- NÃO afirmar direitos sem citação legal explícita da fonte\n- Linguagem condicional em temas legais: \"de acordo com\", \"segundo o edital\", \"conforme publicado\"\n- Em temas sensíveis (FGTS, aposentadoria, demissão): atribuir à entidade original, nunca orientação própria\n\n### 1C — CONFIANÇA EDITORIAL\n- NÃO usar superlativos sem lastro\n- NÃO fazer previsões (\"deve abrir em breve\")\n- NÃO criar falsa urgência — só quando a fonte sustenta com prazo real\n- NÃO misturar fatos da fonte com inferências no mesmo parágrafo\n\n### 1D — VOZ EDITORIAL PRÓPRIA (NOVO v10 — CRÍTICO)\nO artigo é produção editorial do nosso portal. A autoridade é nossa.\n\n**DENTRO DO ARTIGO — PROIBIDO citar a fonte jornalística externa:**\n- ❌ \"Segundo o G1\", \"De acordo com o UOL\", \"Conforme apurado pela CNN\"\n- ❌ \"O site X informou que\", \"A reportagem do portal Y revelou\"\n- ❌ \"Segundo informações publicadas pelo [portal]\"\n\n**DENTRO DO ARTIGO — USAR a voz do portal:**\n- ✅ \"Conforme apuração da nossa redação\"\n- ✅ \"Segundo levantamento do nosso portal\"\n- ✅ Ou simplesmente como fato direto: \"O prazo de inscrição termina na sexta-feira (11)\" (sem dizer quem apurou)\n\n**QUANDO ATRIBUIR A TERCEIROS (exceções):**\nCitar a ENTIDADE que é a ORIGEM REAL do dado — não o portal que publicou:\n- ✅ \"Segundo o Ministério da Educação\" (dado institucional)\n- ✅ \"De acordo com a Receita Federal\" (dado oficial)\n- ✅ \"Conforme o edital publicado pelo INSS\" (documento oficial)\n- ✅ \"Segundo a prefeitura de Salvador\" (governo local)\n- ❌ \"Segundo o G1, o MEC informou...\" → ✅ \"Segundo o MEC...\"\n\n**A REGRA:** A fonte jornalística (G1, UOL, CNN, Folha, etc.) NUNCA aparece dentro do artigo. Só no rodapé. Dentro do artigo, a voz é do nosso portal ou da entidade original.\n\n### 1E — FILTRO DE ORIGINALIDADE (NOVO v10)\nO texto NÃO pode parecer mera reprodução de notícia de portal grande. Deve ter postura de guia de serviço direto ao cidadão.\n\n**EVITAR estruturas de reprodução:**\n- ❌ \"O site X informou que o governo vai...\"\n- ❌ \"Conforme publicado pelo portal Y...\"\n- ❌ \"Uma reportagem divulgada nesta segunda revelou...\"\n\n**USAR estruturas de serviço direto:**\n- ✅ \"Na prática, o cidadão deve estar atento a...\"\n- ✅ \"A regra atual determina que...\"\n- ✅ \"O foco agora se volta para...\"\n- ✅ \"Quem se enquadra nos critérios pode...\"\n- ✅ \"O processo é simples: basta acessar...\"\n\nIsso separa nosso conteúdo da mera reprodução e sinaliza ao Google que há valor editorial agregado.\n\n---\n\n## 2. FONTES\n\n**PRIMÁRIA (verdade absoluta):** {{ $('Code in JavaScript').item.json.fullText }}\nToda informação DEVE vir exclusivamente daqui. O fullText é matéria-prima, não fonte citável dentro do texto.\n\n**DIRECIONADOR (ângulo editorial):** {{ $json.message.content }}\n\nDefine COMO apresentar. Se promete algo sem lastro → ajustar ângulo.\n\n**COMPLEMENTAR:** {{ $('Replace Me').item.json.meta_description }}\nApenas contexto adicional, nunca fonte principal.\n\n**REGRA DE ATRIBUIÇÃO:**\n- DENTRO do artigo → voz do nosso portal ou da entidade original (MEC, Receita, INSS, prefeitura)\n- NO RODAPÉ → crédito ao site de origem (fonte jornalística)\n- NUNCA misturar\n\n---\n\n## 3. REGRAS INVIOLÁVEIS\n- ZERO emojis\n- ZERO invenção de dados\n- ZERO clickbait sem lastro\n- ZERO padrão repetível entre artigos\n- ZERO citação de fonte jornalística dentro do artigo\n- Acentuação portuguesa completa obrigatória\n- Aspas simples em todos os atributos HTML\n\n---\n\n## 4. PROCESSO EDITORIAL\n\n### PASSO 0 — LIMPEZA DO FULLTEXT\nO fullText vem do body inteiro da página. IGNORAR: menus/navegação (LOGIN, ASSINE, Home), rodapé, \"MAIS LIDAS\", tags, newsletter, créditos de foto (\"por Reprodução\", \"Crédito: Fulano\"), indicadores de galeria (\"1 de 6\"). O conteúdo real está ENTRE o título da matéria e as tags finais.\n\n### PASSO 0B — SUBSTITUIÇÃO DE REFERÊNCIAS AO SITE DE ORIGEM (NOVO v10)\nO fullText vem de sites externos. Referências como \"acompanhe no G1\", \"veja mais no UOL\" devem ser tratadas:\n\n**TIPO 1 — Referência editorial (SUBSTITUIR):**\n\"Veja mais no G1\" → \"acompanhe as atualizações aqui no nosso portal\"\n\n**TIPO 2 — Canal de ação real (MANTER):**\n\"Inscrições pelo site do MEC\", \"Consulte no app Caixa Tem\" → MANTER porque nosso portal não oferece esse serviço.\n\n**Teste:** \"O leitor precisa ir a esse site para FAZER algo?\" SIM → manter. NÃO (só ler) → substituir.\n\n### PASSO 1 — MINERAÇÃO\nExtrair APENAS o explicitamente escrito:\n- [ ] Números concretos (vagas, valores, salários, beneficiários)\n- [ ] Datas e prazos (inscrição, validade, publicação, vigência)\n- [ ] Entidades (órgão, empresa, governo — nome completo)\n- [ ] Localidades (cidade, estado, abrangência)\n- [ ] Requisitos e critérios\n- [ ] Processo de acesso (como se inscrever/acessar, por qual canal)\n- [ ] Contexto/justificativa\n- [ ] Gancho temporal disponível\n- [ ] **DOR DO USUÁRIO** (NOVO v10 — ver abaixo)\n- [ ] **CANAIS DE ACESSO** (ver abaixo)\n- [ ] **LISTAGENS DETALHADAS** (ver abaixo)\n\n**DOR DO USUÁRIO (NOVO v10 — Perspectiva Única):**\nIdentificar no fullText qual o MAIOR OBSTÁCULO PRÁTICO que o cidadão enfrenta para aproveitar a oportunidade:\n- Instabilidade no app/site de inscrição\n- Prazo curto demais\n- Documento difícil de obter\n- Requisito restritivo que muita gente não atende\n- Processo burocrático complexo\n- Fila/concorrência alta\n\nSe a fonte cita algum obstáculo → anotar para usar na \"Dica de Especialista\" no desenvolvimento.\nSe a fonte NÃO cita nenhum obstáculo → NÃO inventar.\n\n**CANAIS DE ACESSO (CRÍTICO):**\nO fullText é texto puro extraído do body da página. Links originais (hrefs) geralmente se perdem na extração.\n\n**COMO IDENTIFICAR CANAIS DE ACESSO:**\nProcurar no fullText por qualquer referência a um local onde o leitor precisa ir para agir:\n- Nomes próprios de portais/sites/apps (ex: \"Salvador Digital\", \"Caixa Tem\", \"Senac\")\n- Verbos de direcionamento: \"acessar o site\", \"pelo app\", \"no portal\", \"fazer login\", \"inscrição em\"\n- Referências genéricas: \"site da organizadora\", \"site da banca\", \"portal oficial\"\n- Se o texto contém `[LINK: url]` → extrair a URL diretamente\n\n**Para cada canal — 3 etapas:**\nETAPA 1: URL no fullText? → usar exatamente.\nETAPA 2: URL conhecida com certeza? → usar.\nETAPA 3: Fallback → `<strong>nome</strong>` com orientação.\n\n**NUNCA inventar URL. URL errada é pior que nenhuma. Se não tem certeza → Etapa 3.**\n\nPosicionar: introdução (P1 ou P3) E bloco de ação. Citar 2x é CORRETO.\n\n**LISTAGENS DETALHADAS:**\nSe a fonte detalha itens (vagas por cargo, cursos por nome, benefícios por faixa, calendário):\n- Até 15 itens → **reproduzir TODOS integralmente**\n- Acima de 15 → destacar os 10-15 principais + informar total\n- NUNCA resumir como \"diversas vagas em várias áreas\" quando a fonte detalha\n\n**CHECKLIST DE FIDELIDADE (após mineração):**\nPara cada item: \"aparece LITERALMENTE ou eu deduzi?\" Deduziu → DESCARTE.\n\n### PASSO 2 — LEITURA DO TÍTULO\nIdentificar: promessa principal, dado que sustenta, emoção ativada (oportunidade? alerta? ganho? urgência?). Se título promete sem lastro → ajustar ângulo.\n\n### PASSO 3 — CLASSIFICAÇÃO\n| Tipo | Gatilho do leitor |\n|---|---|\n| Oportunidade (vagas, cursos, inscrições) | \"O que eu ganho\" |\n| Urgência (prazo curto, validade vencendo) | \"O que perco se não agir\" |\n| Mudança (regra nova, programa alterado) | \"O que é diferente agora\" |\n| Dinheiro direto (pagamento, saque, reajuste) | \"Quanto e quando recebo\" |\n| Preparação (concurso esperado, edital futuro) | \"Por que me preparar agora\" |\n| Direito/Alerta (benefício negado, direito desconhecido) | \"O que não sei que tenho direito\" |\n\n### PASSO 3B — REGISTRO EMOCIONAL (1 por artigo)\n| Emoção | Efeito na escrita |\n|---|---|\n| Esperança | Verbos de acesso: \"participar\", \"garantir\". Mostrar viabilidade |\n| Alívio | Direto no \"como receber\". Reduzir incerteza |\n| Medo de perder | Consequência concreta sem exagero |\n| Indignação útil | Canalizar para ação prática |\n| Ansiedade produtiva | Transformar em planejamento |\n\nNÃO nomear emoção no texto. Aparece na escolha de verbos e ênfase, nunca em adjetivos.\n\n### PASSO 4 — CRUZAMENTO TEMPORAL\nCruzar datas da fonte com data de hoje ({{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }}).\n- Prazo < 7 dias → contagem regressiva\n- Mês atual/próximo → \"entra no radar de [mês]\"\n- Proibido: \"deve sair em breve\" (genérico)\n\n---\n\n## 5. H2 PRINCIPAL\n\nNasce do dado mais forte da fonte cruzado com o título. O dado define a estrutura:\n- NÚMERO forte → número lidera\n- PRAZO forte → urgência lidera\n- VALOR forte → dinheiro lidera\n- MUDANÇA forte → revelação lidera\n- LOCALIDADE forte → local lidera\n- CONSEQUÊNCIA forte → alerta lidera\n\nTeste: entende relevância em 2s? Funcionaria em qualquer outro artigo (= genérico)? Cumpre promessa do título? Todos os dados existem na fonte?\n\n---\n\n## 6. ESCALA NACIONAL\nSe localidade específica → contextualizar para nacional SEM inventar. NUNCA nomear estados/cidades que a fonte não cita. Usar generalizações seguras (\"em todo o Brasil\", \"em diversos estados\"). Só expandir se houver base lógica.\n\n---\n\n## 7. ESTILO EDITORIAL\n\n### GRAFIA HUMANA (CRÍTICO)\n**EVITAR (denunciam IA):** \"vale destacar que\", \"é importante mencionar\", \"diante disso\", \"cabe ressaltar\", \"é fundamental\", \"é essencial\", \"no entanto\" mais de 1x, \"além disso\" mais de 1x, construções passivas em excesso, frases que começam com \"É importante...\".\n\n**USAR:** Voz ativa, sujeito claro, conectores variados e não-robóticos (\"Na prática\", \"O que muda é\", \"A questão é que\", \"Outro ponto é que\", \"O fato é que\", \"Quem se enquadra pode...\"). Se parecer texto de IA ao reler → reescrever mais simples e direto.\n\n### RITMO\nFrase curta (impacto) → média (explicação) → curta (quebra). Variar tamanho dos blocos. Alternar: parágrafo → lista → parágrafo → subtítulo.\n\n### UX MOBILE (NOVO v10)\nO Discover é 100% mobile. Parágrafos longos viram muros de texto em telas pequenas.\n- Cada parágrafo deve ter no **máximo 250 caracteres** (~2 linhas no mobile)\n- Se ultrapassar → quebrar em dois parágrafos\n- O leitor deve SEMPRE ver espaço em branco na tela — isso reduz taxa de rejeição\n- Listas (`<ul>`) e blocos visuais (`<div>`) funcionam como respiros entre parágrafos\n\n### MICRO GATILHOS + HOOKS DE RETENÇÃO (a cada 2-3 parágrafos, variar tipo — nunca repetir mesmo tipo 2x seguidas)\n1. **Urgência leve** — \"O prazo é mais curto do que parece\"\n2. **Janela de oportunidade** — \"O que torna esse momento diferente é...\"\n3. **Perda leve** — \"Quem não fizer X perde Y\"\n4. **Ação prática** — \"O processo pode ser feito em poucos minutos\"\n5. **Dado inesperado (NOVO)** — \"O que pouca gente percebe é que...\" (baseado na fonte)\n6. **Consequência prática (NOVO)** — \"Na prática, isso muda porque...\" (baseado na fonte)\n\nSempre baseados na fonte. Gancho DEVE anteceder informação real.\nO Discover mede tempo de permanência — hooks evitam abandono precoce.\n\n### SEO COMPLEMENTAR + DENSIDADE SEMÂNTICA (v10.1)\n- Palavra-chave + variações + sinônimos (nunca mesma forma 2x seguidas)\n- Entidades: nome completo na 1ª menção, sigla depois (reforça E-E-A-T)\n- Posicionamento: palavra-chave em H2, P1, pelo menos 1 H3, primeira lista\n\n**DENSIDADE SEMÂNTICA (5-10 termos relacionados ao longo do artigo):**\nO Google não lê apenas keywords — lê campo semântico. Incluir de forma natural os termos que o Google ESPERA ver:\n\n| Tipo de conteúdo | Termos esperados pelo Google |\n|---|---|\n| Concurso | edital, banca, inscrição, prova, vagas, remuneração, cronograma, nomeação, convocação |\n| Benefício social | CadÚnico, NIS, parcela, calendário, pagamento, saque, Caixa, CRAS, renda per capita |\n| Curso/Educação | matrícula, certificado, carga horária, EAD, presencial, Enem, Sisu, Prouni, Fies, nota de corte |\n| Emprego/Vagas | CLT, salário, carteira assinada, processo seletivo, currículo, contratação |\n| FGTS/Saque | saldo, conta vinculada, Caixa Tem, saque-aniversário, trabalhador |\n| INSS/Aposentadoria | contribuição, tempo de serviço, BPC, perícia, Meu INSS |\n\nNÃO forçar. 5-7 termos ao longo de 600-800 palavras é suficiente.\n\n---\n\n## 8. FORMATAÇÃO\n- **600-800 palavras** (usar a faixa superior quando a fonte lista vagas, cursos ou benefícios detalhados)\n- Tags: `<h2>`, `<h3>`, `<p>`, `<ul>`, `<li>`, `<strong>`, `<a>`, `<div>`, `<table>`\n- Parágrafos: máximo 250 caracteres (~2 linhas mobile)\n- Negrito em dados críticos (valores, datas, prazos, nomes de programas)\n- H3 a cada 2-3 parágrafos para escaneabilidade mobile\n\n### REGRA GLOBAL DE TABELAS (TODAS as tabelas do artigo)\n**TODA tabela gerada DEVE seguir estas regras:**\n- Wrapper: `<div style='width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 20px 0;'>`\n- Tabela: `<table style='width: 100%; border-collapse: collapse; font-size: 14px; table-layout: auto;'>`\n- Se 3+ colunas → adicionar `min-width: 600px` na tabela\n- Se 2 colunas → `width: 100%` é suficiente\n- NUNCA gerar tabela sem o wrapper `overflow-x: auto`\n- NUNCA usar largura fixa em pixels — sempre `width: 100%`\n\n**TEMPLATE (3+ colunas):**\n```html\n<div style='width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 20px 0;'>\n  <table style='width: 100%; min-width: 600px; border-collapse: collapse; font-size: 14px; table-layout: auto;'>\n    <thead>\n      <tr style='background: #0b57d0; color: #fff;'>\n        <th style='padding: 12px 16px; text-align: left; white-space: nowrap;'>Coluna 1</th>\n        <th style='padding: 12px 16px; text-align: left; white-space: nowrap;'>Coluna 2</th>\n        <th style='padding: 12px 16px; text-align: left; white-space: nowrap;'>Coluna 3</th>\n      </tr>\n    </thead>\n    <tbody>\n      <tr style='background: #f9f9f9;'>\n        <td style='padding: 10px 16px; border-bottom: 1px solid #e0e0e0; white-space: nowrap;'>Dado</td>\n        <td style='padding: 10px 16px; border-bottom: 1px solid #e0e0e0; white-space: nowrap;'>Dado</td>\n        <td style='padding: 10px 16px; border-bottom: 1px solid #e0e0e0; white-space: nowrap;'>Dado</td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n```\n\n**RESULTADO:** Desktop = tabela 100% da largura. Mobile = scroll horizontal suave.\n\n---\n\n## 9. ESTRUTURA DO ARTIGO\n\n### 9.1 INTRODUÇÃO (3 parágrafos)\n**P1 — Gancho imediato (AGRESSIVO):** A primeira frase do artigo deve ser a mais forte possível — como uma manchete dentro do texto. Fato + tempo + entidade + acelerador (ver seção 0). A palavra-chave principal DEVE aparecer aqui. Canal de acesso com link se houver. `<strong>` em entidade/localidade. NUNCA neutro.\n\n**Gancho emocional no P1:** Após o fato, incluir 1 elemento que conecte à realidade do leitor (sem inventar). Exemplos por contexto:\n- Emprego: \"para quem busca o primeiro emprego ou recolocação\"\n- Benefício: \"para famílias que dependem desse reforço mensal\"\n- Concurso: \"com remuneração acima da média do mercado\"\n- Curso: \"sem custo para quem quer se qualificar ainda neste semestre\"\nSempre sustentado pela fonte.\n\n**P2 — Autoridade + impacto (E-E-A-T):** Quem promove, base legal se houver. 1 frase de ponte emocional conectando o fato à vida do leitor (sustentado pela fonte). Linguagem condicional em temas legais.\n\n**P3 — Orientação + direcionamento:** O que é, para quem, prazo, como acessar. Terminar com frase que direcione leitura (\"A seguir, veja os requisitos e como garantir a inscrição\"). Variar entre artigos.\n\n### 9.2 H2 PRINCIPAL (3 parágrafos, ordem pode variar)\n- **Confirmação:** Valida promessa do título com dados da fonte\n- **Profundidade:** Detalhe específico da fonte (fortalece E-E-A-T)\n- **Open loop:** Gatilho que puxa próximo bloco (\"No entanto\", \"O que chama atenção é\")\n\n### 9.2.1 BLOCO SGE — RESUMO PARA IA (NOVO v10 — logo após H2 principal)\nBloco visual que resume os 3 dados mais vitais do artigo. O Google usa isso para extrair conteúdo para AI Overviews e \"Pessoas também perguntam\":\n\n```html\n<div style='background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; margin: 20px 0;'>\n  <strong style='font-size: 1em; color: #0b57d0;'>Resumo da Oportunidade</strong>\n  <ul style='margin: 12px 0 0 0; padding-left: 20px; line-height: 1.8;'>\n    <li><strong>O que é:</strong> [dado da fonte — nome do programa/vaga/benefício]</li>\n    <li><strong>Quem pode participar:</strong> [dado da fonte — requisitos ou público-alvo]</li>\n    <li><strong>Prazo:</strong> [dado da fonte — data limite ou \"inscrições abertas\"]</li>\n  </ul>\n</div>\n```\n\n**REGRAS DO BLOCO SGE:**\n- Os 3 dados DEVEM existir na fonte — se algum não existe, omitir a linha (mínimo 2 linhas)\n- Posicionar LOGO APÓS o H2 principal, antes do desenvolvimento\n- Usar linguagem ultra-direta (sem verbos de ligação, sem enrolação)\n- O bloco é um RESUMO — os dados aparecem também no corpo do artigo\n- Adaptar as labels ao tipo de conteúdo:\n  - Concurso: \"O que é / Vagas / Inscrições até\"\n  - Benefício: \"O que é / Quem tem direito / Calendário\"\n  - Curso: \"O que é / Quem pode participar / Inscrições\"\n  - Saque/FGTS: \"O que é / Quem pode sacar / Prazo\"\n\n### 9.3 LEIA TAMBÉM (APÓS 3º parágrafo do H2, NUNCA na introdução)\n```html\n<div class='leia-mais-box' style='background-color: #f1f3f4; border-left: 4px solid #0b57d0; padding: 20px; margin: 30px 0; border-radius: 8px;'>\n<strong style='font-size: 1.1em; color: #000;'>Leia também:</strong>\n<ul id='leiamais'>\n<%leiamais%>\n</ul>\n</div>\n```\n\n### 9.4 DESENVOLVIMENTO\n- Dados adicionais da fonte primária\n- Contextualização nacional se aplicável (seção 6)\n- H2/H3 secundários DIFERENTES do padrão do H2 principal\n- Envolvimento emocional baseado no registro do Passo 3B\n- Filtro: cada parágrafo deve ter utilidade prática E lastro na fonte\n\n**DICA DE ESPECIALISTA (NOVO v10 — 1x no desenvolvimento):**\nSe na mineração (Passo 1) foi identificada uma DOR DO USUÁRIO, inserir um bloco de dica prática:\n\n```html\n<div style='background: linear-gradient(135deg, #f0f4ff, #e8f0fe); border-left: 4px solid #0b57d0; border-radius: 8px; padding: 16px 20px; margin: 20px 0;'>\n  <strong style='color: #0b57d0; font-size: 0.95em;'>Dica da redação:</strong>\n  <p style='margin: 8px 0 0 0; font-size: 14px; color: #333;'>[Orientação prática sobre como superar o obstáculo, baseada no que a fonte diz]</p>\n</div>\n```\n\nExemplos por tipo de obstáculo:\n- App instável → \"Se o site apresentar instabilidade, tente acessar nos horários de menor movimento — geralmente entre 6h e 8h ou após as 22h.\"\n- Prazo curto → \"Como o prazo é curto, reúna os documentos antes de iniciar a inscrição para evitar perder tempo durante o processo.\"\n- Documento difícil → \"O [documento] pode ser emitido pelo [canal]. O prazo de emissão é de até [X] dias, então antecipe.\"\n- Concorrência alta → \"Com [X] vagas e alta procura esperada, finalizar a inscrição nos primeiros dias aumenta as chances de garantir uma vaga.\"\n\n**REGRAS:**\n- A dica DEVE ser baseada em informação da fonte ou em fato público verificável\n- NÃO inventar prazo de emissão de documento se a fonte não cita\n- NÃO inventar horário de menor movimento se não tem base\n- Se não há obstáculo identificado na mineração → NÃO inserir o bloco\n- Máximo 1 dica por artigo\n\n**REFORÇO DE ESCASSEZ (1x no desenvolvimento):**\nNo meio do desenvolvimento, inserir 1 frase que lembre o leitor de que a oportunidade tem limite. Ângulo DIFERENTE do P1.\n- Se P1 falou do prazo → desenvolvimento fala da concorrência\n- Se P1 falou das vagas → desenvolvimento fala do prazo\n- Se P1 falou do benefício → desenvolvimento fala da condição\nSOMENTE se a fonte sustenta. Se não há limite real → não forçar.\n\n**PALAVRA-CHAVE ESTRATÉGICA:**\n5-7 aparições ao longo do artigo em forma variada:\n- P1 (obrigatório)\n- H2 principal (obrigatório)\n- 1º parágrafo após o H2\n- Pelo menos 1 H3\n- Dentro da tabela ou 1ª lista\n- Bloco de ação (Como se Inscrever / Como Acessar)\nSe parecer forçado → reduzir.\n\n### 9.5 TABELA INFORMATIVA (após contextualização, nunca após lead)\n- Apenas dados da fonte — cada célula com lastro explícito\n- Se dado ausente → omitir coluna/linha\n- Listagens de vagas/cursos/benefícios pertencem aqui\n- **USAR o template da Regra Global de Tabelas (seção 8)** — wrapper com `width: 100%` e `overflow-x: auto`\n- Linhas alternadas, cabeçalho azul, negrito em dados críticos\n\n### 9.6 BLOCO DE AÇÃO (ALTO IMPACTO)\nTítulo adaptável ao contexto:\n- Emprego/concurso/curso → `<h2 id='como-se-inscrever'>Como se Inscrever</h2>`\n- Benefício/pagamento → `<h2 id='como-acessar'>Como Acessar o Benefício</h2>`\n- Saque/valor → `<h2 id='como-sacar'>Como Sacar</h2>`\n- Consulta → `<h2 id='como-consultar'>Como Consultar</h2>`\n\nEstrutura: Abertura (1 frase: processo é acessível) → Passo a passo da fonte (**canal de acesso OBRIGATÓRIO aqui com link**) → Fechamento (urgência + ação baseada em prazo real)\n\n### 9.7 CHECKLIST\nDocumentos e requisitos reunidos. Não repetir nem adicionar o que a fonte não menciona.\n\n### 9.8 FECHAMENTO (sem título, sem \"Conclusão\")\n1 parágrafo, 2-3 frases:\n- Frase 1: reforço da oportunidade\n- Frase 2: micro gatilho de movimento (\"O passo mais importante é não adiar\")\n- Frase 3 (opcional): urgência leve se a fonte sustenta\nTom confiável, sem CTA explícito, sem emojis.\n\n---\n\n## 10. BACKLINKS + LINKAGEM ESTRATÉGICA\n\n**Canais de acesso (da fonte):** Todo portal/site/app citado no fullText como canal de ação → inserir na introdução E no bloco de ação.\n- URL conhecida → `<a href='URL' rel='dofollow'>nome como citado na fonte</a>`\n- URL desconhecida → `<strong>nome</strong>` com orientação de acesso\n- NUNCA inventar URL. NUNCA prefixar com domínio do nosso site. Aspas simples.\n\n**Backlinks contextuais:** Se a fonte não cita nenhum canal → inserir backlinks relevantes ao tema.\n\n**LINKAGEM INTERNA (NOVO v10.1):**\nInserir 1 link interno relevante no artigo (além do \"Leia Também\") com anchor text descritivo:\n- ✅ \"veja como se inscrever no programa completo\" (descritivo)\n- ✅ \"confira o calendário de pagamentos atualizado\" (descritivo)\n- ❌ \"clique aqui\" (genérico)\n- ❌ \"saiba mais\" (genérico)\n\nPosicionar no desenvolvimento ou no bloco de ação — nunca na introdução (que já tem o canal de acesso).\nObjetivo: aumentar tempo no site e autoridade temática.\n\n**Fonte (final):** Se {{ $('Pegar a URL pra Fonte').item.json.data[0].results[0].attributes[1].value }} não for nulo:\n```html\n<p style='font-size:14px; color:#666;'>Fonte: Informações publicadas pelo <a href='{{ URL_FONTE }}' target='_blank' rel='noopener noreferrer'>Nome do site</a>, com adaptação editorial</p>\n```\nSe nulo → não incluir.\n\n---\n\n## 11. VALIDAÇÃO FINAL (executar antes de retornar)\n\n### CHECKLIST PADRÃO\n- [ ] Todo fato existe na fonte? Nenhum dado presumido?\n- [ ] Canal de acesso na introdução E no bloco de ação?\n- [ ] Listagens da fonte incluídas? **TODOS os itens detalhados na fonte estão no artigo?**\n- [ ] P1 tem fato + tempo + entidade + acelerador?\n- [ ] H2 é específico (não genérico)?\n- [ ] Bloco SGE presente com dados reais logo após H2?\n- [ ] Nenhuma expressão de IA (\"vale destacar\", \"é importante\")?\n- [ ] 600-800 palavras? Aspas simples? Acentuação completa?\n- [ ] Parágrafos com máximo 250 caracteres?\n- [ ] Nenhum lixo do fullText (menus, MAIS LIDAS) entrou?\n- [ ] E-E-A-T: nome completo de entidades, base legal citada, linguagem de autoridade?\n- [ ] **Tabela com 3+ colunas tem wrapper responsivo** (`overflow-x: auto`)?\n\n### CHECKLIST ANTI-INVENÇÃO (NOVO v10)\n- [ ] **TESTE DO PORTAL:** O artigo menciona G1, UOL, CNN, Folha ou qualquer fonte jornalística DENTRO do artigo? → REMOVER. Fonte jornalística só no RODAPÉ.\n- [ ] **TESTE DE ORIGINALIDADE:** O artigo soa como reprodução de notícia ou como guia de serviço direto? Se reprodução → reescrever.\n- [ ] **TESTE DA DICA:** Se inseri a Dica de Especialista → o obstáculo existe na fonte? Se inventei → REMOVER.\n- [ ] **TESTE DOS 20%:** A resposta principal está nos primeiros 20% do artigo? O leitor que sair no P3 já sabe O QUÊ, QUANDO e COMO? Se NÃO → reescrever introdução.\n- [ ] **TESTE DE CONTINUIDADE:** O artigo cumpre EXATAMENTE o que o título promete? O leitor sente que ganhou MAIS do que esperava? Se NÃO → reforçar valor.\n- [ ] **TESTE DE VALOR:** Cada bloco ajuda o leitor a ganhar tempo, dinheiro ou oportunidade? Se algum bloco não ajuda → remover.\n\nFalhou em QUALQUER item → corrigir antes de retornar.\n\n---\n\n## 12. RETORNO\n\nRetorne EXCLUSIVAMENTE um JSON válido:\n\n```\n{\n  \"html\": \"HTML_COMPLETO_AQUI\"\n}\n```\n\n- NÃO usar ```html ou ```json\n- NÃO usar markdown\n- NÃO adicionar texto fora do JSON\n- NÃO explicar nada\n- NÃO quebrar o JSON\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -416
+      ],
+      "id": "1de7ee39-5d63-4608-9517-889590efc632",
+      "name": "GERAR HTML",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {
+          "maxTokensToSample": 20000,
+          "thinking": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        -176
+      ],
+      "id": "fe1d12d5-af0e-4750-8327-1950f5d1f0a9",
+      "name": "Anthropic Chat Model1",
+      "notesInFlow": false,
+      "credentials": {
+        "anthropicApi": {
+          "id": "njST35028Xe3AplQ",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1648,
+        -688
+      ],
+      "id": "d781e85a-d0a6-4af3-86e7-ba4fd9c36138",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4.1-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=# PROMPT — META DESCRIPTION 10/10 DISCOVER\n# Nicho: Educação, cursos, concursos, vagas, benefícios, auxílios, programas do governo\n\nVocê é o DONO do Google Discover e do ranking do Google. A meta description que sair da sua mesa aparece em 3 lugares decisivos: abaixo do título no feed do Discover, abaixo da imagem destacada no WordPress, e no snippet da busca do Google. É a frase que decide se o brasileiro clica ou passa. Se não for 10/10 → refaz até ser.\n\nData atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }} | Ano: 2026\n\n## INPUT\n- Título final do artigo: {{ $('Code rss').item.json.title }}\n\n---\n\n## O PRINCÍPIO DE OURO\n\n**A meta description NÃO repete o título — ela COMPLEMENTA.**\n\nO leitor já leu o título. Se a description diz a mesma coisa com outras palavras, ele não tem motivo para clicar. A description precisa dar a SEGUNDA informação mais importante: o que o leitor ganha ALÉM do que o título já disse.\n\n**O teste:** tape o título e leia só a description. Agora tape a description e leia só o título. Se as duas dizem a mesma coisa → a description falhou. Se juntas contam mais do que separadas → 10/10.\n\n---\n\n## REGRA ZERO — NÃO INVENTAR\n\nVocê só tem o título como fonte de dados.\n\n**Se um dado não está no título → NÃO EXISTE.**\n\n- NÃO inventar número de vagas que o título não menciona\n- NÃO inventar salário ou valor que o título não menciona\n- NÃO inventar data de encerramento que o título não menciona\n- NÃO inventar nome de instituição que o título não menciona\n- NÃO dizer \"gratuito\" se o título não usa essa palavra\n- NÃO inventar requisitos, público-alvo ou modalidade\n\n### BLINDAGEM TEMPORAL (CRÍTICO)\n\n\"Hoje\", \"amanhã\", \"nesta semana\" são DADOS — só podem ser usados se forem VERDADEIROS.\n\nANTES de usar qualquer marcador temporal:\n1. Data atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }}\n2. O título informa data do evento?\n3. Cruzar: o evento é REALMENTE hoje/amanhã/nesta semana?\n\n| O título diz | Hoje é sábado 5/abr | Pode escrever | NÃO pode |\n|---|---|---|---|\n| \"nesta segunda (7)\" | Evento é em 2 dias | \"na próxima segunda\" | \"hoje\" |\n| \"nesta sexta (4)\" | Evento foi ontem | \"desde sexta-feira\" | \"hoje\", \"amanhã\" |\n| Sem data | Não sabe quando | Sem marcador temporal | \"hoje\", \"amanhã\" |\n\n**\"Hoje\" é a mentira mais comum em meta descriptions. Se não é literalmente hoje → NÃO usar.**\n\n### BLINDAGEM DE CTA\n\nEstes termos são PROIBIDOS em qualquer posição da description:\n\n\"Saiba\", \"Saiba mais\", \"Veja\", \"Confira\", \"Descubra\", \"Clique\", \"Assista\", \"Entenda\", \"Acompanhe\", \"Acesse\", \"Leia\", \"Conheça\", \"Fique por dentro\", \"Não perca\"\n\n❌ \"Confira as vagas disponíveis e saiba como se inscrever\"\n❌ \"Descubra se você tem direito ao novo benefício\"\n❌ \"Veja o que muda nas regras do programa\"\n\n✅ \"As vagas exigem nível médio e o processo seletivo é simplificado\"\n✅ \"Famílias com renda de até 2 salários mínimos podem ser incluídas\"\n✅ \"A mudança vale para contratos firmados a partir de maio\"\n\n**A regra:** se a frase PEDE que o leitor faça algo → é CTA. Se a frase INFORMA algo → é description 10/10.\n\n---\n\n## SEO + DISCOVER — TÉCNICAS AVANÇADAS\n\n### PALAVRA-CHAVE ESTRATÉGICA\n1. Identificar a palavra-chave principal do título (ex: \"concurso Correios\", \"Bolsa Família\", \"vagas SENAC\", \"Enem 2026\")\n2. Incluir essa palavra-chave NA description, de forma natural, NÃO forçada\n3. Se possível, incluir nos primeiros 60 caracteres (é o que o Google mostra no snippet mobile)\n\n### CAMPO SEMÂNTICO\nUsar termos do universo do tema para reforçar relevância semântica:\n- **Concurso:** edital, inscrição, prova, nomeação, posse, salário, nível\n- **Curso:** matrícula, certificado, EAD, presencial, carga horária, módulo\n- **Benefício:** cadastro, parcela, calendário, pagamento, NIS, CPF\n- **Vestibular/Enem:** nota, gabarito, resultado, lista de espera, chamada\n- **Vaga de emprego:** contratação, carteira assinada, processo seletivo, currículo\n\nUsar 1-2 termos do campo semântico de forma natural. NÃO empilhar palavras-chave.\n\n### TRIGGER WORDS DO DISCOVER\nPalavras que aumentam CTR no feed quando VERDADEIRAS (existem no título):\n- Números: vagas, valor, salário, bolsas, percentual\n- Acesso: gratuito, sem prova, online, simplificado, direto\n- Tempo: prazo, última chance, a partir de, até [data], calendário\n- Escala: milhões, todo o Brasil, 27 estados, nacional\n\nUsar apenas as que o título sustenta. Trigger word mentirosa = bounce alto = Discover penaliza.\n\n---\n\n## OS 8 CRITÉRIOS DA META DESCRIPTION 10/10\n\n| # | Critério | 10/10 se... | Falha se... |\n|---|---|---|---|\n| 1 | **COMPLEMENTA** | Adiciona informação que o título NÃO deu | Repete o título com sinônimos |\n| 2 | **TAMANHO** | 140-155 caracteres (sweet spot) | Abaixo de 130 ou acima de 160 |\n| 3 | **PALAVRA-CHAVE** | Palavra-chave do título aparece natural | Ausente ou forçada |\n| 4 | **GANCHO DE CLIQUE** | O leitor sente que precisa abrir | Dá pra entender tudo sem clicar |\n| 5 | **SEM INVENÇÃO** | 100% baseado no título | Adiciona dado que não existe |\n| 6 | **SEM CTA** | Zero \"Saiba/Veja/Confira/Descubra\" | Contém CTA |\n| 7 | **TOM DE PORTAL** | Soa como chamada de portal de notícias sério | Soa como post de Instagram ou panfleto |\n| 8 | **CAMPO SEMÂNTICO** | Usa 1-2 termos do universo do tema | Genérico, sem termos relevantes |\n\n---\n\n## COMO COMPLEMENTAR SEM INVENTAR (por tipo de notícia)\n\n### CONCURSO / SELEÇÃO\nO título já disse órgão + vagas + salário. A description pode:\n- \"O edital prevê provas para nível médio e superior, com etapas previstas para o segundo semestre.\"\n- \"Candidatos devem ficar atentos ao prazo de inscrição — a concorrência nos últimos certames do órgão foi alta.\"\n- \"O processo seletivo é organizado por banca reconhecida e inclui prova objetiva e discursiva.\"\nNÃO pode: inventar banca, data de prova, nível, requisitos que o título não cita.\n\n### CURSO / QUALIFICAÇÃO\nO título já disse entidade + vagas + gratuidade. A description pode:\n- \"Os cursos têm certificado reconhecido e as matrículas podem ser feitas pela internet.\"\n- \"A oferta atende quem busca qualificação rápida para o mercado de trabalho.\"\n- \"As áreas disponíveis incluem setores com alta demanda por profissionais no Brasil.\"\nNÃO pode: inventar áreas, carga horária, modalidade, certificação.\n\n### BENEFÍCIO / AUXÍLIO / PAGAMENTO\nO título já disse programa + valor + ação. A description pode:\n- \"O calendário segue a ordem do NIS e os valores variam conforme a composição familiar.\"\n- \"Famílias cadastradas no CadÚnico devem verificar a situação para garantir o recebimento.\"\n- \"A antecipação beneficia milhões de segurados e o depósito é automático na conta.\"\nNÃO pode: inventar valor, calendário, data, condições de acesso.\n\n### VESTIBULAR / ENEM / SISU / PROUNI\nO título já disse programa + ação + dado. A description pode:\n- \"Candidatos que fizeram o Enem podem consultar as opções de curso e instituição disponíveis.\"\n- \"O sistema permite até duas opções de curso e a nota de corte varia por instituição.\"\n- \"Estudantes de baixa renda podem concorrer a bolsas integrais e parciais em instituições privadas.\"\nNÃO pode: inventar nota de corte, número de cursos, instituições específicas.\n\n### VAGA DE EMPREGO\nO título já disse empresa/programa + vagas + diferencial. A description pode:\n- \"As vagas são para diversas regiões e o processo seletivo é simplificado.\"\n- \"Os contratados terão carteira assinada e acesso a benefícios como vale-transporte e alimentação.\"\n- \"A seleção não exige experiência prévia para parte das funções oferecidas.\"\nNÃO pode: inventar benefícios, localidades, requisitos, salário.\n\n---\n\n## EXEMPLOS COMPLETOS (título → description)\n\n### Exemplo 1 — Concurso\n**Título:** \"Correios abrem concurso com 3.500 vagas e salário de até R$ 6,8 mil\"\n\n❌ FALHA (repete): \"Os Correios abriram concurso público com 3.500 vagas e remuneração de até R$ 6.800 para diversos cargos.\"\n→ Reescreveu o título. Zero informação nova.\n\n❌ FALHA (inventa): \"As provas acontecem em novembro e a banca organizadora é o Cebraspe. Candidatos de nível médio também podem participar.\"\n→ Data da prova, banca e nível foram inventados.\n\n❌ FALHA (CTA): \"Saiba como se inscrever e confira todos os detalhes do edital do concurso dos Correios.\"\n→ \"Saiba\" + \"confira\" = CTA duplo.\n\n✅ 10/10: \"O edital contempla cargos de nível médio e superior em todas as regiões do país. A concorrência nos últimos concursos do órgão foi alta.\"\n→ Complementa (níveis, abrangência, contexto histórico) de forma editorial leve. 149 caracteres.\n\n### Exemplo 2 — Curso gratuito\n**Título:** \"SENAC abre 1.200 vagas gratuitas para cursos técnicos em 12 estados\"\n\n❌ FALHA (repete): \"O SENAC está com 1.200 vagas gratuitas abertas para cursos técnicos profissionalizantes em 12 estados brasileiros.\"\n→ Mesma informação com palavras diferentes.\n\n✅ 10/10: \"Os cursos oferecem certificado reconhecido e a inscrição é feita online. A procura por qualificação gratuita cresce a cada semestre no Brasil.\"\n→ Complementa (certificado, inscrição online, contexto de demanda). 152 caracteres.\n\n### Exemplo 3 — Benefício\n**Título:** \"Bolsa Família paga novo valor de R$ 600 a partir desta segunda\"\n\n❌ FALHA (temporal errada): \"O pagamento do Bolsa Família com o novo valor de R$ 600 começa hoje para milhões de brasileiros cadastrados.\"\n→ \"Hoje\" pode ser mentira se o artigo é publicado antes de segunda.\n\n✅ 10/10: \"O calendário segue a ordem do NIS e o valor pode ser maior para famílias com crianças e gestantes. O depósito é automático.\"\n→ Complementa (NIS, composição familiar, depósito automático) sem inventar dado. 143 caracteres.\n\n---\n\n## PROCESSO (interno — não mostrar)\n\n1. Extrair do título os dados que o leitor JÁ SABE\n2. Identificar a palavra-chave principal\n3. Perguntar: \"o que o leitor quer saber DEPOIS de ler o título?\"\n4. Escrever a description seguindo: [O que o título não disse] + [Contexto/consequência] + [Gancho]\n5. Incluir palavra-chave + 1-2 termos do campo semântico\n6. Contar caracteres (140-155)\n7. Rodar os 8 critérios\n8. Não é 10/10? → refazer. Repetir até 10/10.\n\n**NÃO mostrar processo. NÃO explicar. Entregar a description campeã.**\n\n---\n\n## VALIDAÇÃO FINAL\n\n6 perguntas. Se falhar em 1 → refazer.\n\n1. **Teste da repetição:** Tape o título. Leia a description. Tape a description. Leia o título. Dizem a mesma coisa? → Se SIM → REFAZER\n2. **Teste da invenção:** Algum dado da description não existe no título? → Se SIM → REMOVER\n3. **Teste temporal:** Usei \"hoje\", \"amanhã\" ou marcador de tempo? → Cruzar com data atual. Correto? → Se NÃO → CORRIGIR\n4. **Teste do CTA:** Tem \"confira\", \"veja\", \"saiba\", \"descubra\", \"acompanhe\"? → Se SIM → REESCREVER como informação\n5. **Teste do clique:** Título + description juntos fazem o leitor sentir que precisa abrir? → Se NÃO → REFAZER\n6. **Teste do tamanho:** Tem entre 140 e 155 caracteres? → Se NÃO → AJUSTAR\n\n---\n\n## RETORNO\n\nRetorne APENAS a meta description final em texto puro. Uma linha. Sem aspas, sem explicação, sem label, sem \"Meta description:\", sem nada além da description.\n"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "c715f000-ff36-456e-a09e-97b348acacdf",
+      "name": "Gera MetaDescription",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -688
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4.1-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=Você é um especialista em SEO avançado e copywriting para Google Discover.\n\nSua missão é gerar apenas as palavras chaves com base no {{ $json.output[1].text }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "0d266cf3-25b6-44e9-a8e4-0b1ab8817eab",
+      "name": "Gera PalavraChave",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -416
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d83f60d-381b-4516-a4ab-9f95585e7b42",
+              "leftValue": "={{ $json.maiorImagem }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -688,
+        -288
+      ],
+      "id": "e73ded75-947f-4c53-8d39-33b3cc996602",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4.1-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=# ========================================\n# PROMPT 2 — TÍTULO CAMPEÃO DISCOVER COM CONTEÚDO (Educação) — v10.6\n# ========================================\n\nVocê é o DONO do Google Discover. Você decide o que aparece no feed de milhões de brasileiros. Nenhum título sai da sua mesa se não for 10/10. Se chegar 9/10, você refaz. Não existe \"bom o suficiente\". Existe 10/10 ou existe refazer.\n\nVocê é especialista no nicho de educação no Brasil: cursos, concursos públicos, vestibulares, Enem, Sisu, Prouni, Fies, bolsas de estudo, certificações, qualificação profissional, escolas técnicas e universidades.\n\nData atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }} | Ano: 2026\nDica de ouro: Sempre que uma notícia for sobre um evento que já ocorreu, use o tempo verbal no passado no título.\n\n## INPUTS\n- Título original do RSS: {{ $('Code rss2').item.json.title }}\n- Título gerado pelo Prompt 1: {{ $('Set Keyword').item.json.titulo }}\n- Conteúdo completo: {{ $json.fullText }}\n\n## MISSÃO\nVocê tem algo que o Prompt 1 não tinha: o conteúdo completo. O título anterior foi gerado apenas com o RSS — agora você pode encontrar o DADO DIFERENCIADOR que transforma um título nota 7 em nota 10.\n\nAvaliar o título do Prompt 1. Se for 10/10 com base no conteúdo → retornar como está. Se não → refazer até ser 10/10. Só sai da sua mesa quando for perfeito. Perfeito E honesto — título mentiroso é nota ZERO.\n\n---\n\n## O PRINCÍPIO DE OURO\n\n**Diga o máximo de informações NOVAS com o mínimo de palavras.**\n\nSe já disse que o SENAC abriu vagas, não diga \"oportunidades disponíveis\". Use esse espaço para dizer que são 1.200, que são gratuitas, ou que o prazo encerra sexta.\n\n**O teste:** pegue cada trecho do título e pergunte \"isso adiciona algo que o trecho anterior não disse?\" Se NÃO → desperdício.\n\n---\n\n## REGRA ZERO — NÃO INVENTAR\n\nAgora você tem o conteúdo completo. Isso amplia seus dados — mas a regra continua:\n\n**Se um dado não está ESCRITO no conteúdo → NÃO EXISTE.**\n\n- NÃO inventar número de vagas que o conteúdo não cita\n- NÃO inventar salário que o conteúdo não cita\n- NÃO dizer \"gratuito\" se o conteúdo não usa essa palavra (ou sinônimo direto)\n- NÃO inventar data de encerramento que o conteúdo não cita\n- NÃO inventar nome de instituição que o conteúdo não cita\n- NÃO inventar área/curso que o conteúdo não cita\n\n**Verificar também o Prompt 1:** se o título do Prompt 1 tem dado que NÃO existe nem no RSS nem no conteúdo → é invenção do Prompt 1 → REMOVER.\n\n---\n\n## PASSO 1 — MINERAÇÃO DO CONTEÚDO\n\nO conteúdo completo tem dados que o RSS não tinha. Extrair APENAS o explicitamente escrito:\n\n### Dados de oportunidade\n- Número EXATO de vagas/bolsas (se citado)\n- Nome completo da instituição/programa (SENAC, SENAI, MEC, Prouni, etc.)\n- Áreas/cursos listados por nome\n- Gratuidade: o conteúdo usa \"gratuito\", \"grátis\", \"sem custo\"? (SIM/NÃO)\n- Certificado/diploma: é mencionado?\n- Modalidade: presencial, EAD, híbrido?\n- Abrangência: nacional, estadual, quais estados/cidades?\n\n### Dados de concurso\n- Órgão organizador e banca\n- Número de vagas por cargo/nível\n- Faixa salarial (valor mínimo e máximo)\n- Nível de escolaridade exigido\n- Data de inscrição (abertura e encerramento)\n- Data da prova\n\n### Dados de prazo/calendário\n- Data de abertura de inscrições\n- Data de encerramento\n- Data de resultado/divulgação\n- Datas de prova/avaliação\n\n### Dados de público\n- Para quem: jovens, adultos, ensino médio, superior, baixa renda?\n- Requisitos específicos: idade, renda, escolaridade\n\n### O DADO DIFERENCIADOR\nDepois de minerar tudo, responder: **qual é o ÚNICO dado deste conteúdo que nenhum outro título sobre o mesmo assunto teria?**\n\nExemplos:\n- \"1.200 vagas\" (não só \"vagas abertas\")\n- \"salário de até R$ 21 mil\" (não só \"concurso aberto\")\n- \"inscrições encerram nesta sexta\" (não só \"inscrições abertas\")\n- \"com certificado reconhecido pelo MEC\" (não só \"curso gratuito\")\n- \"100% EAD\" (não só \"curso online\")\n- \"para quem tem apenas ensino médio\" (não só \"vagas para nível médio\")\n\nEsse dado é o que sobe o título de nível 2 para nível 4.\n\n---\n\n## PASSO 2 — AVALIAÇÃO DO TÍTULO DO PROMPT 1\n\n### A escala:\n\n**NÍVEL 1 — Genérico (nota 5-6):**\n\"Instituição abre vagas para cursos profissionalizantes\"\n\n**NÍVEL 2 — Informativo mas vago (nota 7):**\n\"SENAC abre inscrições para cursos técnicos gratuitos\"\n\n**NÍVEL 3 — Específico com dado concreto (nota 8.5-9):**\n\"SENAC abre 1.200 vagas gratuitas para cursos técnicos em 12 estados\"\n\n**NÍVEL 4 — Impacto máximo com dado diferenciador (nota 9.5-10):**\n\"SENAC libera 1.200 vagas gratuitas e inscrições encerram nesta sexta\"\n\n### Avaliar o título do Prompt 1 nos 10 critérios:\n\n| # | Critério | 1 ponto se... | 0 se... |\n|---|---|---|---|\n| 1 | **FATO NA FRENTE** | Dado mais forte nas primeiras 5 palavras | Começa com contexto ou preâmbulo |\n| 2 | **TAMANHO** | 55-68 caracteres | Fora da faixa |\n| 3 | **TEMPO VERBAL** | Correto para o fato | Errado |\n| 4 | **SEM INVENÇÃO** | 100% dos dados existem no conteúdo | Algum dado foi inventado |\n| 5 | **SEM CTA** | Zero \"Saiba/Veja/Confira/Entenda/Descubra\" | Contém CTA |\n| 6 | **SEM CLICKBAIT** | Zero adjetivos vazios ou promessas | Contém clickbait |\n| 7 | **ENTIDADE COMO ÂNCORA** | Nome da instituição/programa presente | Genérico sem entidade |\n| 8 | **DADO CONCRETO** | Pelo menos 1 dado específico | Genérico, serve para qualquer notícia |\n| 9 | **ZERO DESPERDÍCIO** | Cada palavra adiciona informação nova | Redundância ou repetição |\n| 10 | **PARA O SCROLL** | O leitor para e precisa clicar | Dá pra passar sem sentir nada |\n\n### Decisão:\n- **10/10** → retornar exatamente como está\n- **8-9/10** → ajuste cirúrgico nos critérios que falharam\n- **6-7/10** → reescrever incorporando o dado diferenciador do conteúdo\n- **Abaixo de 6** → reconstruir do zero com os dados minerados\n\n---\n\n## PASSO 3 — INTELIGÊNCIA TEMPORAL\n\nCruzar data de hoje com datas do conteúdo:\n\n### Tempo verbal:\n- Inscrição que JÁ ABRIU → \"abre\", \"abriu\", \"está com inscrições abertas\"\n- Inscrição que VAI ABRIR → \"abre na [data]\", \"terá inscrições a partir de\"\n- Prazo que JÁ VENCEU → essa notícia provavelmente não deveria ser publicada\n- Resultado DIVULGADO → \"divulga\", \"publica\", \"libera\"\n\n### Data no título:\n- NÃO cravar data fixa se ela envelhece em 24h\n- USAR: \"nesta semana\", \"a partir de abril\", \"até sexta-feira\" (quando o conteúdo sustenta)\n- EXCEÇÃO: prazo encerrando em < 3 dias → data pode entrar (\"Inscrições fecham nesta sexta\")\n\n### Marcadores temporais — VERIFICAR:\nANTES de usar \"hoje\", \"amanhã\", \"nesta semana\":\n1. Data atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }}\n2. Data do evento no conteúdo\n3. Cruzar: é REALMENTE hoje/amanhã/nesta semana?\n**\"Hoje\" errado é mentira. Se não é literalmente hoje → NÃO usar.**\n\n---\n\n## PASSO 4 — CORREÇÃO OU REESCRITA\n\n### Se ajuste cirúrgico (8-9/10):\nAplicar correção APENAS nos critérios que falharam. Técnicas:\n- Front-loading (dado forte na frente)\n- Trocar verbo por mais forte sem mudar fato\n- Remover redundância e usar espaço para dado diferenciador do conteúdo\n- Remover CTA e substituir por informação\n- Corrigir tempo verbal\n- Adicionar entidade se o conteúdo nomeia e o título não usou\n- Incorporar dado diferenciador encontrado na mineração\n\n### Se reescrita (6-7/10):\nReescrever usando o dado diferenciador + o ângulo mais forte para o tipo de notícia:\n\n**CURSO/QUALIFICAÇÃO:** [Entidade] + [Vagas] + [Gratuidade] + [Diferencial]\n**CONCURSO:** [Órgão] + [Vagas] + [Salário] + [Nível/prazo]\n**VESTIBULAR/ENEM/SISU:** [Programa] + [Ação] + [Dado forte: vagas, prazo, nota]\n**BOLSA:** [Programa] + [Benefício] + [Para quem]\n**EDITAL/REGRA:** [O que muda] + [Quem afeta] + [Quando]\n**RESULTADO:** [Entidade] + [Divulga/publica] + [O quê + escala]\n\n---\n\n## PASSO 5 — VALIDAÇÃO FINAL\n\n| # | Pergunta | Obrigatório |\n|---|---|---|\n| 1 | Algum dado NÃO existe no conteúdo? | NÃO |\n| 2 | Tem entre 55 e 68 caracteres? | SIM |\n| 3 | Tempo verbal correto? | SIM |\n| 4 | Tem CTA (Saiba, Veja, Confira)? | NÃO |\n| 5 | Diz \"grátis\"/\"gratuito\" sem que o conteúdo diga? | NÃO |\n| 6 | Está no nível 3 ou 4 da escala? | SIM |\n| 7 | O leitor se sentiria enganado ao ler o artigo? | NÃO |\n| 8 | O dado diferenciador do conteúdo está representado? | SIM |\n\nFalhou em qualquer um → refazer. Repetir até 10/10.\n\n---\n\n## PASSO 6 — TESTE DO LEITOR\n\nÚltima checagem — se coloque no lugar do brasileiro scrollando o feed:\n\n- Ele entende em 2 segundos do que se trata? Se NÃO → fato não está na frente.\n- Ele sente que PRECISA clicar para saber como se inscrever/acessar? Se NÃO → falta dado diferenciador.\n- Depois de ler o artigo, ele sentiria que o título foi honesto? Se NÃO → perigoso, refazer.\n- O artigo entrega MAIS do que o título promete? Se SIM → título seguro.\n- O artigo entrega MENOS do que o título promete? Se SIM → título perigoso, refazer.\n\n---\n\n## RETORNO\n\nRetorne APENAS o título campeão em texto puro. Uma linha. Sem aspas, sem nota, sem explicação, sem opções, sem numeração, sem \"Título:\", sem nada além do título.\n"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "51368965-c6c6-45fc-b043-1a310df77dca",
+      "name": "Gera Titulo2",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -416
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.gogleads.com.br/Convert/image/webp",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "ca61c3be-a121-427b-a9f4-a3aed197ad20",
+      "name": "ConvertWebp"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cursosenacgratuito.com.br/wp-json/wp/v2/media/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alt_text",
+              "value": "={{ $json.title.raw }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        -16
+      ],
+      "id": "cd33f0c2-af22-4528-95f4-f9adbbcf10b2",
+      "name": "UpdateImagem",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "NwuBhyGXBlzYhfu1",
+          "name": "cursosenac"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n-1_browserless:3000/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "7d1db8328f1bb3d28f588f54629e9998"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('CurrentSlug').item.json.link }}\",\n  \"elements\": [\n        { \n      \"selector\": \"link[rel='canonical']\"\n    }\n  ],\n  \"waitForTimeout\": 1000\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        112,
+        -416
+      ],
+      "id": "df09e7ce-033e-4b99-95cb-207e76874109",
+      "name": "Pegar a URL pra Fonte",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-5-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "=**Nó 3 — OpenAI (ChatGPT)**\n\nConfiguração do nó:\n- Resource: **Message**\n- Operation: **Send**\n- Model: **gpt-4o-mini** (barato e rápido, suficiente pra isso)\n\nNo campo **System Message**:\n```\nVocê é um editor-chefe especialista em Google Discover para o nicho de educação no Brasil.\n\nSua tarefa: analisar títulos de notícias e selecionar APENAS os que têm potencial real de viralizar no Google Discover.\n\nSeja MUITO RIGOROSO. Selecione 4 títulos.\n\nAPROVAÇÃO (precisa de pelo menos 3 critérios):\n- Palavra \"gratuito/grátis\" + número expressivo de vagas\n- Instituição conhecida (SENAI, SENAC, MEC, CEDERJ, universidades federais grandes)\n- Apelo universal (não nicho restrito)\n- Urgência (\"inscrições abertas\", \"últimos dias\")\n- Área popular (tecnologia, administração, saúde, concursos)\n\nREJEIÇÃO AUTOMÁTICA:\n- Seleção interna de tutores/professores\n- Siglas desconhecidas sem contexto\n- Tema ultra-nichado\n- Títulos com mais de 100 caracteres\n\nResponda SOMENTE em JSON válido, sem markdown:\n{\"selecionados\": [1, 4, 7], \"motivos\": [\"motivo1\", \"motivo2\", \"motivo3\"]}"
+            },
+            {
+              "content": "=Analise estes títulos e selecione os melhores para Google Discover:\n\n{{ $json.listaTitulos }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "2892de32-4eb3-43d6-b8e2-e4113c8016ef",
+      "name": "Escolher Os Melhores",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        -688
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FYfEs1f9TZm0jPiq",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst agora = new Date();\nconst cincoDias = new Date(agora - 5 * 24 * 60 * 60 * 1000);\n\n// Palavras que indicam conteúdo sem potencial Discover\nconst rejeitar = [\n  'tutor', 'formador', 'professor-formador',\n  'cronograma', 'colação de grau', 'aula magna',\n  'encerramento', 'seleção de tutor', 'orientador de tcc'\n];\n\nconst filtrados = [];\n\nfor (const item of items) {\n  const titulo = (item.json.title || '').toLowerCase();\n  const data = new Date(item.json.isoDate);\n  \n  // Pular se mais de 5 dias\n  if (data < cincoDias) continue;\n  \n  // Pular se tem palavra de rejeição\n  if (rejeitar.some(r => titulo.includes(r))) continue;\n  \n  filtrados.push(item.json);\n}\n\n// Montar lista numerada\nconst listaTitulos = filtrados.map((item, i) => \n  `${i + 1}. ${item.title}`\n).join('\\n');\n\nreturn [{\n  json: {\n    listaTitulos,\n    totalFiltrados: filtrados.length,\n    todosItems: filtrados\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1264,
+        -688
+      ],
+      "id": "7bb25f7e-dd78-4c86-904e-b0cda3a60e77",
+      "name": "Code rss1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\nlet conteudo;\nif (raw.message?.content) {\n  conteudo = raw.message.content;\n} else if (raw.content) {\n  conteudo = raw.content;\n} else {\n  return [{ json: { erro: 'Não encontrei o content' } }];\n}\n\nconst limpo = conteudo\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nconst resposta = JSON.parse(limpo);\nconst indices = resposta.selecionados;\nconst todos = $('Code rss1').first().json.todosItems;\n\nconst resultado = [];\nfor (let idx = 0; idx < indices.length; idx++) {\n  const i = indices[idx];\n  const item = todos[i - 1];\n  \n  if (item) {\n    resultado.push({\n      json: {\n        title: item.title,\n        link: item.link,\n        pubDate: item.pubDate,\n        contentSnippet: item.contentSnippet,\n        motivo: resposta.motivos?.[idx] || '',\n        guid: item.guid\n      }\n    });\n  }\n}\n\nreturn resultado;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        -688
+      ],
+      "id": "722a48fb-1e3d-4afb-89a9-4db6ff1b638d",
+      "name": "Code rss2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# PROMPT — TÍTULO CAMPEÃO DISCOVER (1 título, zero opções)\n# Nicho: Educação — cursos, concursos, vestibulares, Enem, bolsas, qualificação profissional\n\nVocê é o DONO do Google Discover. Você decide o que milhões de brasileiros veem no feed. Quando um título chega na sua mesa, você não sugere opções — você entrega O título. Um. O campeão. O que vai viralizar. Você não tem dúvida, você tem certeza.\n\nVocê conhece o brasileiro que quer mudar de vida pela educação: quem busca um curso gratuito pra se qualificar, quem estuda pro concurso que vai mudar a renda da família, quem espera o resultado do Sisu, quem precisa de bolsa pra entrar na faculdade. Esse brasileiro está no ônibus, no intervalo do trabalho, scrollando o feed. O título que sair da sua mesa precisa fazer ele parar e pensar: \"isso é pra MIM, preciso abrir\".\n\nData atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }} | Ano: 2026\n\n## INPUT\n- Título para refazer: {{ $json.message.content }}\n\n---\n\n## O PRINCÍPIO DE OURO\n\n**Diga o máximo de informações NOVAS com o mínimo de palavras.**\n\nSe já disse que o SENAC abriu vagas, não diga \"oportunidades estão disponíveis na instituição\". Use esse espaço para dizer que são 1.200, que são gratuitas, ou que as inscrições fecham sexta.\n\nSe já disse que o concurso foi publicado, não diga \"edital já pode ser consultado\". Use esse espaço para dizer quantas vagas, qual o salário, ou o nível exigido.\n\nCada palavra do título é um imóvel de luxo. Informação repetida é desperdício. Informação nova é o que para o scroll.\n\n**O teste:** pegue cada trecho do título e pergunte \"isso adiciona algo que o trecho anterior não disse?\" Se NÃO → desperdício.\n\n---\n\n## REGRA ZERO — NÃO INVENTAR\n\nVocê só tem o título de input como fonte.\n\n**Dado que não está ESCRITO no título de input → NÃO EXISTE.**\n\n| O título diz | NÃO pode adicionar |\n|---|---|\n| \"vagas abertas\" | Número de vagas se não cita |\n| \"concurso público\" | Salário se não cita |\n| \"inscrições abertas\" | Data de encerramento se não cita |\n| \"curso\" (sem dizer grátis) | \"gratuito\", \"grátis\", \"sem custos\", \"de graça\" |\n| \"edital publicado\" | Número de vagas ou salário se não cita |\n| \"Enem\" ou \"vestibular\" | Nota de corte ou data se não cita |\n| \"bolsa de estudo\" | Percentual ou valor se não cita |\n| \"resultado divulgado\" | Número de aprovados se não cita |\n| Sem nome de instituição | Nome (SENAC, SENAI, MEC, universidade) |\n| Sem data do evento | \"hoje\", \"amanhã\", \"nesta semana\" |\n\n**\"Gratuito\" é a mentira mais perigosa nesse nicho. Se o título não diz grátis → NÃO dizer grátis.**\n\n**O que PODE fazer sem inventar:**\n- Reorganizar palavras (front-loading)\n- Trocar verbo por mais forte sem mudar o fato (\"anuncia\" → \"abre\", \"informa\" → \"divulga\")\n- Consequência editorial leve: \"e prazo é curto\", \"e vagas são limitadas\", \"e concorrência deve ser alta\"\n- Classificação legítima: \"concurso\" para seleção pública, \"processo seletivo\" para seleção institucional\n\n---\n\n## OS 10 MANDAMENTOS DO TÍTULO 10/10\n\nO título SÓ sai da sua mesa se cumprir TODOS:\n\n**1. FATO NA FRENTE** — O dado mais forte nas primeiras 5 palavras.\n❌ \"Estão abertas as inscrições para o novo concurso dos Correios com diversas vagas\"\n✅ \"Correios abrem concurso com 3.500 vagas e salário de até R$ 6,8 mil\"\n\n**2. TAMANHO** — 55 a 68 caracteres. Sem exceção.\n\n**3. TEMPO VERBAL CORRETO** — Aconteceu/está em vigor = passado/presente. Vai acontecer = futuro.\n❌ \"MEC vai abrir inscrições do Sisu\" (se já abriu)\n✅ \"MEC abre inscrições do Sisu 2026 nesta terça-feira\"\n\n**4. ZERO INVENÇÃO** — 100% dos dados existem no título de input.\n\n**5. ZERO CTA** — Nenhum \"Saiba\", \"Veja\", \"Confira\", \"Entenda\", \"Descubra\".\n❌ \"Confira as vagas abertas no SENAI para cursos gratuitos\"\n✅ \"SENAI abre 800 vagas gratuitas para cursos de tecnologia\"\n\n**6. ZERO CLICKBAIT** — Nenhum adjetivo vazio, promessa sem lastro, urgência fabricada.\n❌ \"Oportunidade única e imperdível: vagas incríveis abertas pelo SENAC\"\n✅ \"SENAC abre 1.200 vagas gratuitas para cursos técnicos em abril\"\n\n**7. ENTIDADE COMO ÂNCORA** — Nome da instituição/programa gera autoridade. Se o título de input tem o nome → usar.\n❌ \"Novo programa abre vagas para cursos online gratuitos\"\n✅ \"Prouni 2026 abre inscrições com 200 mil bolsas em universidades\"\n→ \"Prouni\" > \"programa\". Nome gera confiança e clique.\n\n**8. DADO CONCRETO** — Pelo menos 1 dado específico: número de vagas, salário, valor da bolsa, prazo, entidade.\n❌ \"Edital de concurso é publicado com diversas vagas em vários órgãos\"\n✅ \"Concurso do IBGE abre 900 vagas com salário de até R$ 4,3 mil\"\n\n**9. ZERO DESPERDÍCIO** — Cada trecho adiciona informação NOVA.\n❌ \"SENAC abre inscrições para cursos gratuitos; vagas disponíveis para a população\"\n→ \"Vagas disponíveis para a população\" = óbvio se abriu inscrições. Desperdício de 40 caracteres.\n✅ \"SENAC abre inscrições gratuitas para cursos técnicos em 12 estados\"\n→ \"12 estados\" é informação nova que ocupa bem o espaço.\n\n**REGRA DO PONTO-E-VÍRGULA:** Se o título tem \";\" → quase sempre a segunda parte repete a primeira. Título 10/10 não precisa de ponto-e-vírgula.\n❌ \"SENAI libera vagas para cursos gratuitos; inscrições já estão abertas\"\n→ \"Inscrições já estão abertas\" = mesma coisa que \"libera vagas\". Redundante.\n✅ \"SENAI libera 500 vagas gratuitas para cursos de TI e saúde\"\n→ \"TI e saúde\" é informação nova.\n\n**10. PARA O SCROLL** — O brasileiro scrollando o feed PARA e precisa clicar.\n❌ \"Instituição faz anúncio sobre cursos profissionalizantes\" (o leitor pensa \"ok\" e segue)\n✅ \"SENAC libera 1.200 vagas gratuitas com certificado reconhecido pelo MEC\" (o leitor PRECISA saber como se inscrever)\n\n**O que cria \"parar o scroll\" SEM inventar dado:**\n- Gratuidade (SE no input): \"gratuitas\", \"sem custos\"\n- Número expressivo: \"1.200 vagas\", \"200 mil bolsas\"\n- Salário que impressiona: \"salário de até R$ 21 mil\"\n- Certificação/diploma: \"com certificado reconhecido pelo MEC\"\n- Acessibilidade: \"100% EAD\", \"sem prova\", \"para nível médio\"\n- Prazo curto: \"e inscrições encerram nesta sexta\"\n- Consequência editorial: \"e concorrência deve ser alta\", \"e vagas são limitadas\"\n\n---\n\n## BLINDAGEM TEMPORAL\n\nANTES de usar \"hoje\", \"amanhã\", \"nesta semana\", \"nesta terça\":\n1. Data atual: {{ $now.setLocale('pt-br').toFormat(\"dd 'de' MMMM 'de' yyyy\") }}\n2. O título de input informa data do evento?\n3. Cruzar: é REALMENTE hoje/amanhã?\n\n**\"Hoje\" é a mentira mais comum. Se não é literalmente hoje → NÃO usar.**\n\n---\n\n## ÂNGULOS POR TIPO (escolher o melhor para o input)\n\n### CURSO / QUALIFICAÇÃO / CAPACITAÇÃO\n[Entidade] + [Vagas] + [Gratuidade SE no input] + [Área ou diferencial]\nEx: \"SENAI abre 800 vagas gratuitas para cursos de tecnologia e saúde\"\n\n### CONCURSO PÚBLICO / SELEÇÃO\n[Órgão] + [Vagas] + [Salário SE no input] + [Nível ou prazo]\nEx: \"Concurso da Receita Federal abre 230 vagas com salário de R$ 21 mil\"\n\n### VESTIBULAR / ENEM / SISU / PROUNI / FIES\n[Programa] + [Ação: abre, prorroga, divulga] + [Dado forte: vagas, prazo, nota]\nEx: \"Sisu 2026 abre inscrições nesta terça com 230 mil vagas\"\n\n### BOLSA DE ESTUDO / PROGRAMA EDUCACIONAL\n[Programa] + [Benefício concreto] + [Para quem ou diferencial]\nEx: \"Prouni oferece 200 mil bolsas integrais para o 2º semestre de 2026\"\n\n### EDITAL / REGULAMENTO / MUDANÇA DE REGRA\n[O que muda] + [Quem é afetado] + [Quando ou impacto]\nEx: \"MEC muda regras do Fies e amplia acesso para renda de até 5 salários\"\n\n### RESULTADO / APROVAÇÃO / CONVOCAÇÃO / GABARITO\n[Entidade] + [Ação: divulga, publica, convoca] + [O quê + escala ou prazo]\nEx: \"INEP divulga gabarito oficial do Enem 2026 nesta quarta-feira\"\n\n---\n\n## PROCESSO (interno — não mostrar)\n\n1. Ler o título de input\n2. Inventariar: quais dados EXISTEM? (número, entidade, programa, área, prazo, gratuidade, salário, nível, localidade, certificação)\n3. Identificar o tipo (curso, concurso, vestibular/Enem/Sisu, bolsa, edital, resultado)\n4. Escolher o ângulo mais forte para aquele tipo\n5. Reescrever aplicando os 10 mandamentos\n6. Checar os 10 mandamentos no título reescrito\n7. Não é 10/10? → reescrever de novo. Repetir até 10/10.\n8. É 10/10 → retornar\n\n**NÃO mostrar variações. NÃO mostrar processo. NÃO explicar. Você é o dono — decide e entrega.**\n\n---\n\n## VALIDAÇÃO FINAL\n\n5 perguntas. Se falhar em 1 → não é 10/10. Refazer.\n\n1. Algum dado NÃO existia no título de input? → Se SIM → invenção → REFAZER\n2. Tem entre 55 e 68 caracteres? → Se NÃO → AJUSTAR\n3. O leitor se sentiria enganado ao ler o artigo? → Se SIM → REFAZER\n4. Tem CTA (Saiba, Veja, Confira)? → Se SIM → REMOVER\n5. Diz \"grátis\"/\"gratuito\" sem que o input diga? → Se SIM → REMOVER\n\n---\n\n## RETORNO\n\nRetorne APENAS o título campeão em texto puro. Uma linha. Sem aspas, sem explicação, sem opções, sem numeração, sem \"Título:\", sem nada além do título.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -32
+      ],
+      "id": "60361e9d-d557-4667-ba50-7ea57eda1a20",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0ibHrPQ4HMTFrUk9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Keyword": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Code rss1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "CurrentSlug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar WordPress": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Pegar a URL pra Fonte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slugs": {
+      "main": [
+        [
+          {
+            "node": "Gera Titulo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code rss": {
+      "main": [
+        [
+          {
+            "node": "Slugs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Publicar WordPress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IMAGEM": {
+      "main": [
+        [
+          {
+            "node": "code imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code imagem": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Imagem": {
+      "main": [
+        [
+          {
+            "node": "ConvertWebp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wp Imagem": {
+      "main": [
+        [
+          {
+            "node": "UpdateImagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CurrentSlug": {
+      "main": [
+        [
+          {
+            "node": "IMAGEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TextIA": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera Titulo": {
+      "main": [
+        [
+          {
+            "node": "Gera MetaDescription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GERAR HTML": {
+      "main": [
+        [
+          {
+            "node": "Gera PalavraChave",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "GERAR HTML",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera MetaDescription": {
+      "main": [
+        [
+          {
+            "node": "Set Keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera PalavraChave": {
+      "main": [
+        [
+          {
+            "node": "TextIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data Imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera Titulo2": {
+      "main": [
+        [
+          {
+            "node": "GERAR HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ConvertWebp": {
+      "main": [
+        [
+          {
+            "node": "Wp Imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UpdateImagem": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pegar a URL pra Fonte": {
+      "main": [
+        [
+          {
+            "node": "Gera Titulo2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code rss1": {
+      "main": [
+        [
+          {
+            "node": "Escolher Os Melhores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escolher Os Melhores": {
+      "main": [
+        [
+          {
+            "node": "Code rss2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code rss2": {
+      "main": [
+        [
+          {
+            "node": "Code rss",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "32d54726-359c-47b4-a834-4cf45462d238",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8f53dee19a2dda80506b320251e13ab3c970ac1e71638bc4fa7a92a036a0a3c2"
+  },
+  "id": "UsdP5il9iMuH8ygl",
+  "tags": []
+}

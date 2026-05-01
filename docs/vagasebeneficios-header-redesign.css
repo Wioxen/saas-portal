@@ -1,0 +1,177 @@
+/* ============================================================
+   VAGASEBENEFICIOS — Redesign do Header (logo centro + nav full-width)
+   Aplicar em: WP Admin → Aparência → Personalizar → CSS Adicional
+   ============================================================ */
+
+/* 1. Remove a "top-bar" de novidades (ticker + data) */
+.top-bar { display: none !important; }
+
+/* 2. Header com 2 linhas no desktop */
+@media (min-width: 1024px) {
+
+    /* Container do header full-width (rompe o max-width do tema) */
+    .site-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e5e5;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .header-inner {
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr;
+        grid-template-rows: auto auto;
+        align-items: center;
+        column-gap: 24px;
+        row-gap: 14px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 18px 24px 0;
+    }
+
+    /* Linha 1, col 1 — busca à esquerda (compacta) */
+    .site-search {
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: start;
+        max-width: 280px;
+        width: 100%;
+    }
+    .site-search input[type='search'] {
+        height: 40px;
+        font-size: 14px;
+    }
+
+    /* Linha 1, col 2 — LOGO centralizada */
+    .site-logo {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: center;
+        text-align: center;
+    }
+    .site-logo-name { font-size: 24px; }
+    .site-logo-tagline { font-size: 11px; }
+
+    /* Linha 1, col 3 — vazio em desktop (hamburger só aparece mobile) */
+    .menu-toggle {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        display: none;
+    }
+
+    /* Linha 2 — NAV full-width estourando o container */
+    .nav-wrap {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        position: relative;
+        width: 100vw;
+        margin-left: calc(-50vw + 50% + 0px);
+        margin-right: calc(-50vw + 50% + 0px);
+        background: #fafbfc;
+        border-top: 1px solid #e8eaed;
+        padding: 0;
+        max-height: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+    }
+
+    .nav-cats {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        list-style: none;
+        margin: 0 auto;
+        padding: 0 24px;
+        max-width: 1280px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .nav-cats::-webkit-scrollbar { display: none; }
+
+    .nav-cats > li {
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .nav-cat-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 14px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #2a2e38;
+        text-decoration: none;
+        border-bottom: 3px solid transparent;
+        transition: color 0.18s, border-color 0.18s;
+    }
+    .nav-cat-link:hover,
+    .nav-cat-link:focus {
+        color: #c4170c;
+        border-bottom-color: #c4170c;
+    }
+
+    .dd-arrow {
+        font-size: 8px;
+        opacity: 0.6;
+    }
+
+    /* Dropdown — mantém comportamento, ajusta posicionamento ao novo layout */
+    .nav-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #fff;
+        border: 1px solid #e5e5e5;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        min-width: 240px;
+        padding: 8px 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+        z-index: 100;
+    }
+    .has-dd:hover .nav-dropdown,
+    .has-dd:focus-within .nav-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .nav-dropdown a {
+        display: block;
+        padding: 9px 18px;
+        font-size: 13px;
+        color: #2a2e38;
+        text-decoration: none;
+    }
+    .nav-dropdown a:hover {
+        background: #fafbfc;
+        color: #c4170c;
+    }
+
+    /* Botão de fechar drawer não aparece em desktop */
+    .close-li,
+    .nav-cats-close {
+        display: none !important;
+    }
+}
+
+/* 3. Mobile (< 1024px) — mantém drawer original do Astra */
+@media (max-width: 1023px) {
+    .header-inner {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    .site-logo {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+    .site-search { display: none; } /* busca via lupa no menu mobile, ou pode reativar */
+    .menu-toggle { display: flex; }
+}

@@ -1,0 +1,2818 @@
+{
+    "silos": {
+        "concursos-publicos": {
+            "name": "Concursos Públicos",
+            "subs": {
+                "concursos-federais": {
+                    "name": "Concursos Federais",
+                    "kw": [
+                        "polícia federal",
+                        "prf ",
+                        "policia federal",
+                        "metrô de sp",
+                        "metro de sp",
+                        "federal",
+                        "governo federal",
+                        "presidencial",
+                        "tribunal federal",
+                        "inss",
+                        "receita federal",
+                        "ministério",
+                        "ministerio",
+                        "petrobras",
+                        "exército",
+                        "exercito",
+                        "esa ",
+                        " esa",
+                        "esa-",
+                        "sargento",
+                        "fuzileiro",
+                        "aeronáutica",
+                        "aeronautica",
+                        "marinha",
+                        "correios",
+                        "cnu",
+                        "concurso unificado",
+                        "bloco 2",
+                        "tj sc",
+                        "tjsc",
+                        "tjmg",
+                        "tjrs",
+                        "tjsp",
+                        "tjrj",
+                        "tj-sc",
+                        "ministério da",
+                        "ministerio da",
+                        "dpf",
+                        "prf"
+                    ],
+                    "prio": 9
+                },
+                "concursos-estaduais": {
+                    "name": "Concursos Estaduais",
+                    "kw": [
+                        "detran",
+                        "polícia civil",
+                        "policia civil",
+                        "polícia militar",
+                        "policia militar",
+                        "sefaz",
+                        "secretaria estadual",
+                        "assembleia legislativa",
+                        "ses-mg",
+                        "ses mg",
+                        " ses ",
+                        "tjrs",
+                        "tjsp",
+                        "tjmg",
+                        "tjrj",
+                        "ufla",
+                        "ufma",
+                        "ufrrj",
+                        "uerj",
+                        "uesc",
+                        "uemg",
+                        "uneb",
+                        "uems",
+                        "upe",
+                        "rs",
+                        "sp",
+                        "mg",
+                        "rj",
+                        "pe",
+                        "ba",
+                        "mt",
+                        "ma",
+                        "am",
+                        "pa",
+                        "am ",
+                        "rj ",
+                        "sp ",
+                        "pe ",
+                        "rs ",
+                        "ba ",
+                        "docente",
+                        "docentes",
+                        "ifrs",
+                        "ifsp",
+                        "ifmg",
+                        "ifes",
+                        "ifrn",
+                        "ifg",
+                        "ifba",
+                        "ifce",
+                        "ifma",
+                        "ifc",
+                        "if-rs",
+                        "if-sp",
+                        "if-mg"
+                    ],
+                    "prio": 8
+                },
+                "concursos-municipais": {
+                    "name": "Concursos Municipais",
+                    "kw": [
+                        "prefeitura",
+                        "câmara municipal",
+                        "camara municipal",
+                        "câmara de",
+                        "camara de",
+                        "município",
+                        "municipio",
+                        "araguaína",
+                        "araguaina",
+                        "garanhuns",
+                        "surubim",
+                        "ouro preto",
+                        "botucatu",
+                        "gramado",
+                        "santo andré",
+                        "santo andre",
+                        "itapevi",
+                        "goiânia",
+                        "goiania",
+                        "sonora",
+                        "promissão",
+                        "promissao"
+                    ],
+                    "prio": 7
+                },
+                "editais-abertos": {
+                    "name": "Editais Abertos",
+                    "kw": [
+                        "edital",
+                        "edital publicado",
+                        "edital divulgado"
+                    ],
+                    "prio": 5
+                },
+                "resultado-convocacao": {
+                    "name": "Resultado e Convocação",
+                    "kw": [
+                        "convocação",
+                        "convocacao",
+                        "convocados",
+                        "aprovados",
+                        "posse",
+                        "excedentes",
+                        "classificação",
+                        "classificacao",
+                        "contratados",
+                        "nomeação",
+                        "nomeacao",
+                        "7º lugar",
+                        "aprovado"
+                    ],
+                    "prio": 6
+                },
+                "concursos-publicos-geral": {
+                    "name": "Concursos Públicos",
+                    "kw": [
+                        "concurso público",
+                        "concursos públicos",
+                        "concurso publico",
+                        "concursos publicos",
+                        "concurso",
+                        "concursos"
+                    ],
+                    "prio": 4
+                }
+            }
+        },
+        "enem-sisu-prouni": {
+            "name": "ENEM, Sisu e ProUni",
+            "subs": {
+                "redacao-enem": {
+                    "name": "Redação ENEM",
+                    "kw": [
+                        "redação enem",
+                        "redacao enem",
+                        "redação do enem"
+                    ],
+                    "prio": 10
+                },
+                "isencao-enem": {
+                    "name": "Isenção ENEM",
+                    "kw": [
+                        "isenção enem",
+                        "isencao enem",
+                        "isenção do enem",
+                        "isenção da taxa do enem",
+                        "isencao da taxa",
+                        "isencao do enem"
+                    ],
+                    "prio": 10
+                },
+                "enem": {
+                    "name": "ENEM",
+                    "kw": [
+                        "enem",
+                        "encceja"
+                    ],
+                    "prio": 9
+                },
+                "sisu": {
+                    "name": "Sisu",
+                    "kw": [
+                        "sisu"
+                    ],
+                    "prio": 9
+                },
+                "prouni": {
+                    "name": "ProUni",
+                    "kw": [
+                        "prouni",
+                        "pró-uni"
+                    ],
+                    "prio": 9
+                },
+                "fies": {
+                    "name": "Fies",
+                    "kw": [
+                        "fies"
+                    ],
+                    "prio": 9
+                },
+                "vestibular": {
+                    "name": "Vestibular",
+                    "kw": [
+                        "vestibular",
+                        "vestibulares"
+                    ],
+                    "prio": 8
+                }
+            }
+        },
+        "cursos-gratuitos": {
+            "name": "Cursos Gratuitos com Certificado",
+            "subs": {
+                "cursos-senac": {
+                    "name": "Cursos Senac",
+                    "kw": [
+                        "senac"
+                    ],
+                    "prio": 10
+                },
+                "cursos-senai": {
+                    "name": "Cursos Senai",
+                    "kw": [
+                        "senai",
+                        "sena-i",
+                        "senai-rn"
+                    ],
+                    "prio": 10
+                },
+                "cursos-senar": {
+                    "name": "Cursos Senar",
+                    "kw": [
+                        "senar"
+                    ],
+                    "prio": 10
+                },
+                "cursos-sebrae": {
+                    "name": "Cursos Sebrae",
+                    "kw": [
+                        "sebrae"
+                    ],
+                    "prio": 10
+                },
+                "cursos-mec": {
+                    "name": "Cursos MEC",
+                    "kw": [
+                        "mec",
+                        "ministério da educação",
+                        "ministerio da educacao",
+                        "livros do mec",
+                        "idiomas mec",
+                        "livros mec",
+                        "minc",
+                        "ministério da cultura"
+                    ],
+                    "prio": 10
+                },
+                "cursos-usp-fapesp": {
+                    "name": "Cursos USP e Fapesp",
+                    "kw": [
+                        "usp ",
+                        " usp",
+                        "fapesp",
+                        "univ. de são paulo",
+                        "universidade de são paulo"
+                    ],
+                    "prio": 10
+                },
+                "fundacao-bradesco": {
+                    "name": "Fundação Bradesco",
+                    "kw": [
+                        "fundação bradesco",
+                        "bradesco fundação"
+                    ],
+                    "prio": 10
+                },
+                "cursos-fiocruz": {
+                    "name": "Cursos Fiocruz",
+                    "kw": [
+                        "fiocruz"
+                    ],
+                    "prio": 10
+                },
+                "cursos-fatec": {
+                    "name": "Cursos Fatec",
+                    "kw": [
+                        "fatec"
+                    ],
+                    "prio": 10
+                },
+                "cursos-estacio": {
+                    "name": "Cursos Estácio",
+                    "kw": [
+                        "estácio",
+                        "estacio"
+                    ],
+                    "prio": 10
+                },
+                "cursos-embraer": {
+                    "name": "Cursos Embraer",
+                    "kw": [
+                        "embraer",
+                        "aeronáutico",
+                        "aeronautico"
+                    ],
+                    "prio": 10
+                },
+                "cursos-com-certificado": {
+                    "name": "Cursos com Certificado",
+                    "kw": [
+                        "com certificado",
+                        "certificado"
+                    ],
+                    "prio": 3
+                },
+                "cursos-gratuitos-geral": {
+                    "name": "Cursos Gratuitos",
+                    "kw": [
+                        "curso gratuito",
+                        "cursos gratuitos",
+                        "curso grátis",
+                        "cursos grátis",
+                        "curso grátis",
+                        "vagas grátis",
+                        "vagas gratuitas",
+                        "grátis",
+                        "gratuito",
+                        "gratuita",
+                        "gratis",
+                        "sem custo",
+                        "sem mensalidade"
+                    ],
+                    "prio": 6
+                }
+            }
+        },
+        "cursos-tecnicos": {
+            "name": "Cursos Técnicos",
+            "subs": {
+                "cursos-etec": {
+                    "name": "Cursos Etec",
+                    "kw": [
+                        "etec",
+                        "escola técnica estadual",
+                        "escola tecnica estadual"
+                    ],
+                    "prio": 9
+                },
+                "institutos-federais": {
+                    "name": "Institutos Federais",
+                    "kw": [
+                        "ifes",
+                        "ifsuldeminas",
+                        "ifmg",
+                        "ifrj",
+                        "ifsp",
+                        "ifrn",
+                        "ifba",
+                        "ifg",
+                        "ifgo",
+                        "ifce",
+                        "ifpe",
+                        "if-",
+                        "if ",
+                        "instituto federal",
+                        "institutos federais"
+                    ],
+                    "prio": 9
+                },
+                "tecnicos-estaduais": {
+                    "name": "Cursos Técnicos Estaduais",
+                    "kw": [
+                        "uems",
+                        "upe",
+                        "ufrrj",
+                        "uerj",
+                        "uesc",
+                        "uemg",
+                        "uneb",
+                        "universidade estadual"
+                    ],
+                    "prio": 8
+                },
+                "cursos-tecnicos-geral": {
+                    "name": "Cursos Técnicos",
+                    "kw": [
+                        "curso técnico",
+                        "cursos técnicos",
+                        "técnico em",
+                        "tecnico em"
+                    ],
+                    "prio": 4
+                }
+            }
+        },
+        "profissionalizantes": {
+            "name": "Profissionalizantes e Áreas",
+            "subs": {
+                "inteligencia-artificial": {
+                    "name": "Inteligência Artificial e Tech",
+                    "kw": [
+                        "inteligência artificial",
+                        "inteligencia artificial",
+                        " ia ",
+                        "ia para",
+                        "ia em",
+                        "ia no",
+                        "marketing e ia",
+                        "transição 4.0",
+                        "transicao 4.0",
+                        "5.0",
+                        "segurança digital",
+                        "seguranca digital",
+                        "programação",
+                        "programacao"
+                    ],
+                    "prio": 9
+                },
+                "saude-bem-estar": {
+                    "name": "Saúde e Bem-Estar",
+                    "kw": [
+                        "sus",
+                        "enfermagem",
+                        "saúde",
+                        "saude",
+                        "medicina",
+                        "psicologia",
+                        "nutrição",
+                        "nutricao",
+                        "farmácia"
+                    ],
+                    "prio": 8
+                },
+                "administracao-gestao": {
+                    "name": "Administração e Gestão",
+                    "kw": [
+                        "administração",
+                        "administracao",
+                        "gestão",
+                        "gestao",
+                        "liderança",
+                        "lideranca",
+                        "rh",
+                        "recursos humanos",
+                        "contabilidade",
+                        "fiscal",
+                        "tributário",
+                        "tributario"
+                    ],
+                    "prio": 8
+                },
+                "marketing-vendas": {
+                    "name": "Marketing e Vendas",
+                    "kw": [
+                        "marketing",
+                        "vendas",
+                        "digital",
+                        "redes sociais"
+                    ],
+                    "prio": 7
+                },
+                "manualidades": {
+                    "name": "Manualidades e Artesanato",
+                    "kw": [
+                        "costura",
+                        "artesanato",
+                        "culinária",
+                        "culinaria",
+                        "padaria",
+                        "confeitaria"
+                    ],
+                    "prio": 7
+                },
+                "fiscal-tributario": {
+                    "name": "Fiscal e Tributário",
+                    "kw": [
+                        "nf-e",
+                        "nfe ",
+                        "inscrição estadual",
+                        "inscricao estadual",
+                        "imposto",
+                        "tributário",
+                        "tributario",
+                        "fiscal",
+                        "sped"
+                    ],
+                    "prio": 10
+                },
+                "producao-audiovisual": {
+                    "name": "Audiovisual e Games",
+                    "kw": [
+                        "audiovisual",
+                        "games",
+                        "produção audiovisual",
+                        "producao audiovisual",
+                        "jogos",
+                        "game design"
+                    ],
+                    "prio": 10
+                },
+                "educacao-saude-mental": {
+                    "name": "Saúde Mental e Bem-Estar",
+                    "kw": [
+                        "sofrimento mental",
+                        "saúde mental",
+                        "saude mental",
+                        "bem-estar mental"
+                    ],
+                    "prio": 10
+                }
+            }
+        },
+        "ead-online": {
+            "name": "EAD e Especialização Online",
+            "subs": {
+                "especializacao-ead": {
+                    "name": "Especialização EAD",
+                    "kw": [
+                        "especialização",
+                        "especializacao",
+                        "pós-graduação",
+                        "pos-graduacao",
+                        "pós graduação",
+                        "pós",
+                        "mba"
+                    ],
+                    "prio": 9
+                },
+                "graduacao-ead": {
+                    "name": "Graduação EAD",
+                    "kw": [
+                        "graduação ead",
+                        "graduacao ead",
+                        "graduação a distância",
+                        "graduacao a distancia",
+                        "graduação online"
+                    ],
+                    "prio": 9
+                },
+                "cursos-online": {
+                    "name": "Cursos Online",
+                    "kw": [
+                        "ead",
+                        "100% online",
+                        "a distância",
+                        "a distancia",
+                        "online",
+                        "remoto",
+                        "remoto"
+                    ],
+                    "prio": 4
+                }
+            }
+        },
+        "idiomas": {
+            "name": "Idiomas",
+            "subs": {
+                "cursos-ingles": {
+                    "name": "Cursos de Inglês",
+                    "kw": [
+                        "inglês",
+                        "ingles"
+                    ],
+                    "prio": 9
+                },
+                "cursos-espanhol": {
+                    "name": "Cursos de Espanhol",
+                    "kw": [
+                        "espanhol"
+                    ],
+                    "prio": 9
+                },
+                "cursos-libras": {
+                    "name": "Cursos de Libras",
+                    "kw": [
+                        "libras"
+                    ],
+                    "prio": 9
+                },
+                "idiomas-geral": {
+                    "name": "Idiomas",
+                    "kw": [
+                        "idioma",
+                        "idiomas",
+                        "línguas",
+                        "linguas"
+                    ],
+                    "prio": 5
+                }
+            }
+        },
+        "carreira-mercado": {
+            "name": "Carreira e Mercado",
+            "subs": {
+                "jovem-aprendiz": {
+                    "name": "Jovem Aprendiz",
+                    "kw": [
+                        "jovem aprendiz",
+                        "jovens aprendizes",
+                        "aprendiz",
+                        "aprendizes"
+                    ],
+                    "prio": 10
+                },
+                "estagio": {
+                    "name": "Estágio",
+                    "kw": [
+                        "estágio",
+                        "estagio",
+                        "estagiário",
+                        "estagiario",
+                        "estagiária"
+                    ],
+                    "prio": 10
+                },
+                "primeiro-emprego": {
+                    "name": "Primeiro Emprego",
+                    "kw": [
+                        "primeiro emprego",
+                        "primeira oportunidade",
+                        "primeiro trabalho"
+                    ],
+                    "prio": 10
+                },
+                "mercado-trabalho": {
+                    "name": "Mercado de Trabalho",
+                    "kw": [
+                        "mercado de trabalho",
+                        "currículo",
+                        "curriculo",
+                        " cv ",
+                        "linkedin",
+                        "entrevista de emprego",
+                        "recolocação",
+                        "recolocacao",
+                        "calendário escolar",
+                        "calendario escolar",
+                        "feriado"
+                    ],
+                    "prio": 7
+                },
+                "bolsas-estudos": {
+                    "name": "Bolsas de Estudos",
+                    "kw": [
+                        "bolsas",
+                        "bolsa de estudos",
+                        "bolsa para",
+                        "bolsas para",
+                        "milhão para bolsas",
+                        "milhao para bolsas"
+                    ],
+                    "prio": 9
+                }
+            }
+        }
+    },
+    "posts": [
+        {
+            "id": 1602,
+            "title": "4 cursos grátis do Senai em Rio Bonito revelam salário inicial por área",
+            "slug": "inscricoes-abertas-para-varios-cursos-gratuitos-em-parceria",
+            "date": "2026-04-30T19:07:34",
+            "old_cats": [
+                980,
+                981
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1601,
+            "title": "Por que certificado municipal de costura fica na gaveta e não gera renda",
+            "slug": "prefeitura-sebrae-e-senai-entregam-certificados-de-curso-de",
+            "date": "2026-04-30T19:07:14",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "pa"
+        },
+        {
+            "id": 1595,
+            "title": "4 perfis que têm isenção no ENEM 2026 e quanto cada um economiza",
+            "slug": "enem-2026-prazo-para-pedir-isencao-da-taxa-termina-nesta-qui",
+            "date": "2026-04-30T15:28:48",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 1593,
+            "title": "Isenção ENEM 2026 e justificativa 2025 encerram hoje: faça os 2",
+            "slug": "enem-2026-prazo-para-pedir-isencao-da-taxa-de-inscricao-term",
+            "date": "2026-04-30T15:28:33",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção enem"
+        },
+        {
+            "id": 1584,
+            "title": "25 vagas por turma na UEMS garantem liderança gratuita em Campo Grande",
+            "slug": "uems-e-escolagov-oferecem-cursos-gratuitos-de-inteligencia-e",
+            "date": "2026-04-30T11:36:06",
+            "old_cats": [
+                1089,
+                1067
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "uems"
+        },
+        {
+            "id": 1588,
+            "title": "Fiocruz revela curso de 40h sobre SUS ignorado por quem atua na área",
+            "slug": "inscricoes-abertas-para-o-curso-gratuito-online-em-politicas",
+            "date": "2026-04-30T11:35:49",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-fiocruz",
+            "sub_name": "Cursos Fiocruz",
+            "matched_kw": "fiocruz"
+        },
+        {
+            "id": 1586,
+            "title": "2 cursos grátis na Estácio Madureira treinam ambulantes às 19h em maio",
+            "slug": "subprefeitura-da-zona-norte-e-estacio-oferecem-cursos-gratui",
+            "date": "2026-04-30T11:35:37",
+            "old_cats": [
+                980,
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-estacio",
+            "sub_name": "Cursos Estácio",
+            "matched_kw": "estácio"
+        },
+        {
+            "id": 1570,
+            "title": "UPE abre 19 vagas em concurso com salários de até R$ 3,8 mil",
+            "slug": "upe-abre-19-vagas-em-concurso-com-salarios-de-ate-r-3-8-mil",
+            "date": "2026-04-28T11:45:27",
+            "old_cats": [
+                1089,
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "upe"
+        },
+        {
+            "id": 1562,
+            "title": "19 vagas abertas na UPE com salários até R$ 3.868,48 em Garanhuns e Surubim",
+            "slug": "edital-upe-2026-abre-concurso-para-assistentes-e-analistas",
+            "date": "2026-04-28T11:41:09",
+            "old_cats": [
+                1089,
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "upe"
+        },
+        {
+            "id": 1532,
+            "title": "30 vagas no IFMG em Ouro Preto fecham em 17 dias e taxa de R$ 80 barra inscrição",
+            "slug": "ifmg-abre-30-vagas-na-especializacao-gratuita-em-gestao-de-n",
+            "date": "2026-04-27T23:38:31",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-tecnicos",
+            "silo_name": "Cursos Técnicos",
+            "sub_slug": "institutos-federais",
+            "sub_name": "Institutos Federais",
+            "matched_kw": "ifmg"
+        },
+        {
+            "id": 1553,
+            "title": "Metrô de SP abre 35 vagas para aprendiz em parceria com o Senai",
+            "slug": "metro-de-sp-abre-vagas-de-aprendiz-em-parceria-com-o-senai",
+            "date": "2026-04-27T23:31:54",
+            "old_cats": [
+                980,
+                981,
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1507,
+            "title": "1.500 vagas em Araguaína com salários de até R$ 16 mil disponíveis",
+            "slug": "concurso-araguaina-1-500-vagas-e-salarios-de-ate-r-16-mil",
+            "date": "2026-04-27T16:23:44",
+            "old_cats": [
+                978,
+                9,
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "sp"
+        },
+        {
+            "id": 1499,
+            "title": "116 vagas no Detran AL pagam até R$ 7,8 mil e inscrições abrem em dias",
+            "slug": "edital-detran-al-esta-publicado-116-vagas-e-ate-r-7-8-mil",
+            "date": "2026-04-27T16:23:31",
+            "old_cats": [
+                978,
+                9,
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "detran"
+        },
+        {
+            "id": 1491,
+            "title": "Ceará tem 500 vagas de emprego e concursos abertos nesta segunda (27)",
+            "slug": "ceara-tem-vagas-de-emprego-e-concursos-abertos-nesta-segunda",
+            "date": "2026-04-27T16:23:19",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 1465,
+            "title": "Isenção de taxa do Enem 2026: MEC prorroga pedidos até 30 de abril",
+            "slug": "isencao-no-enem-2026-mec-estende-prazo-para-pedidos-veja-nov",
+            "date": "2026-04-24T13:01:23",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1457,
+            "title": "Isenção do Enem 2026 tem nova data: solicitação agora até 30 de abril",
+            "slug": "prorrogado-prazo-para-pedir-isencao-da-taxa-de-inscricao",
+            "date": "2026-04-24T13:01:06",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção do enem"
+        },
+        {
+            "id": 1453,
+            "title": "Prazo para isenção da taxa do Enem 2026 termina em 24 de abril",
+            "slug": "prazo-para-pedir-isencao-da-taxa-do-enem-2026-termina-na-sex",
+            "date": "2026-04-23T23:35:53",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção da taxa do enem"
+        },
+        {
+            "id": 1451,
+            "title": "Isenção do Enem 2026: prazo para solicitação acaba em 24 de abril",
+            "slug": "mec-envia-mensagens-de-alerta-sobre-gratuidade-do-enem-2026",
+            "date": "2026-04-23T23:35:14",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção do enem"
+        },
+        {
+            "id": 1383,
+            "title": "Enem 2026: passo a passo pra se inscrever e não perder o prazo",
+            "slug": "enem-2026-como-se-inscrever",
+            "date": "2026-04-22T21:23:47",
+            "old_cats": [
+                1212
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 1387,
+            "title": "Isenção do Enem 2026: quem tem direito e prazo até 24 de abril",
+            "slug": "isencao-taxa-enem-2026-quem-tem-direito",
+            "date": "2026-04-22T21:23:32",
+            "old_cats": [
+                1212
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção do enem"
+        },
+        {
+            "id": 1394,
+            "title": "CadÚnico desatualizado derruba isenção do Enem 2026 e prazo acaba em 24 de abril",
+            "slug": "enem-2026-prazo-isencao-inscricao",
+            "date": "2026-04-22T21:23:04",
+            "old_cats": [
+                1212
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção do enem"
+        },
+        {
+            "id": 1401,
+            "title": "7 erros na Inscrição Estadual que bloqueiam sua NF-e: códigos e correções",
+            "slug": "erros-inscricao-estadual-invalidam-nfe",
+            "date": "2026-04-22T21:22:22",
+            "old_cats": [
+                1337
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "fiscal-tributario",
+            "sub_name": "Fiscal e Tributário",
+            "matched_kw": "nf-e"
+        },
+        {
+            "id": 1392,
+            "title": "FATEC oferece 660 vagas gratuitas para graduação no Grande ABC em 2026\/2",
+            "slug": "vestibular-fatec-2026-2-abre-660-vagas-em-cursos-de-graduaca",
+            "date": "2026-04-22T21:21:26",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-fatec",
+            "sub_name": "Cursos Fatec",
+            "matched_kw": "fatec"
+        },
+        {
+            "id": 1399,
+            "title": "Fatec oferece 80 cursos gratuitos em novo vestibular",
+            "slug": "fatec-abre-vestibular-com-mais-de-80-cursos-gratuitos",
+            "date": "2026-04-22T21:21:11",
+            "old_cats": [
+                980,
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-fatec",
+            "sub_name": "Cursos Fatec",
+            "matched_kw": "fatec"
+        },
+        {
+            "id": 1404,
+            "title": "20 vagas gratuitas na Fatec Itapira fecham em 30 minutos na segunda",
+            "slug": "fatec-de-itapira-abre-20-vagas-para-curso-gratuito-de-ingles",
+            "date": "2026-04-22T21:20:52",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-fatec",
+            "sub_name": "Cursos Fatec",
+            "matched_kw": "fatec"
+        },
+        {
+            "id": 1407,
+            "title": "Fatec Suzano tem 60 vagas gratuitas para o Vestibular 2026 em tecnologia",
+            "slug": "fatec-suzano-oferece-60-vagas-para-o-vestibular-2026-com-cur",
+            "date": "2026-04-22T21:20:38",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-fatec",
+            "sub_name": "Cursos Fatec",
+            "matched_kw": "fatec"
+        },
+        {
+            "id": 1375,
+            "title": "Feriado em sexta cria janela de 3 dias sem aulas em maio; organize já",
+            "slug": "feriado-de-maio-em-2026-cai-em-uma-sexta-feira-e-cria-tres-d",
+            "date": "2026-04-22T15:21:45",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ma"
+        },
+        {
+            "id": 1373,
+            "title": "Escolas de Pernambuco fecham em maio com aulas suspensas a partir do dia 1º",
+            "slug": "escolas-confirmam-fechamento-geral-no-mes-de-maio-e-nao-have",
+            "date": "2026-04-22T15:21:33",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "sp"
+        },
+        {
+            "id": 1369,
+            "title": "USP oferece 3 mil vagas para curso gratuito e 100% online até 2026",
+            "slug": "usp-abre-3-mil-vagas-em-curso-gratuito-100-online",
+            "date": "2026-04-22T14:50:02",
+            "old_cats": [
+                984,
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-usp-fapesp",
+            "sub_name": "Cursos USP e Fapesp",
+            "matched_kw": "usp "
+        },
+        {
+            "id": 1367,
+            "title": "MEC barra acesso a cursos gratuitos de quem escolhe plataforma errada",
+            "slug": "mec-cursos-gratuitos-com-certificado-melhores-opcoes-online",
+            "date": "2026-04-22T14:49:39",
+            "old_cats": [
+                984,
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1307,
+            "title": "ES tem 25 mil vagas em concursos mas prazo de 4 dias congela quem errar hoje",
+            "slug": "vitoria-governo-do-es-e-ifes-25-mil-vagas-em-concursos-e-sel",
+            "date": "2026-04-20T12:29:25",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 1305,
+            "title": "7º lugar no CNU Bloco 2: o detalhe que virou 20 mil questões até passar",
+            "slug": "aprovado-concurso-cnu-bloco-2-vinicius-kolling",
+            "date": "2026-04-20T12:29:07",
+            "old_cats": [
+                9,
+                979
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "cnu"
+        },
+        {
+            "id": 1304,
+            "title": "Promissão abre 186 vagas mas prova em junho congela quem errar a inscrição hoje",
+            "slug": "prefeitura-abre-concurso-com-186-vagas-imediatas-e-salarios",
+            "date": "2026-04-20T12:28:38",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ma"
+        },
+        {
+            "id": 1294,
+            "title": "Aviso: especialização gratuita EAD em Docência abre vagas mas sistema trava inscrições hoje",
+            "slug": "especializacao-gratuita",
+            "date": "2026-04-19T21:38:11",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "ead-online",
+            "silo_name": "EAD e Especialização Online",
+            "sub_slug": "especializacao-ead",
+            "sub_name": "Especialização EAD",
+            "matched_kw": "especialização"
+        },
+        {
+            "id": 1284,
+            "title": "Exército abre 1.100 vagas para sargento mas filtro de idade corta metade",
+            "slug": "concurso-sargento",
+            "date": "2026-04-19T21:37:27",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "exército"
+        },
+        {
+            "id": 1282,
+            "title": "Sonora abre seletivo na educação hoje mas prazo de 2 dias elimina quem errar o cadastro",
+            "slug": "seletivo-na-educacao-abre-vagas-para-nivel-fundamental-e-med",
+            "date": "2026-04-19T21:31:20",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ma"
+        },
+        {
+            "id": 1280,
+            "title": "IFRN abre 40 vagas EAD grátis mas nota zero no ENEM elimina antes do prazo",
+            "slug": "faca-uma-graduacao-ead-e-100-gratuita-no-instituto-federal-i",
+            "date": "2026-04-19T21:31:08",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 1274,
+            "title": "1.140 vagas Petrobras e SENAI em 4 estados: bolsa de R$ 858 trava quem ignora o filtro hoje",
+            "slug": "com-bolsas-que-chegam-a-r-858-petrobras-e-senai-se-unem-para-2",
+            "date": "2026-04-19T21:30:53",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1272,
+            "title": "830 jovens entram no programa Petrobras e SENAI mas o filtro real elimina quem não viu o edital",
+            "slug": "petrobras-e-senai-iniciam-formacao-de-830-jovens-aprendizes-2",
+            "date": "2026-04-19T21:30:40",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1270,
+            "title": "Jovem Aprendiz dos Correios na Bahia tem prazo ampliado mas detalhe de idade corta metade dos candidatos",
+            "slug": "blog-do-emprego-2",
+            "date": "2026-04-19T21:30:28",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "carreira-mercado",
+            "silo_name": "Carreira e Mercado",
+            "sub_slug": "jovem-aprendiz",
+            "sub_name": "Jovem Aprendiz",
+            "matched_kw": "jovem aprendiz"
+        },
+        {
+            "id": 1268,
+            "title": "Prazo fatal em Cubatão: SENAI prorroga inscrições até sexta mas erro no cadastro trava candidatos hoje",
+            "slug": "cursos-gratuitos-em-parceria-com-o-senai-tem-inscricoes-pror-2",
+            "date": "2026-04-19T21:30:08",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1256,
+            "title": "Inscrições para 3 cursos grátis do SENAI em Cubatão terminam em dias e o detalhe no edital é o que mais assusta",
+            "slug": "cursos-gratuitos-em-parceria-com-o-senai-tem-inscricoes-pror",
+            "date": "2026-04-19T16:38:48",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1258,
+            "title": "Senar Bahia abre 398 vagas grátis mas filtro elimina candidatos antes do prazo",
+            "slug": "blog-do-emprego",
+            "date": "2026-04-19T16:38:19",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senar",
+            "sub_name": "Cursos Senar",
+            "matched_kw": "senar"
+        },
+        {
+            "id": 1260,
+            "title": "Petrobras e SENAI formam 830 aprendizes mas vaga some antes do prazo em 14 estados",
+            "slug": "petrobras-e-senai-iniciam-formacao-de-830-jovens-aprendizes",
+            "date": "2026-04-19T16:38:03",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1262,
+            "title": "Petrobras e SENAI abrem 1.140 vagas mas bolsa de R$ 858 trava quem não atende ao filtro",
+            "slug": "com-bolsas-que-chegam-a-r-858-petrobras-e-senai-se-unem-para",
+            "date": "2026-04-19T16:37:37",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1228,
+            "title": "3 sites liberam cursos grátis de IA mas o filtro de acesso barra quem não sabe por onde começar",
+            "slug": "tres-sites-com-cursos-de-graca-para-aprender-ia",
+            "date": "2026-04-17T17:16:49",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "inteligencia-artificial",
+            "sub_name": "Inteligência Artificial e Tech",
+            "matched_kw": " ia "
+        },
+        {
+            "id": 1226,
+            "title": "Petrobras abre 800 vagas grátis em PE mas prazo fecha quinta e bolsa some antes",
+            "slug": "petrobras-abre-800-vagas-para-cursos-gratuitos-de-qualificac",
+            "date": "2026-04-17T17:16:35",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "petrobras"
+        },
+        {
+            "id": 1230,
+            "title": "IFRS libera 901 vagas mas prazo para isenção da taxa trava candidatos hoje",
+            "slug": "periodo-para-solicitar-inscricao-gratuita-no-processo-seleti",
+            "date": "2026-04-17T17:16:14",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 1219,
+            "title": "8 mil vagas abertas em curso gratuito para professores com inscrição até esta semana",
+            "slug": "mec-curso-gratuito-professores-inscricoes",
+            "date": "2026-04-17T17:15:28",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 1221,
+            "title": "8 mil livros gratuitos: acesso online liberado pelo MEC para leitura em 2026",
+            "slug": "mec-plataforma-gratuita-8-mil-livros-online-2",
+            "date": "2026-04-17T17:15:07",
+            "old_cats": [
+                1082
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1223,
+            "title": "R$ 3,9 mil por escola: MEC abre inscrições para levar internet a todo o país",
+            "slug": "mec-abre-inscricoes-repasse-internet-escolas",
+            "date": "2026-04-17T17:14:25",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1207,
+            "title": "MEC lança guia de IA nas escolas mas 47% dos professores ainda não usam nenhuma ferramenta",
+            "slug": "mec-orientacoes-ia-escolas-formacao-docente-2026",
+            "date": "2026-04-16T17:31:14",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1198,
+            "title": "MinC abre 2ª turma de curso grátis de 60h mas prazo escondido barra muita gente hoje",
+            "slug": "ministerio-cultura-curso-gratuito-producao-audiovisual-2a-tu",
+            "date": "2026-04-16T17:09:32",
+            "old_cats": [
+                980,
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "minc"
+        },
+        {
+            "id": 1185,
+            "title": "Bosch e Senai abrem 80 vagas em Campinas mas filtro de idade barra muita gente hoje",
+            "slug": "bosch-senai-80-vagas-campinas-cursos-tecnicos-aprendizagem",
+            "date": "2026-04-16T17:09:16",
+            "old_cats": [
+                1089
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 1175,
+            "title": "SENAC libera cursos 100% online grátis mas filtro da Plataforma Orango barra muita gente hoje",
+            "slug": "senac-cursos-gratuitos-online-plataforma-orango-marketing-di",
+            "date": "2026-04-16T16:14:34",
+            "old_cats": [
+                980,
+                983,
+                982
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senac",
+            "sub_name": "Cursos Senac",
+            "matched_kw": "senac"
+        },
+        {
+            "id": 1060,
+            "title": "8 mil vagas em curso gratuito para professores com inscrição aberta neste mês",
+            "slug": "mec-curso-gratuito-professores-inscricao",
+            "date": "2026-04-16T03:55:05",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 1058,
+            "title": "Cursos grátis do MEC: o detalhe que faz muita gente nem começar",
+            "slug": "mec-app-gratuito-ia-aprender-ingles-espanhol",
+            "date": "2026-04-16T03:54:26",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1064,
+            "title": "8 mil livros gratuitos: plataforma do MEC libera acesso online imediato",
+            "slug": "mec-plataforma-gratuita-8-mil-livros-online",
+            "date": "2026-04-16T03:54:13",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 1067,
+            "title": "1,5 milhão de livros gratuitos disponíveis na nova biblioteca virtual do MEC",
+            "slug": "mec-lanca-biblioteca-virtual-gratuita",
+            "date": "2026-04-16T00:06:51",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 899,
+            "title": "15 mil vagas em concursos públicos com inscrições abertas nesta semana",
+            "slug": "concursos-abertos-abril-15-mil-vagas-brasil",
+            "date": "2026-04-14T22:54:02",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 897,
+            "title": "2 mil vagas abertas em concursos com salários de até R$40 mil disponíveis agora",
+            "slug": "concursos-publicos-abertos-2000-vagas-salarios-ate-40-mil",
+            "date": "2026-04-14T22:51:57",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 884,
+            "title": "Curso gratuito com 160 vagas em auxiliar aeronáutico na Embraer abre inscrições nesta semana",
+            "slug": "embraer-curso-gratuito-auxiliar-producao-aeronautica-160-vagas",
+            "date": "2026-04-14T13:08:42",
+            "old_cats": [
+                980
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-embraer",
+            "sub_name": "Cursos Embraer",
+            "matched_kw": "embraer"
+        },
+        {
+            "id": 886,
+            "title": "Mais de 50 mil vagas abertas no SENAI em diversas áreas neste mês",
+            "slug": "senai-50-mil-vagas-cursos-formacao-profissional",
+            "date": "2026-04-14T13:08:09",
+            "old_cats": [
+                981
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 888,
+            "title": "15 mil vagas abertas em cursos gratuitos do Senai com bolsa de R$700",
+            "slug": "bolsa-700-senai-15-mil-vagas-cursos-gratis-tecnologia",
+            "date": "2026-04-14T13:07:51",
+            "old_cats": [
+                980,
+                981
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 890,
+            "title": "Curso gratuito do Senai com 150 vagas abertas para moradores do Amapá até segunda-feira",
+            "slug": "jovens-ap-inscricoes-curso-gratis-tecnologia-senai-petrobras",
+            "date": "2026-04-14T01:33:30",
+            "old_cats": [
+                980,
+                981
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 837,
+            "title": "Salário de até R$ 21.220 no novo concurso da Receita Federal 2026",
+            "slug": "concurso-receita-federal-2026-salario-materias-formato-provas",
+            "date": "2026-04-13T16:40:32",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "federal"
+        },
+        {
+            "id": 835,
+            "title": "Salário inicial de até R$ 24,5 mil no concurso Receita Federal 2026",
+            "slug": "concurso-receita-federal-salarios-beneficios-atualizados",
+            "date": "2026-04-13T16:40:28",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "federal"
+        },
+        {
+            "id": 833,
+            "title": "Receita Federal abre concurso com até 2.500 vagas e salários de até R$ 30 mil em 2026",
+            "slug": "receita-federal-concurso-publico-salario-ate-30-mil-2026",
+            "date": "2026-04-13T16:40:22",
+            "old_cats": [
+                978,
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "federal"
+        },
+        {
+            "id": 832,
+            "title": "Prazo final para entrega à Receita Federal e SEFAZ DF é nesta semana",
+            "slug": "receita-federal-ou-sefaz-df-qual-exige-mais-tempo-de-estudo",
+            "date": "2026-04-13T16:40:19",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "federal"
+        },
+        {
+            "id": 859,
+            "title": "280 vagas abertas para especialização gratuita do IFES 100% online em 2026",
+            "slug": "ifes-especializacao-ead-gratis-280-vagas",
+            "date": "2026-04-13T16:36:05",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-tecnicos",
+            "silo_name": "Cursos Técnicos",
+            "sub_slug": "institutos-federais",
+            "sub_name": "Institutos Federais",
+            "matched_kw": "ifes"
+        },
+        {
+            "id": 857,
+            "title": "150 vagas abertas para especialização EAD gratuita da UFRRJ em 2026",
+            "slug": "especializacao-gratuita-a-distancia-ufrrj-2026-150-vagas",
+            "date": "2026-04-13T16:35:58",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "ead-online",
+            "silo_name": "EAD e Especialização Online",
+            "sub_slug": "especializacao-ead",
+            "sub_name": "Especialização EAD",
+            "matched_kw": "especialização"
+        },
+        {
+            "id": 867,
+            "title": "200 vagas abertas para curso gratuito do Integra Enem em Itapevi nesta semana",
+            "slug": "com-vagas-limitadas-integra-enem-brasil-edicao-gratuita-plenario-camara-itapevi",
+            "date": "2026-04-13T09:32:44",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 865,
+            "title": "200 vagas abertas no IFSULDEMINAS para curso de redação ENEM com certificado",
+            "slug": "enem-ifsuldeminas-curso-redacao-200-vagas",
+            "date": "2026-04-13T09:31:35",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "redacao-enem",
+            "sub_name": "Redação ENEM",
+            "matched_kw": "redação enem"
+        },
+        {
+            "id": 863,
+            "title": "Isenção da taxa do Enem 2026: prazo para pedir isenção já está aberto",
+            "slug": "inep-isencao-taxa-enem-2026-como-solicitar",
+            "date": "2026-04-13T09:30:11",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção da taxa do enem"
+        },
+        {
+            "id": 861,
+            "title": "Isenção do Enem 2026: pedido aberto com prazo até sexta-feira",
+            "slug": "isencao-enem-2026-pedidos-provas-gratis",
+            "date": "2026-04-13T09:28:51",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "isencao-enem",
+            "sub_name": "Isenção ENEM",
+            "matched_kw": "isenção do enem"
+        },
+        {
+            "id": 847,
+            "title": "1.600 vagas abertas para Fuzileiro Naval; inscrições encerram hoje",
+            "slug": "inscricoes-concurso-fuzileiro-naval-marinha-terminam-hoje",
+            "date": "2026-04-10T15:26:19",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "fuzileiro"
+        },
+        {
+            "id": 845,
+            "title": "Mais de 500 vagas abertas no concurso de educação em Joinville com salário de R$5.000",
+            "slug": "joinville-concurso-educacao-500-vagas-salario-5-mil",
+            "date": "2026-04-10T15:26:12",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "inteligencia-artificial",
+            "sub_name": "Inteligência Artificial e Tech",
+            "matched_kw": "5.0"
+        },
+        {
+            "id": 849,
+            "title": "150 vagas para docentes na UFLA com inscrições abertas nesta semana",
+            "slug": "ufla-concurso-publico-docentes-inscricoes",
+            "date": "2026-04-10T15:25:58",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ufla"
+        },
+        {
+            "id": 851,
+            "title": "Salários até R$10 mil no TJSC: inscrições abertas para concurso público",
+            "slug": "tjsc-concurso-publico-salarios-ate-10-mil-cargos",
+            "date": "2026-04-10T15:24:50",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "tjsc"
+        },
+        {
+            "id": 824,
+            "title": "Inscrições abertas para vagas remanescentes do Fies 2026 a partir de 22\/4",
+            "slug": "mec-edital-fies-2026-vagas-remanescentes-inscricoes-22-abril",
+            "date": "2026-04-07T11:18:46",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "fies",
+            "sub_name": "Fies",
+            "matched_kw": "fies"
+        },
+        {
+            "id": 822,
+            "title": "Cursos gratis do MEC oferecem certificado em inglês e espanhol com inscrições abertas",
+            "slug": "governo-ensino-ingles-espanhol-gratuito-mec",
+            "date": "2026-04-07T11:18:40",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 820,
+            "title": "Quase 8 mil livros digitais grátis disponíveis no app oficial do MEC",
+            "slug": "mec-app-gratuito-livros-digitais",
+            "date": "2026-04-07T11:18:35",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 818,
+            "title": "Cursos gratuitos do MEC com certificado e acesso imediato a livros digitais",
+            "slug": "mec-aplicativos-livros-gratis-cursos-idiomas",
+            "date": "2026-04-07T11:18:28",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 810,
+            "title": "1.300 vagas e salários de até R$ 9.000 no novo concurso do Detran com inscrições abertas",
+            "slug": "detran-concurso-publico-1300-vagas-salario-9-mil-inscricoes",
+            "date": "2026-04-06T11:07:13",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "detran"
+        },
+        {
+            "id": 809,
+            "title": "10.000 vagas em concurso público de SC com salários até R$11,5 mil abertas nesta semana",
+            "slug": "superconcurso-educacao-sc-10-mil-vagas-salarios-ate-11500",
+            "date": "2026-04-06T11:07:12",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 807,
+            "title": "103 vagas abertas com salários até R$8.000; inscrições acabam hoje",
+            "slug": "inscricoes-concurso-publico-103-vagas-salarios-8-mil",
+            "date": "2026-04-06T11:07:10",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ba"
+        },
+        {
+            "id": 805,
+            "title": "20 mil vagas abertas no ES: MP, prefeituras e Marinha recrutam agora",
+            "slug": "ministerio-publico-prefeituras-es-marinha-20-mil-vagas-concursos-selecoes",
+            "date": "2026-04-06T11:07:09",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "marinha"
+        },
+        {
+            "id": 799,
+            "title": "380 vagas abertas no concurso da SES-MG com salários de até R$ 4.287,02",
+            "slug": "ses-mg-concurso-380-vagas-salario-4287-02",
+            "date": "2026-04-04T15:28:56",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ses-mg"
+        },
+        {
+            "id": 797,
+            "title": "Inscrições para 32 vagas docentes na UFMA encerram em 3 dias",
+            "slug": "ufma-prorroga-inscricoes-concurso-professor-ate-6-abril-32-vagas",
+            "date": "2026-04-04T15:28:53",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ufma"
+        },
+        {
+            "id": 795,
+            "title": "Mais de 100 mil vagas em concursos 2026 com salários até R$30 mil disponíveis agora",
+            "slug": "concursos-2026-vagas-salarios-altos-estrategia",
+            "date": "2026-04-04T15:28:49",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 793,
+            "title": "1.100 vagas abertas no concurso do Exército para nível médio com inscrições abertas",
+            "slug": "exercito-concurso-1100-vagas-nivel-medio",
+            "date": "2026-04-04T15:28:47",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "exército"
+        },
+        {
+            "id": 779,
+            "title": "2 mil vagas gratuitas para cursos on-line do SENAI-RN com inscrições abertas",
+            "slug": "de-almoxarife-a-rh-senai-rn-abre-2-mil-vagas-cursos-online-gratuitos",
+            "date": "2026-04-03T21:39:36",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senai",
+            "sub_name": "Cursos Senai",
+            "matched_kw": "senai"
+        },
+        {
+            "id": 777,
+            "title": "20 mil vagas abertas em curso gratuito da USP sobre Marketing e IA até abril",
+            "slug": "curso-marketing-dados-ia-usp-gratis-online-10mil-vagas",
+            "date": "2026-04-03T21:37:11",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-usp-fapesp",
+            "sub_name": "Cursos USP e Fapesp",
+            "matched_kw": "usp "
+        },
+        {
+            "id": 775,
+            "title": "5 mil vagas abertas no curso gratuito da USP sobre transição 4.0 para 5.0",
+            "slug": "usp-curso-gratis-industria-5-0-hora-brasil",
+            "date": "2026-04-03T21:34:23",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-usp-fapesp",
+            "sub_name": "Cursos USP e Fapesp",
+            "matched_kw": "usp "
+        },
+        {
+            "id": 773,
+            "title": "8 mil vagas abertas para a rede pública do RS com inscrições até abril",
+            "slug": "curso-gratuito-enem-inscricoes-rs-8-mil-vagas-rede-publica",
+            "date": "2026-04-03T21:31:59",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 760,
+            "title": "800 vagas gratuitas em cursos de Inteligência Artificial no Senac RJ com inscrições abertas",
+            "slug": "senac-rj-800-vagas-gratis-curso-inteligencia-artificial",
+            "date": "2026-04-03T20:31:26",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senac",
+            "sub_name": "Cursos Senac",
+            "matched_kw": "senac"
+        },
+        {
+            "id": 763,
+            "title": "120 vagas gratuitas em curso de IA para segurança digital com inscrições abertas em Botucatu",
+            "slug": "senac-botucatu-curso-ia-seguranca-digital-vagas-gratis",
+            "date": "2026-04-03T20:31:01",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "inteligencia-artificial",
+            "sub_name": "Inteligência Artificial e Tech",
+            "matched_kw": " ia "
+        },
+        {
+            "id": 767,
+            "title": "Curso técnico gratuito em Administração com 120 vagas abertas no Senac Gramado",
+            "slug": "senac-gramado-curso-tecnico-administracao-gratuito-inscricoes",
+            "date": "2026-04-03T20:30:29",
+            "old_cats": [
+                683
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senac",
+            "sub_name": "Cursos Senac",
+            "matched_kw": "senac"
+        },
+        {
+            "id": 673,
+            "title": "Cursos e livros gratuitos do MEC são liberados agora para brasileiros",
+            "slug": "mec-livros-apps-gratis-livros-curso-idiomas-lula",
+            "date": "2026-04-02T22:45:19",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 669,
+            "title": "Acesso gratuito a MEC Livros e Idiomas está disponível para estudantes em 2026",
+            "slug": "lula-anuncia-aplicativos-mec-livros-mec-idiomas-gratuitos",
+            "date": "2026-04-02T22:45:06",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 706,
+            "title": "77 vagas abertas no concurso da Câmara de Goiânia com salários até R$ 7 mil",
+            "slug": "concurso-publico-camara-municipal-goiania-instituto-verbena-comunicado",
+            "date": "2026-04-02T17:36:44",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 704,
+            "title": "7.000 aprovados serão contratados pelo governo federal até o fim de 2026",
+            "slug": "governo-federal-aprovados-concursos-ministra",
+            "date": "2026-04-02T17:36:38",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "federal"
+        },
+        {
+            "id": 702,
+            "title": "1.500 vagas excedentes garantidas para aprovados no concurso da Polícia Federal",
+            "slug": "concurso-pf-esther-dweck-confirma-1500-excedentes",
+            "date": "2026-04-02T17:36:32",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "polícia federal"
+        },
+        {
+            "id": 700,
+            "title": "5 mil vagas abertas em concursos federais com inscrições até abril de 2026",
+            "slug": "concursos-federais-excedentes-autorizacoes",
+            "date": "2026-04-02T17:31:16",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 717,
+            "title": "1.500 excedentes da PF serão convocados para posse em 2026, inscrições abertas",
+            "slug": "concurso-pf-convocacao-1500-excedentes",
+            "date": "2026-04-02T17:28:04",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "pa"
+        },
+        {
+            "id": 732,
+            "title": "Enem passa a medir qualidade da educação com análise de dados até 2027",
+            "slug": "enem-avaliacao-educacao-brasil",
+            "date": "2026-04-02T16:46:53",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 734,
+            "title": "8 mil vagas abertas para curso gratuito preparatório para Enem no RS",
+            "slug": "programa-ciee-governo-rs-curso-gratuito-enem",
+            "date": "2026-04-02T16:45:25",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "enem",
+            "sub_name": "ENEM",
+            "matched_kw": "enem"
+        },
+        {
+            "id": 684,
+            "title": "R$ 1,2 milhão para bolsas em audiovisual e games no RS; Inscrições até maio",
+            "slug": "secretaria-cultura-edital-bolsas-setores-audiovisual-gamer-rs",
+            "date": "2026-04-02T13:28:13",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "producao-audiovisual",
+            "sub_name": "Audiovisual e Games",
+            "matched_kw": "audiovisual"
+        },
+        {
+            "id": 683,
+            "title": "Inscrições abertas para 150 projetos culturais com incentivo no RS até abril",
+            "slug": "governo-rs-edital-lei-incentivo-cultura-patrimonio-espacos-publicos",
+            "date": "2026-04-02T13:28:04",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 671,
+            "title": "MEC libera cursos e livros gratuitos para brasileiros em 2026",
+            "slug": "lula-anuncia-apps-mec-livros-gratis-cursos-idiomas",
+            "date": "2026-04-01T17:33:53",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 667,
+            "title": "Sem pagar nada: MEC libera livros e aulas de inglês e espanhol em aplicativos",
+            "slug": "mec-aplicativos-gratis-livros-aulas-ingles-espanhol-lula",
+            "date": "2026-04-01T17:31:58",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-mec",
+            "sub_name": "Cursos MEC",
+            "matched_kw": "mec"
+        },
+        {
+            "id": 598,
+            "title": "Senac abre 120 vagas grátis em cursos técnicos com início em maio; veja como participar",
+            "slug": "senac-120-vagas-gratis-cursos-tecnicos-maio",
+            "date": "2026-04-01T12:33:42",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senac",
+            "sub_name": "Cursos Senac",
+            "matched_kw": "senac"
+        },
+        {
+            "id": 568,
+            "title": "Curso gratuito de jornalismo online começa em abril; veja como se inscrever",
+            "slug": "jeduca-curso-gratuito-jornalismo-educacao-inscricoes",
+            "date": "2026-04-01T11:55:42",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 566,
+            "title": "Curso gratuito ensina a identificar sofrimento mental em jovens",
+            "slug": "curso-gratuito-professores-saude-mental-ufes",
+            "date": "2026-04-01T11:55:40",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "educacao-saude-mental",
+            "sub_name": "Saúde Mental e Bem-Estar",
+            "matched_kw": "sofrimento mental"
+        },
+        {
+            "id": 564,
+            "title": "Curso internacional da SWAT começa no Acre e chama atenção",
+            "slug": "governo-acre-curso-seguranca-swat",
+            "date": "2026-04-01T11:55:38",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 562,
+            "title": "Curso de produção audiovisual gratuito abre inscrições nesta semana",
+            "slug": "escult-segunda-turma-curso-livre-producao-audiovisual",
+            "date": "2026-04-01T11:55:36",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "profissionalizantes",
+            "silo_name": "Profissionalizantes e Áreas",
+            "sub_slug": "producao-audiovisual",
+            "sub_name": "Audiovisual e Games",
+            "matched_kw": "audiovisual"
+        },
+        {
+            "id": 596,
+            "title": "Curso gratuito de Alongamento de Cílios com inscrições abertas pela Prefeitura e Senac nesta semana",
+            "slug": "curso-gratuito-alongamento-cilios-prefeitura-senac",
+            "date": "2026-04-01T11:45:14",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "cursos-gratuitos",
+            "silo_name": "Cursos Gratuitos com Certificado",
+            "sub_slug": "cursos-senac",
+            "sub_name": "Cursos Senac",
+            "matched_kw": "senac"
+        },
+        {
+            "id": 593,
+            "title": "Cursos profissionalizantes gratuitos com até 4 vagas abertas em Santo André hoje",
+            "slug": "senac-prefeitura-santo-andre-cursos-profissionalizantes-gratuitos",
+            "date": "2026-04-01T11:43:48",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 591,
+            "title": "4 Cursos gratuitos em finanças abrem inscrições hoje para Lucas do Rio Verde",
+            "slug": "prefeitura-senac-cursos-gratuitos-alimentacao-financas-lucas-do-rio-verde",
+            "date": "2026-04-01T11:42:30",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 519,
+            "title": "Prouni tem novas vagas e bolsas em discussão; veja o que pode mudar",
+            "slug": "lula-encontro-estudantes-sp-prouni",
+            "date": "2026-03-31T18:40:07",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "prouni",
+            "sub_name": "ProUni",
+            "matched_kw": "prouni"
+        },
+        {
+            "id": 515,
+            "title": "Prouni permite duas inscrições para bolsas",
+            "slug": "candidatos-prouni-cotas-ampla-concorrencia-decisao-governo",
+            "date": "2026-03-31T18:38:33",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "prouni",
+            "sub_name": "ProUni",
+            "matched_kw": "prouni"
+        },
+        {
+            "id": 516,
+            "title": "Bolsas do Prouni aumentam e novas regras já estão valendo",
+            "slug": "evento-lula-mudancas-acesso-prouni-cotistas",
+            "date": "2026-03-31T18:38:23",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "prouni",
+            "sub_name": "ProUni",
+            "matched_kw": "prouni"
+        },
+        {
+            "id": 521,
+            "title": "Lista de espera do Prouni sai hoje; veja se você foi chamado",
+            "slug": "prouni-resultado-lista-espera-1-semestre-2026",
+            "date": "2026-03-31T18:37:45",
+            "old_cats": [
+                338
+            ],
+            "silo_slug": "enem-sisu-prouni",
+            "silo_name": "ENEM, Sisu e ProUni",
+            "sub_slug": "prouni",
+            "sub_name": "ProUni",
+            "matched_kw": "prouni"
+        },
+        {
+            "id": 357,
+            "title": "Concurso do Banco do Brasil pode pagar até R$ 8 mil; edital pode sair até maio",
+            "slug": "concurso-banco-do-brasil-edital-salario-8-mil-vagas-nivel-medio",
+            "date": "2026-03-30T16:10:27",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 356,
+            "title": "Banco do Brasil pode abrir concurso com salário de até R$ 8 mil",
+            "slug": "concurso-banco-do-brasil-2026-salarios-beneficios-inscricoes",
+            "date": "2026-03-30T16:10:19",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 354,
+            "title": "Concurso do Banco do Brasil pode pagar até R$ 8 mil para nível médio",
+            "slug": "concurso-banco-do-brasil-2026-noticias-situacao-atual",
+            "date": "2026-03-30T16:10:09",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 359,
+            "title": "Edital do Banco do Brasil pode sair a qualquer momento",
+            "slug": "concurso-bb-2026-fatos-e-rumores",
+            "date": "2026-03-30T16:05:09",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "ba"
+        },
+        {
+            "id": 340,
+            "title": "Últimos dias: Jovem Aprendiz Correios 2026 encerra inscrições em abril",
+            "slug": "correios-programa-jovem-aprendiz-2026-inscricoes-detalhes",
+            "date": "2026-03-30T14:22:50",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "carreira-mercado",
+            "silo_name": "Carreira e Mercado",
+            "sub_slug": "jovem-aprendiz",
+            "sub_name": "Jovem Aprendiz",
+            "matched_kw": "jovem aprendiz"
+        },
+        {
+            "id": 341,
+            "title": "Correios 2026 abre vagas para jovens com inscrição gratuita e jornada reduzida",
+            "slug": "processo-seletivo-correios-edital-2026",
+            "date": "2026-03-30T14:21:23",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "correios"
+        },
+        {
+            "id": 343,
+            "title": "Quer o primeiro emprego? Correios 2026 abre seleção para Jovem Aprendiz",
+            "slug": "correios-inscricoes-jovem-aprendiz-cadastro-reserva-sul-rio",
+            "date": "2026-03-30T14:17:27",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "carreira-mercado",
+            "silo_name": "Carreira e Mercado",
+            "sub_slug": "jovem-aprendiz",
+            "sub_name": "Jovem Aprendiz",
+            "matched_kw": "jovem aprendiz"
+        },
+        {
+            "id": 339,
+            "title": "Correios libera vagas de Jovem Aprendiz 2026 e prazo já está correndo",
+            "slug": "programa-jovem-aprendiz-correios-2026-inscricoes-abertas",
+            "date": "2026-03-29T08:44:00",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "carreira-mercado",
+            "silo_name": "Carreira e Mercado",
+            "sub_slug": "jovem-aprendiz",
+            "sub_name": "Jovem Aprendiz",
+            "matched_kw": "jovem aprendiz"
+        },
+        {
+            "id": 168,
+            "title": "Concurso Petrobras (Ansa): 126 vagas com provas em abril e salários de até R$ 8,2 mil",
+            "slug": "subsidiaria-petrobras-encerra-inscricao-concurso",
+            "date": "2026-03-27T21:36:30",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "petrobras"
+        },
+        {
+            "id": 166,
+            "title": "Concurso Petrobras 2026: 1.100 Vagas com Salários de R$ 14 Mil | Veja as 10 Cidades",
+            "slug": "concurso-petrobras-cidades-onde-trabalhar",
+            "date": "2026-03-27T21:34:59",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "petrobras"
+        },
+        {
+            "id": 164,
+            "title": "Transpetro 2026: Concurso com salários de até R$ 12,7 mil para nível médio e superior",
+            "slug": "concurso-transpetro-edital-preparacao-cargos-degrau-cultural",
+            "date": "2026-03-27T21:33:42",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "upe"
+        },
+        {
+            "id": 162,
+            "title": "PLR Petrobras 2026: veja quanto você pode ganhar no próximo concurso público",
+            "slug": "petrobras-2026-beneficios-plr-concurso",
+            "date": "2026-03-27T21:32:33",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "petrobras"
+        },
+        {
+            "id": 160,
+            "title": "Salários de até R$10,3 mil: TJ SC libera 2 vagas + cadastro reserva nesta semana",
+            "slug": "edital-tj-sc-2024-2-vagas-cr-ate-10k-concursos",
+            "date": "2026-03-27T21:16:03",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "tj sc"
+        },
+        {
+            "id": 158,
+            "title": "Resultado final concurso Alerj já disponível: veja quem avançou na FGV",
+            "slug": "concurso-alerj-resultado-final-provas-objetivas-fgv-degrau-cultural",
+            "date": "2026-03-27T21:14:44",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 156,
+            "title": "Concurso abre com salários de até R$ 10,3 mil para níveis médio e superior",
+            "slug": "edital-concurso-tj-sc-vagas-niveis-medio-superior-salarios-ate-10300",
+            "date": "2026-03-27T21:13:28",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "upe"
+        },
+        {
+            "id": 154,
+            "title": "Concurso TJ RJ confirma edital e divulga datas oficiais para inscrições",
+            "slug": "concurso-tj-rj-ultimas-noticias-situacao-atual",
+            "date": "2026-03-27T21:12:18",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-estaduais",
+            "sub_name": "Concursos Estaduais",
+            "matched_kw": "rs"
+        },
+        {
+            "id": 101,
+            "title": "INSS confirma 8.000 vagas no concurso 2026 com inscrições previstas nesta semana",
+            "slug": "concurso-inss-2026-ultimas-noticias-situacao-hoje",
+            "date": "2026-03-27T18:42:06",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "inss"
+        },
+        {
+            "id": 103,
+            "title": "INSS 2026: 8.500 Vagas Confirmadas com Edital Previsto para Segundo Semestre",
+            "slug": "concurso-inss-2026-ultimas-noticias-situacao-atual",
+            "date": "2026-03-27T18:41:40",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "inss"
+        },
+        {
+            "id": 105,
+            "title": "INSS confirma reunião decisiva nesta semana que pode liberar 8.500 vagas em 2026",
+            "slug": "concurso-inss-2026-mudancas-reuniao-31",
+            "date": "2026-03-27T18:21:44",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "inss"
+        },
+        {
+            "id": 107,
+            "title": "INSS acelera edital com reunião decisiva marcada para 31, prepare-se já",
+            "slug": "concurso-inss-reuniao-acelera-edital",
+            "date": "2026-03-27T18:20:49",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "inss"
+        },
+        {
+            "id": 34,
+            "title": "Exército abre 1.100 vagas para Sargentos da ESA; inscrições até 4 de maio",
+            "slug": "exercito-concurso-1100-vagas-sargentos-esa-2026",
+            "date": "2026-03-27T14:45:01",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "exército"
+        },
+        {
+            "id": 30,
+            "title": "Concurso ESA 2027 libera 1.100 vagas para sargentos com inscrições abertas",
+            "slug": "concurso-esa-2027-edital-1100-vagas",
+            "date": "2026-03-27T14:44:51",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "esa "
+        },
+        {
+            "id": 28,
+            "title": "1.100 vagas abertas no concurso ESA 2027 para sargentos com edital publicado",
+            "slug": "concurso-esa-2027-edital-1100-vagas-sargentos",
+            "date": "2026-03-27T14:44:40",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "esa "
+        },
+        {
+            "id": 32,
+            "title": "ESA abre 1.100 vagas para Nível Médio: Inscrições de 30\/03 a 04\/05",
+            "slug": "edital-esa-2027-1100-vagas-nivel-medio",
+            "date": "2026-03-27T14:43:59",
+            "old_cats": [
+                9
+            ],
+            "silo_slug": "concursos-publicos",
+            "silo_name": "Concursos Públicos",
+            "sub_slug": "concursos-federais",
+            "sub_name": "Concursos Federais",
+            "matched_kw": "esa "
+        }
+    ],
+    "resumo_silos": {
+        "Concursos Públicos": 67,
+        "Cursos Gratuitos com Certificado": 45,
+        "ENEM, Sisu e ProUni": 20,
+        "Profissionalizantes e Áreas": 7,
+        "Carreira e Mercado": 4,
+        "Cursos Técnicos": 2,
+        "EAD e Especialização Online": 2
+    },
+    "resumo_subs": {
+        "Concursos Estaduais": 41,
+        "Concursos Federais": 26,
+        "Cursos MEC": 16,
+        "Cursos Senai": 13,
+        "Isenção ENEM": 8,
+        "ENEM": 6,
+        "Cursos Senac": 5,
+        "Cursos Fatec": 4,
+        "Jovem Aprendiz": 4,
+        "ProUni": 4,
+        "Cursos USP e Fapesp": 3,
+        "Inteligência Artificial e Tech": 3,
+        "Institutos Federais": 2,
+        "Especialização EAD": 2,
+        "Audiovisual e Games": 2,
+        "Cursos Fiocruz": 1,
+        "Cursos Estácio": 1,
+        "Fiscal e Tributário": 1,
+        "Cursos Senar": 1,
+        "Cursos Embraer": 1,
+        "Redação ENEM": 1,
+        "Fies": 1,
+        "Saúde Mental e Bem-Estar": 1
+    },
+    "sem_classificacao": []
+}

@@ -1,0 +1,90 @@
+<?php
+/**
+ * sites.php — TEMPLATE.
+ *
+ * O arquivo real (sites.php) está no .gitignore porque contém os WP App Passwords
+ * em plaintext dos 6 portais em produção. Pra reconstruir localmente:
+ *
+ *   1. cp sites.php.example sites.php
+ *   2. Para cada site: gere App Password em /wp-admin/profile.php → "Senhas de aplicativo"
+ *   3. Cole no campo wp_app_password
+ *   4. Tokens longos (FB/IG/etc) ficam em .env, NUNCA aqui — referencie via Env::get()
+ *
+ * Estrutura por site (campos disponíveis):
+ *
+ *   Obrigatórios:
+ *     - name, wp_url, wp_user, wp_app_password
+ *
+ *   Identidade institucional (anti-PBN):
+ *     - empresa.nome, empresa.descricao, empresa.cnpj
+ *     - sites do mesmo grupo (mesma empresa.nome) são "rede irmã" — cross-site dedup >60% bloqueia
+ *
+ *   Editorial:
+ *     - persona (autor, voz, especialidade, audiencia, tom, clusters_foco, termos_proibidos)
+ *     - subtipo_nicho — declaração curta, validada pelo pre-flight check
+ *     - termos_canibal — termos cobertos por sites IRMÃOS (rejeita trends que batem aqui)
+ *
+ *   Distribuição:
+ *     - whatsapp_number, whatsapp_group_url, whatsapp_cta_text
+ *     - fb_page_id, fb_page_token (= Env::get('FB_PAGE_TOKEN_X'))
+ *     - ig_user_id, ig_access_token (= Env::get('IG_TOKEN_X'))
+ *     - pretty_links_prefix (default: 'go')
+ *
+ *   Afiliado/Performance:
+ *     - amazon_associates_tag (vazio até API liberada — fluxo atual é PrettyLinks manual)
+ *     - cloudflare_zone_id — purge auto após swap; vazio = no-op
+ *
+ * IMPORTANTE: tokens longos vão pro .env. Aqui ficam só IDs.
+ */
+require_once __DIR__ . '/lib/Env.php';
+Env::load(__DIR__ . '/.env');
+
+return [
+    // ─── EXEMPLO COMPLETO (copie e adapte por site) ───
+    'siteslug' => [
+        'name'              => 'Nome do Site',
+        'wp_url'            => 'https://exemplo.com.br',
+        'wp_user'           => 'admin',
+        'wp_app_password'   => 'xxxx xxxx xxxx xxxx xxxx xxxx', // App Password do WP
+
+        'site_name'         => 'Nome Editorial',
+        'whatsapp_number'   => '5511999999999',
+        'whatsapp_group_url'=> '',
+        'whatsapp_cta_text' => 'Receba no WhatsApp',
+        'pretty_links_prefix' => 'go',
+
+        'amazon_associates_tag' => '',
+        'cloudflare_zone_id'    => '',
+
+        // Tokens FB/IG longos vêm do .env (NÃO colar aqui)
+        // 'fb_page_id'        => '000000000000000',
+        // 'fb_page_token'     => Env::get('FB_PAGE_TOKEN_SLUG', ''),
+        // 'ig_user_id'        => '00000000000000000',
+        // 'ig_access_token'   => Env::get('IG_TOKEN_SLUG', ''),
+
+        'empresa' => [
+            'nome'      => 'Razão Social Distinta da Editora',
+            'descricao' => 'Descrição editorial curta',
+            'cnpj'      => '',
+        ],
+
+        'subtipo_nicho' => 'declaração curta da especialização (ex: cursos técnicos / EAD)',
+
+        'termos_canibal' => [
+            // Termos cobertos por sites IRMÃOS (mesma empresa.nome) — anti-canibalização
+            'termo coberto por site irmão 1',
+            'termo coberto por site irmão 2',
+        ],
+
+        'persona' => [
+            'autor'            => 'Nome do Autor ou Equipe',
+            'voz'              => 'descrição curta da voz editorial',
+            'especialidade'    => 'tópicos que esse site cobre',
+            'audiencia'        => 'quem lê esse site',
+            'tom'              => 'tom da escrita',
+            'clusters_foco'    => ['cluster_1', 'cluster_2'],
+            'termos_proibidos' => ['palavras vetadas pra esse site'],
+            'cta_estilo'       => 'estilo de CTA',
+        ],
+    ],
+];

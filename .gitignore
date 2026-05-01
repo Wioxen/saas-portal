@@ -1,0 +1,40 @@
+# ── Secrets / config local ──
+config.php
+.env
+.env.local
+.env.*.local
+
+# ── Sites com app passwords WP em plaintext (REGENERAR LOCAL) ──
+sites.php
+sites.php.bak
+scripts/aplicar_fixes_adsense.php
+scripts/auditar_pre_adsense.php
+scripts/auditar_adsense_completo.php
+scripts/instalar_cookie_consent.php
+scripts/revisar_posts_anti_ia.php
+scripts/reorganizar_categorias_guiadoscursos.php
+scripts/_empacotar_deploy.php
+
+# ── Estado runtime / cache / logs (12MB+) ──
+data/
+pages/
+*.log
+*.bak
+
+# ── Sessão Claude Code local ──
+.claude/
+
+# ── WordPress espelho (não pertence ao repo) ──
+wp-content/
+
+# ── Artefatos de build ──
+*.zip
+!plugin/*.zip
+
+# ── OS / IDE ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
