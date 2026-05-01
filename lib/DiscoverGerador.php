@@ -404,13 +404,16 @@ class DiscoverGerador
         $cluster = DiscoverClusterMatcher::detectar($trend);
         $blocos[] = DiscoverClusterMatcher::instrucaoProPrompt($cluster);
 
-        // 3b-bis) Cluster=esportes → instrução pra Claude extrair sports_event
-        // (gera schema.org/SportsEvent quando partida específica). Sem extração válida
-        // o schema é pulado; NewsArticle continua saindo.
-        if (($cluster['key'] ?? '') === 'esportes') {
-            require_once __DIR__ . '/DiscoverSportsEvent.php';
-            $blocos[] = DiscoverSportsEvent::instrucaoProPrompt();
-        }
+        // 3b-bis) Cluster=esportes → instrução SportsEvent estava aqui mas DESATIVADA.
+        // Razão: a instrução pedia "retorne no JSON final um campo sports_event",
+        // mas o prompt.md atual instrui formato texto (## ANÁLISE + ## ARTIGO HTML).
+        // Mid-prompt JSON cria contradição → Claude/GPT confundem formato → JSON
+        // parser falha no fallback. Reativar quando refatorar pra formato compatível
+        // com text-mode (ex: HTML comment <!--SPORTS_EVENT ... -->).
+        // if (($cluster['key'] ?? '') === 'esportes') {
+        //     require_once __DIR__ . '/DiscoverSportsEvent.php';
+        //     $blocos[] = DiscoverSportsEvent::instrucaoProPrompt();
+        // }
 
         // 3c) E-E-A-T — bloco "Humano-Especialista" universal (voz autoridade, pulo do gato, transparência)
         // Sinais que Google Helpful Content premia. Não conflita com persona (que é por nicho).
