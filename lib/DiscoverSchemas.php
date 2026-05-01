@@ -66,6 +66,14 @@ class DiscoverSchemas
         $event = self::event($meta, $trend, $cfg);
         if ($event) $graph[] = $event;
 
+        // SportsEvent (esportes ao vivo) — só sai se DiscoverSportsEvent extraiu dados
+        // válidos do LLM (home_team, away_team, kickoff em janela sensata).
+        if (!empty($meta['sports_event']) && is_array($meta['sports_event'])) {
+            require_once __DIR__ . '/DiscoverSportsEvent.php';
+            $sportsEvent = DiscoverSportsEvent::paraSchema($meta['sports_event'], $meta);
+            if ($sportsEvent) $graph[] = $sportsEvent;
+        }
+
         // ItemList só se ProductRanker injetou (detectado por marker no HTML — caller passa via meta)
         if (!empty($meta['ranker_produtos']) && is_array($meta['ranker_produtos'])) {
             $itemList = self::itemListProdutos($meta['ranker_produtos'], $url);

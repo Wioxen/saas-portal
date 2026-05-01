@@ -404,6 +404,14 @@ class DiscoverGerador
         $cluster = DiscoverClusterMatcher::detectar($trend);
         $blocos[] = DiscoverClusterMatcher::instrucaoProPrompt($cluster);
 
+        // 3b-bis) Cluster=esportes → instrução pra Claude extrair sports_event
+        // (gera schema.org/SportsEvent quando partida específica). Sem extração válida
+        // o schema é pulado; NewsArticle continua saindo.
+        if (($cluster['key'] ?? '') === 'esportes') {
+            require_once __DIR__ . '/DiscoverSportsEvent.php';
+            $blocos[] = DiscoverSportsEvent::instrucaoProPrompt();
+        }
+
         // 3c) E-E-A-T — bloco "Humano-Especialista" universal (voz autoridade, pulo do gato, transparência)
         // Sinais que Google Helpful Content premia. Não conflita com persona (que é por nicho).
         $blocos[] = DiscoverPromptBuilder::blocoHumanoEspecialista();
@@ -576,6 +584,11 @@ class DiscoverGerador
                     $metaPos = ['titulo' => $titulo, 'url' => $urlPublica, 'post_id' => $postId];
                     // Se ProductRanker rodou e tem produtos, passa pra ItemList schema
                     if (!empty($rankerProdutos)) $metaPos['ranker_produtos'] = $rankerProdutos;
+                    // Sports event (cluster=esportes) — extrai do response do LLM se válido
+                    if (($cluster['key'] ?? '') === 'esportes') {
+                        $sportsEvent = DiscoverSportsEvent::extrairDoPrimeiro($primeiro);
+                        if ($sportsEvent !== null) $metaPos['sports_event'] = $sportsEvent;
+                    }
                     // Fontes scrapeadas pra QuoteEnrichment extrair citação oficial
                     if (!empty($fontesOk)) $metaPos['fontes'] = $fontesOk;
                     // PAA cacheado (CtrIntel) → FaqEnricher injeta seção FAQ se Sonnet não fez
