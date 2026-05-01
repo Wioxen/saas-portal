@@ -18,8 +18,12 @@ scripts/reorganizar_categorias_guiadoscursos.php
 scripts/_empacotar_deploy.php
 
 # ── Estado runtime / cache / logs (12MB+) ──
-data/
-pages/
+# data/ e pages/ são runtime — só a estrutura de pastas vai pro repo (.gitkeep)
+data/**
+!data/**/
+!data/**/.gitkeep
+pages/**
+!pages/.gitkeep
 *.log
 *.bak
 
