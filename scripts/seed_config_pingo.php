@@ -24,7 +24,7 @@ $exitCode = 0;
 
 // ─── 1) FONTES PINGO (merge idempotente por url_rss) ───────────────────────
 $dest = $ROOT . '/data/fontes_pingo.json';
-$src  = $ROOT . '/data/fontes_pingo.template.json';
+$src  = $ROOT . '/seeds/fontes_pingo.json';
 
 echo "═══ data/fontes_pingo.json ═══\n";
 
@@ -95,7 +95,7 @@ if (!is_file($src)) {
 echo "\n═══ data/pingo_filtros.json ═══\n";
 
 $destF = $ROOT . '/data/pingo_filtros.json';
-$srcF  = $ROOT . '/data/pingo_filtros.template.json';
+$srcF  = $ROOT . '/seeds/pingo_filtros.json';
 
 if (!is_file($srcF)) {
     echo "  ⚠ template ausente em {$srcF} — pulando filtros\n";
