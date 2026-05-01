@@ -41,12 +41,16 @@ class DiscoverAfiliados
         return $tipo === 'ofertas' ? self::$pathOfertas : self::$pathClicks;
     }
 
-    /** Carrega o catálogo do disco. Lança se arquivo não existe ou é inválido. */
+    /**
+     * Carrega o catálogo do disco. Catálogo ausente vira catálogo vazio
+     * (deploy fresh sem JSON local não deve quebrar o pipeline). JSON inválido
+     * ainda lança — corrupção real precisa atenção, não pode ser silenciada.
+     */
     private static function carregar(): array
     {
         $path = self::path('ofertas');
         if (!is_file($path)) {
-            throw new RuntimeException("Catálogo de afiliados não encontrado em {$path}");
+            return ['ofertas' => [], 'next_id' => 1];
         }
         $raw = @file_get_contents($path);
         $data = json_decode((string)$raw, true);
