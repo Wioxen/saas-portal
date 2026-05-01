@@ -1,0 +1,118 @@
+{
+    "_schema": {
+        "modo": "warn | block — em 'warn' loga rejeições mas aprova tudo; em 'block' rejeita de verdade",
+        "rejeicao_categorias": "padrões que rejeitam o trend ANTES de qualquer score (camada 1)",
+        "aprovacao_pontos": "vocabulário positivo + pesos. Termo precisa atingir min_pontos pra passar (camada 2)",
+        "min_pontos_aprovacao": "limiar de pontos pra termo ser aceito",
+        "bypass_clusters": "cluster_hint que pula camada 2 (entra direto se não rejeitado pela 1)",
+        "bypass_fontes_ids": "fontes específicas que pulam ambas as camadas (ex: feeds curados)",
+        "_doc": "ver docs/pingo/FILTROS.md"
+    },
+
+    "modo": "warn",
+    "min_pontos_aprovacao": 2,
+
+    "bypass_clusters": ["esportes", "sazonal_calendario"],
+    "bypass_fontes_ids": [],
+
+    "rejeicao_categorias": {
+        "loteria": {
+            "_doc": "Loteria converte mal (RPM baixo, tráfego volátil, zero afiliado relevante)",
+            "regex": [
+                "/\\b(lotof[aá]cil|quina|mega-?sena|timemania|lotomania|dupla.?sena|dia.?de.?sorte|super.?sete|loteria.?federal)\\b/i",
+                "/\\bconcurso\\s+\\d{4,}\\b/i"
+            ]
+        },
+        "morte_luto": {
+            "_doc": "Mortes sem utilidade pro leitor — alto sentimento negativo, Discover penaliza (g13)",
+            "regex": [
+                "/\\b(morre|morreu|faleceu|falecimento|luto|enterro|vel[oó]rio|cad[aá]ver|encontra(?:do|da)\\s+morto)\\b/i"
+            ]
+        },
+        "fofoca_celebridade": {
+            "_doc": "Fofoca sem E-E-A-T — Discover bloqueia",
+            "regex": [
+                "/\\b(detona|alfineta|d[aá]\\s+resposta|alfinet[aou]|bate.?boca|brigam|polic[aê]mica|treta|fim\\s+do\\s+casamento|separ(?:ou|aram|açao)|trai[çã][aã]o|amante|ex.?namorad[oa])\\b/i",
+                "/\\b(declara[çã][aã]o\\s+pol[eê]mica|pol[eê]mica\\s+envolvendo)\\b/i"
+            ]
+        },
+        "politica_partidaria": {
+            "_doc": "Política partidária pura sem ação útil pro leitor",
+            "regex": [
+                "/\\b(pt\\s+prev[eê]|pl\\s+afirma|psol\\s+critica|pdt\\s+lan[çc]a|partid[aoá]rio?|lula\\s+afirma|bolsonaro\\s+afirma|discurso\\s+de\\s+(lula|bolsonaro))\\b/i"
+            ]
+        },
+        "resultado_jogo_isolado": {
+            "_doc": "Resultado de jogo isolado é volátil. Cluster=esportes (leaodabarra) tem bypass.",
+            "regex": [
+                "/\\b(\\w+\\s+x\\s+\\w+\\s+(ao\\s+vivo|hoje|placar))\\b/i",
+                "/\\bjogo\\s+do\\s+\\w+\\s+(hoje|domingo|s[aá]bado|sexta)\\b/i"
+            ]
+        }
+    },
+
+    "aprovacao_pontos": {
+        "verbo_acao": {
+            "peso": 2,
+            "_doc": "Termo precisa indicar AÇÃO ou ANÚNCIO concreto pro leitor",
+            "palavras": [
+                "como", "quando", "onde", "veja", "confira", "saiba", "consulte", "verifique",
+                "descubra", "aprenda", "entenda", "passo\\s+a\\s+passo", "acesse",
+                "fa[çc]a", "garanta", "tire", "evite", "antecipe", "atualize",
+                "anuncia", "define", "atualiza", "altera", "reajusta", "confirma",
+                "aprova", "publica", "estabelece", "regulamenta", "decide", "determina",
+                "iniciam", "iniciar[áa]?", "come[çc]am", "estreia", "passa\\s+a\\s+valer"
+            ]
+        },
+        "utilidade": {
+            "peso": 2,
+            "_doc": "Palavra que indica conteúdo de utilidade prática (consumidor/cidadão)",
+            "palavras": [
+                "prazo", "edital", "calend[aá]rio", "valor", "valores", "data\\s+limite",
+                "cronograma", "lista", "regra", "regras", "tabela", "passo", "documento",
+                "documentos\\s+necess[aá]rios", "guia",
+                "tarifa", "tarif[áa]ria", "bandeira", "fatura", "conta\\s+de\\s+luz",
+                "inscri[çc][aã]o", "inscri[çc][oõ]es", "vestibular", "bolsa", "bolsas",
+                "aux[íi]lio", "desemprego", "matr[íi]cula", "matr[íi]culas",
+                "reajuste", "aumento", "isen[çc][aã]o", "deduzir", "declarar"
+            ]
+        },
+        "oportunidade": {
+            "peso": 2,
+            "_doc": "Palavra de escassez ou oportunidade real",
+            "palavras": [
+                "liberado", "liberada", "liberou", "vagas", "abertas",
+                "abertura", "novo", "nova", "antecipa(?:do|da|[çc][aã]o)", "remanescent[ea]s?",
+                "[uú]ltima\\s+chance", "ainda\\s+d[aá]\\s+tempo", "lan[çc]ad[ao]",
+                "abre", "abriu", "estreia", "estreou", "chega", "chegou",
+                "dispon[íi]vel", "dispon[íi]veis"
+            ]
+        },
+        "categoria_favoravel": {
+            "peso": 1,
+            "_doc": "Categorias com alto E-E-A-T e intenção de utilidade",
+            "categoria_ids_match": [958, 11, 533, 1043],
+            "categorias_label": ["Empregos", "Educação", "Lei e governo", "Saúde", "Empregos e educação"]
+        },
+        "temporal": {
+            "peso": 1,
+            "_doc": "Padrão temporal indica frescor (Discover ama frescor)",
+            "regex": [
+                "/\\b(hoje|amanh[aã]|esta\\s+semana|este\\s+m[eê]s|2026|2027|janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\\b/i"
+            ]
+        },
+        "dor_monetizavel": {
+            "peso": 2,
+            "_doc": "Termos que ativam afiliados de alto RPM (FGTS, INSS, etc)",
+            "regex": [
+                "/\\b(fgts|inss|bolsa\\s+fam[íi]lia|aux[íi]lio|pis|pasep|imposto\\s+de\\s+renda|ir\\s+\\d{4}|restitui[çc][aã]o|pix|cnh|meu?\\s*caixa|caixa\\s+tem|enem|sisu|prouni|fies|mei|sebrae|senai|senac)\\b/i"
+            ]
+        }
+    },
+
+    "_meta": {
+        "criado_em": "2026-04-26",
+        "versao": "1.0",
+        "alterar_modo_para_block_apos_calibracao": true
+    }
+}

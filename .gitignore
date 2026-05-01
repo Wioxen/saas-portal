@@ -19,9 +19,11 @@ scripts/_empacotar_deploy.php
 
 # ── Estado runtime / cache / logs (12MB+) ──
 # data/ e pages/ são runtime — só a estrutura de pastas vai pro repo (.gitkeep)
+# EXCEÇÃO: data/*.template.json — seed config inicial (lido por scripts de bootstrap)
 data/**
 !data/**/
 !data/**/.gitkeep
+!data/*.template.json
 pages/**
 !pages/.gitkeep
 *.log
