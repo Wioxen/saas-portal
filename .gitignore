@@ -1,8 +1,9 @@
 # ── Secrets / config local ──
-config.php
 .env
 .env.local
 .env.*.local
+
+# config.php é só wrapper de Env::get() — pode ir pro repo
 
 # ── Sites com app passwords WP em plaintext (REGENERAR LOCAL) ──
 sites.php
