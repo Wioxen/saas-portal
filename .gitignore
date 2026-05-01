@@ -5,8 +5,9 @@
 
 # config.php é só wrapper de Env::get() — pode ir pro repo
 
-# ── Sites com app passwords WP em plaintext (REGENERAR LOCAL) ──
-sites.php
+# ── Backups e artefatos com WP creds em plaintext ──
+# sites.php agora é safe pra commit (lê senhas via Env::get do .env).
+# .bak/scripts antigos ainda têm senhas hardcoded — gitignored até refactor.
 sites.php.bak
 scripts/aplicar_fixes_adsense.php
 scripts/auditar_pre_adsense.php
