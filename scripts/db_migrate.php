@@ -106,20 +106,19 @@ foreach ($files as $f) {
     }
 
     echo "[run] {$name} ... ";
+    // MySQL/MariaDB faz implicit commit em DDL (CREATE TABLE), então transaction
+    // não envolve nada útil aqui — só dá "There is no active transaction" no commit
+    // final. Idempotência vem do IF NOT EXISTS + INSERT IGNORE no próprio SQL.
     try {
-        $pdo->beginTransaction();
-        // Split por ; em statements (cuidado: split simples — não aceita ; em strings/triggers complexos)
         $statements = split_sql($sql);
         foreach ($statements as $stmt) {
             $stmt = trim($stmt);
             if ($stmt === '' || strpos($stmt, '--') === 0) continue;
             $pdo->exec($stmt);
         }
-        $pdo->commit();
         echo "ok\n";
         $aplicadasAgora++;
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
         fwrite(STDERR, "FALHOU: " . $e->getMessage() . "\n");
         exit(4);
     }
