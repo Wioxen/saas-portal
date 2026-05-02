@@ -267,9 +267,24 @@ class DiscoverInternalLinks
         // Termo só com palavras genéricas → rejeita (muito ambíguo pra backlinkar)
         if (empty($especificas)) return false;
         $tituloNorm = $norm($titulo);
-        // Match: pelo menos 1 palavra ESPECÍFICA precisa estar no título
+        // Match: pelo menos 1 palavra ESPECÍFICA precisa estar no título COMO PALAVRA INTEIRA.
+        // Antes usava strpos (substring) — bug observado: termo 'espera' matchava 'esperado'.
+        // Caso real #733: anchor 'espera' virou backlink pra 'Jamerson e Neris... antes do
+        // esperado no Vitória' (post sem relação com Cruzeiro x Atlético).
+        // Word boundary com \b respeita início/fim de palavra. Aceita também variação singular/
+        // plural via prefixo comum de 6+ chars (escola/escolas, dengue/dengues).
         foreach ($especificas as $w) {
-            if (strpos($tituloNorm, $w) !== false) return true;
+            $wEsc = preg_quote($w, '/');
+            if (preg_match('/\b' . $wEsc . '\b/u', $tituloNorm)) return true;
+            // Variação plural/singular: aceita se palavra do título compartilha prefixo de 6+ chars
+            // com o termo específico (ex: termo='ingresso' casa com 'ingressos')
+            if (mb_strlen($w) >= 6) {
+                $prefix = mb_substr($w, 0, 6);
+                if (preg_match('/\b' . preg_quote($prefix, '/') . '\w*\b/u', $tituloNorm, $m)) {
+                    // Aceita só se a palavra encontrada é "compatível" (não muito mais longa)
+                    if (mb_strlen($m[0]) <= mb_strlen($w) + 4) return true;
+                }
+            }
         }
         return false;
     }

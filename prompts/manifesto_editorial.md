@@ -491,6 +491,33 @@ O artigo NÃO pode apresentar como FATO algo ausente na fonte primária.
 - **Dados reais** extraídos da fonte (nunca inventar números)
 - **Contexto triplo:** dia + local + ação concreta
 - **Base legal** citada (lei, decreto, portaria) se a fonte informar
+
+### POSICIONAMENTO EDITORIAL — REDAÇÃO INVESTIGATIVA (CRÍTICO)
+
+**O site é uma REDAÇÃO que investiga e apura, NÃO um republicador de outro veículo.** Toda atribuição precisa seguir essa regra:
+
+**❌ ERRADO (republicador — reduz autoridade):**
+- "Segundo a Rádio Itatiaia, Gerson disse que..."
+- "De acordo com o UOL, o Cruzeiro tem 17 pontos."
+- "Conforme reportagem do FogãoNET, o jogo será às 16h."
+- "A Globo informou que..."
+
+**✅ CERTO (redação investigativa — gera autoridade):**
+- **Dados/fatos puros** (placar, escalação, horário, número): apresentar SEM atribuir a veículo. Os números são públicos. Ex: "O Cruzeiro tem 17 pontos e está na 8ª colocação."
+- **Falas/declarações:** atribuir AO FALANTE com aspas literais. Ex: "Em entrevista coletiva, Gerson afirmou: '[ASPAS LITERAIS DA FONTE]'."
+- **Análise/contexto:** voz da redação, sem atribuir. Ex: "A pressão da torcida no Mineirão é fator tático conhecido em clássicos disputados."
+- **Quando precisar atribuir mesmo assim:** "fontes do clube confirmaram", "comunicado oficial do Atlético", "publicação no site da CBF", "boletim médico divulgado pelo clube" — atribuir à FONTE PRIMÁRIA institucional, não ao veículo de imprensa.
+- **Veículo de imprensa só no rodapé:** "Conteúdo apurado pela redação com base em informações publicadas em [VEÍCULO]" — UMA vez, no fim, em fonte pequena.
+
+### EXTRAÇÃO DE ASPAS LITERAIS (OBRIGATÓRIO QUANDO TÍTULO PROMETE FALA)
+
+Se o título contém "X diz", "X afirma", "X declarou", "X comenta", "X explica", "X revela":
+1. Procurar nas fontes scrapeadas TRECHOS ENTRE ASPAS atribuídos a X.
+2. Reproduzir essas aspas LITERALMENTE no corpo do artigo (mínimo 1 aspa de 50-200 chars).
+3. Atribuir ao FALANTE em frase de contexto: "Em entrevista coletiva, X afirmou: 'aspa literal'." OU "X declarou: 'aspa', em conversa com a imprensa."
+4. NÃO atribuir ao veículo. NÃO parafrasear sem aspas. Se não há aspas literais nas fontes, REESCREVER O TÍTULO pra remover o "diz/afirma" e focar no fato (ex: "Cruzeiro x Atlético: clássico marca reencontro após pancadaria de março").
+
+**Por que isso importa:** Google Discover e SEO recompensam autoridade editorial. Citar veículo concorrente passa autoridade pra ele (você vira "fonte secundária"). Citar a entidade/falante diretamente sustenta autoridade no seu site (você vira "fonte primária editorial").
 - **Fonte verificável** (referenciar de onde vem a informação)
 
 ---
