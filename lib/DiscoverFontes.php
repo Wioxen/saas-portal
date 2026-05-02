@@ -25,7 +25,8 @@ class DiscoverFontes
      * Caso real #756: termo "Vitória x Coritiba: onde assistir" → tokens=['coritiba'].
      * Fonte 'confianca-x-vitoria-tv' não tem 'coritiba' no URL/título → rejeitada.
      */
-    private static function extrairTokensRelevancia(string $termo): array
+    /** Público pra reuso em Maquina.php que tem scraper próprio. */
+    public static function extrairTokensRelevancia(string $termo): array
     {
         $tokens = [];
         $termoLow = mb_strtolower($termo, 'UTF-8');

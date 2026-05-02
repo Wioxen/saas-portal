@@ -51,6 +51,31 @@ class Maquina
     {
         $fontes = [];
 
+        // FILTRO DE RELEVÂNCIA POR ADVERSÁRIO (caso #768 leaodabarra 2026-05-02):
+        // Maquina tinha scraper próprio que NÃO usava DiscoverFontes (com filtro). Resultado:
+        // pra trend "Vitória x Coritiba", Serper retornava fontes de OUTROS jogos (Confiança x
+        // Vitória, Athletico-PR x Vitória) que contaminavam extração de canal de TV (Aratu
+        // do Nordestão virava canal do Brasileirão). Agora reusa DiscoverFontes::extrairTokensRelevancia.
+        require_once __DIR__ . '/DiscoverFontes.php';
+        $tokensRelevancia = DiscoverFontes::extrairTokensRelevancia($keyword);
+        $temFiltro = !empty($tokensRelevancia);
+        if ($temFiltro) {
+            $this->log('🎯 Filtro relevância ativo: tokens=[' . implode(',', $tokensRelevancia) . ']');
+        }
+
+        // Helper local: testa se URL+meta da fonte tem 1+ token de relevância
+        $passaFiltro = function(string $url, array $dados) use ($tokensRelevancia, $temFiltro): bool {
+            if (!$temFiltro) return true;
+            $haystack = mb_strtolower(
+                $url . ' ' . ($dados['meta']['title'] ?? '') . ' ' . ($dados['meta']['description'] ?? ''),
+                'UTF-8'
+            );
+            foreach ($tokensRelevancia as $tok) {
+                if (mb_strpos($haystack, $tok) !== false) return true;
+            }
+            return false;
+        };
+
         // ── ETAPA 1a: URLs diretas ──
         if (!empty($urls)) {
             $this->log('🔗 ' . count($urls) . ' URL(s) para scrapear diretamente');
@@ -61,6 +86,10 @@ class Maquina
                     $dados = $this->scraper->fetch($url);
                     if (count($dados['content']['paragraphs']) < 2) {
                         $this->log('  ⚠️ pouco conteúdo, pulando');
+                        continue;
+                    }
+                    if (!$passaFiltro($url, $dados)) {
+                        $this->log('  ⊘ rejeitado por filtro de relevância (sem ' . implode('/', $tokensRelevancia) . ')');
                         continue;
                     }
                     $fontes[] = $dados;
@@ -92,6 +121,10 @@ class Maquina
                 $dados = $this->scraper->fetch($url);
                 if (count($dados['content']['paragraphs']) < 3) {
                     $this->log('  ⚠️ pouco conteúdo, pulando');
+                    continue;
+                }
+                if (!$passaFiltro($url, $dados)) {
+                    $this->log('  ⊘ rejeitado por filtro de relevância (sem ' . implode('/', $tokensRelevancia) . ')');
                     continue;
                 }
                 $fontes[] = $dados;
