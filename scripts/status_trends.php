@@ -21,8 +21,8 @@ foreach ($argv as $i => $a) {
     if (ctype_digit((string)$a)) $ids[] = (int)$a;
 }
 
-require_once __DIR__ . '/../lib/Db.php';
-$pdo = Db::pdo();
+require_once __DIR__ . '/../lib/DbConnection.php';
+$pdo = DbConnection::pdo();
 
 $where = [];
 $params = [];
