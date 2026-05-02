@@ -1262,7 +1262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         continue;
                     }
                 } elseif ($keyword !== '') {
-                    // SEM URL → Serper top 5 automático (como CLAUDE.md exige)
+                    // SEM URL → Serper top 5 automático (como o manifesto editorial exige)
                     try {
                         $serp = $serper->search($keyword, $cfg['scrape_max_try'] ?? 10);
                         $alvo = $cfg['scrape_top_n'] ?? 5;
@@ -2718,15 +2718,17 @@ a{color:#a78bfa;text-decoration:none}a:hover{text-decoration:underline}
     </div>
 
     <?php
-      // CLAUDE.md já tem TODAS as regras — blocos vazios para não duplicar/conflitar
-      // Se o CLAUDE.md não existir, carrega blocos Discover como fallback
-      $manifestoExists = file_exists(__DIR__ . '/CLAUDE.md') && filesize(__DIR__ . '/CLAUDE.md') > 500;
+      // O manifesto editorial (prompts/manifesto_editorial.md) já tem TODAS as regras —
+      // blocos vazios para não duplicar/conflitar. Se o manifesto não existir, carrega
+      // blocos Discover como fallback.
+      $manifestoPath = __DIR__ . '/prompts/manifesto_editorial.md';
+      $manifestoExists = file_exists($manifestoPath) && filesize($manifestoPath) > 500;
 
       if ($manifestoExists) {
-        // Blocos vazios — CLAUDE.md é a fonte única de verdade
+        // Blocos vazios — manifesto editorial é a fonte única de verdade
         require __DIR__ . '/_blocos_data.php';
         $blocoDefaults = array_fill(1, 8, '');
-        $blocoDefaults[1] = '(CLAUDE.md ativo — regras carregadas automaticamente. Use este bloco só para instruções EXTRAS específicas deste artigo, se necessário.)';
+        $blocoDefaults[1] = '(Manifesto editorial ativo — regras carregadas automaticamente de prompts/manifesto_editorial.md. Use este bloco só para instruções EXTRAS específicas deste artigo, se necessário.)';
       } else {
         $discoverDefaults = require __DIR__ . '/_blocos_discover.php';
         require __DIR__  . '/_blocos_data.php';

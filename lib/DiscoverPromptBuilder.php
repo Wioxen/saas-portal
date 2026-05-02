@@ -10,8 +10,9 @@
  * Agora: cada bloco tem uma versão CANÔNICA aqui. Callers compõem via chamadas aos métodos.
  * Diferenças contextuais (gerar vs revisar) viram parâmetros, não duplicação.
  *
- * Os blocos mais LONGOS (ANTI-REDUNDÂNCIA, FRASES PROIBIDAS, etc.) seguem vivendo em CLAUDE.md
- * (manifesto) — NÃO são duplicados aqui. O manifesto é injetado via manifestoClaudeMd().
+ * Os blocos mais LONGOS (ANTI-REDUNDÂNCIA, FRASES PROIBIDAS, etc.) vivem em
+ * `prompts/manifesto_editorial.md` — manifesto editorial reusável, separado de CLAUDE.md
+ * (que é só pra instruções do agente Claude Code). O manifesto é injetado via manifestoEditorial().
  */
 class DiscoverPromptBuilder
 {
@@ -30,15 +31,28 @@ class DiscoverPromptBuilder
     }
 
     /**
-     * Carrega o manifesto CLAUDE.md uma vez por request, cacheado.
+     * Carrega o manifesto editorial uma vez por request, cacheado.
      * Retorna string vazia se o arquivo não existir.
+     *
+     * Histórico: até 2026-05-02 lia CLAUDE.md, mas esse arquivo virou ambíguo (instruções pro agente
+     * Claude Code + manifesto editorial). Como CLAUDE.md tinha `## FORMATO DE ENTREGA` exigindo
+     * Markdown, o pipeline JSON quebrava. Separado em `prompts/manifesto_editorial.md`.
+     */
+    public static function manifestoEditorial(): string
+    {
+        if (self::$manifestoCache !== null) return self::$manifestoCache;
+        $path = dirname(__DIR__) . '/prompts/manifesto_editorial.md';
+        self::$manifestoCache = is_file($path) ? (string)file_get_contents($path) : '';
+        return self::$manifestoCache;
+    }
+
+    /**
+     * Alias retrocompatível pra callers antigos. Deprecated — use manifestoEditorial().
+     * @deprecated 2026-05-02
      */
     public static function manifestoClaudeMd(): string
     {
-        if (self::$manifestoCache !== null) return self::$manifestoCache;
-        $path = dirname(__DIR__) . '/CLAUDE.md';
-        self::$manifestoCache = is_file($path) ? (string)file_get_contents($path) : '';
-        return self::$manifestoCache;
+        return self::manifestoEditorial();
     }
 
     /**
@@ -239,14 +253,15 @@ class DiscoverPromptBuilder
     }
 
     /**
-     * Injeta o manifesto CLAUDE.md delimitado por cabeçalho/rodapé. Uso em TODOS os 3 prompt-builders.
+     * Injeta o manifesto editorial delimitado por cabeçalho/rodapé. Uso em TODOS os 3 prompt-builders.
+     * Lê de prompts/manifesto_editorial.md.
      */
     public static function blocoManifesto(): string
     {
-        $m = self::manifestoClaudeMd();
+        $m = self::manifestoEditorial();
         if ($m === '') return '';
-        return "═══ REGRAS ABSOLUTAS DO SISTEMA (CLAUDE.md) ═══\n"
+        return "═══ MANIFESTO EDITORIAL — REGRAS ABSOLUTAS ═══\n"
              . $m . "\n"
-             . "═══ FIM REGRAS ABSOLUTAS ═══\n\n";
+             . "═══ FIM MANIFESTO EDITORIAL ═══\n\n";
     }
 }

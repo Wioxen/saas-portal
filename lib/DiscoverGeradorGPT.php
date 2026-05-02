@@ -5,7 +5,7 @@
  * Pipeline simplificado:
  *  1. Fetch artigos via TrendsArticles
  *  2. Scrape defensivo + enrichment (JSON-LD, AMP, meta description)
- *  3. Monta prompt usando CLAUDE.md (regras) + config do discover
+ *  3. Monta prompt usando manifesto editorial (prompts/manifesto_editorial.md) + config do discover
  *  4. Chama GPT via OpenAI::chat
  *  5. Parseia JSON da resposta
  *  6. Cria post no WP (sem Maquina — publish direto)
@@ -432,7 +432,7 @@ class DiscoverGeradorGPT
         return $base;
     }
 
-    /** Monta system + user prompt usando regras do CLAUDE.md + schema de saída esperado. */
+    /** Monta system + user prompt usando manifesto editorial + schema de saída esperado. */
     private function montarPrompt(string $termo, ?array $briefing, array $fontes, string $formato): array
     {
         require_once __DIR__ . '/DiscoverPromptBuilder.php';

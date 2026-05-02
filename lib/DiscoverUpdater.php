@@ -171,10 +171,10 @@ class DiscoverUpdater
             $fontesBloco .= "Texto:\n" . mb_substr($f['texto'], 0, 2500) . "\n";
         }
 
-        $manifestoPath = dirname(__DIR__) . '/CLAUDE.md';
+        $manifestoPath = dirname(__DIR__) . '/prompts/manifesto_editorial.md';
         $manifesto = is_file($manifestoPath) ? (string)file_get_contents($manifestoPath) : '';
 
-        $system = ($manifesto !== '' ? "═══ REGRAS DO SISTEMA ═══\n{$manifesto}\n═══ FIM ═══\n\n" : '')
+        $system = ($manifesto !== '' ? "═══ MANIFESTO EDITORIAL ═══\n{$manifesto}\n═══ FIM ═══\n\n" : '')
             . "MODO: ATUALIZAÇÃO INTELIGENTE DE POST PUBLICADO\n\n"
             . "Tarefas obrigatórias:\n"
             . "1) Remover/reescrever termos temporais desatualizados no texto existente:\n"

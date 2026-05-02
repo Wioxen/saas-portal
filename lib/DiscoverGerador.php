@@ -410,7 +410,7 @@ class DiscoverGerador
         }
 
         // 3) Briefing → bloco de instrução extra pro Claude
-        $progress->reportar('montando_prompt', 'Injetando briefing + regras CLAUDE.md');
+        $progress->reportar('montando_prompt', 'Injetando briefing + manifesto editorial');
         $blocos = $this->briefingParaBlocos($briefing, $termo);
 
         // 3-CTR) INTELIGÊNCIA SERP — autocomplete + related + PAA reais via Serper.

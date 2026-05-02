@@ -455,10 +455,10 @@ class Claude
             . "- Extraia os DADOS (números, datas, nomes próprios, valores) e use-os em parágrafos originais.\n"
             . "- Identifique os TERMOS-CHAVE que aparecem nas buscas virais do nicho e use-os naturalmente (sem stuffing).\n"
             . "- Adicione ao menos UMA análise/contexto que a fonte NÃO tem (amplia valor, justifica republicação).\n"
-            // Seção DISCOVER VIRALIZAÇÃO movida pro CLAUDE.md (fonte única de verdade)
-            // Se CLAUDE.md não existir, regras ficam nos blocos customizados do usuário
+            // Seção DISCOVER VIRALIZAÇÃO vive em prompts/manifesto_editorial.md (fonte única de verdade editorial)
+            // Se manifesto não existir, regras ficam nos blocos customizados do usuário
             . "\n"
-            // (Regras Discover removidas daqui — vivem no CLAUDE.md)
+            // (Regras Discover não duplicadas aqui — vêm do manifesto via blocoManifesto() acima)
             . DiscoverPromptBuilder::regrasTemporais('gerar');
 
         // GANCHO DE ALTO CTR — extrai o risco/gap mais forte da fonte antes de gerar
@@ -578,8 +578,8 @@ SYS;
 
         if (mb_strlen($conteudoCompleto) > 8000) $conteudoCompleto = mb_substr($conteudoCompleto, 0, 8000) . '…';
 
-        // Carrega regras do manifesto
-        $manifestoPath = dirname(__DIR__) . '/CLAUDE.md';
+        // Carrega regras do manifesto editorial (separado de CLAUDE.md desde 2026-05-02)
+        $manifestoPath = dirname(__DIR__) . '/prompts/manifesto_editorial.md';
         $manifesto = file_exists($manifestoPath) ? (string)file_get_contents($manifestoPath) : '';
         $manifestoSection = '';
         // Extrai a seção de título do manifesto (aceita ambos os formatos)
@@ -995,8 +995,8 @@ TXT;
         // Estratégia em 3 níveis:
         //  (a) Marker explícito `<!--CACHE_BREAK-->` no system: split em 2 blocos —
         //      ANTES = cacheado (ephemeral 5min), DEPOIS = sem cache (varia por trend).
-        //      Maximiza cache hit em rajadas de geração que compartilham CLAUDE.md +
-        //      manifesto, mas têm briefing/persona específicos.
+        //      Maximiza cache hit em rajadas de geração que compartilham o manifesto
+        //      editorial, mas têm briefing/persona específicos.
         //  (b) System grande (>=2000 chars) sem marker → cacheia bloco único.
         //  (c) System pequeno → vai como string (não-cacheado, comportamento default).
         $payload = [

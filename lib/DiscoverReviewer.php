@@ -253,7 +253,7 @@ class DiscoverReviewer
 
         $system = "Você é um EDITOR SÊNIOR de portal viral brasileiro, especialista em Google Discover, SEO e alta retenção mobile.\n\n"
             . "TAREFA: revisar e otimizar um artigo JÁ PUBLICADO, entregando versão final + alternativas.\n\n"
-            . DiscoverPromptBuilder::blocoManifesto()  // carrega CLAUDE.md — antes faltava aqui, gerando drift
+            . DiscoverPromptBuilder::blocoManifesto()  // carrega manifesto editorial — antes faltava aqui, gerando drift
             . $clusterBloco
             . $dorBloco
             . DiscoverPromptBuilder::regrasTemporais('revisar') . "\n"
