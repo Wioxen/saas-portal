@@ -16,6 +16,54 @@ class DiscoverFontes
     public const MIN_FONTE_SOLO    = 4000;
 
     /**
+     * Extrai tokens relevantes do termo pra filtragem de fontes por relevância.
+     *
+     * Estratégia: se termo tem padrão "X x Y" / "X vs Y" (jogo de futebol), o adversário
+     * é o token mais discriminante. Sem adversário, usa palavras-chave significativas
+     * (≥4 chars, não-stopword) que distingam o trend de outros do mesmo clube.
+     *
+     * Caso real #756: termo "Vitória x Coritiba: onde assistir" → tokens=['coritiba'].
+     * Fonte 'confianca-x-vitoria-tv' não tem 'coritiba' no URL/título → rejeitada.
+     */
+    private static function extrairTokensRelevancia(string $termo): array
+    {
+        $tokens = [];
+        $termoLow = mb_strtolower($termo, 'UTF-8');
+        // Remove acentos pra match robusto (URL slugs frequentemente sem acento)
+        $termoNorm = strtr($termoLow, ['á'=>'a','à'=>'a','â'=>'a','ã'=>'a','é'=>'e','ê'=>'e','í'=>'i','ó'=>'o','ô'=>'o','õ'=>'o','ú'=>'u','ç'=>'c']);
+
+        // Padrão "X x Y" ou "X vs Y" (jogo) — extrai os 2 lados
+        if (preg_match('/\b([a-zA-Z\-]+)\s*(?:x|vs)\s+([a-zA-Z\-]+)/iu', $termoNorm, $m)) {
+            // Adversários: ambos os lados
+            $a = trim($m[1]); $b = trim($m[2]);
+            if (mb_strlen($a) >= 4) $tokens[] = $a;
+            if (mb_strlen($b) >= 4) $tokens[] = $b;
+        }
+
+        // Stopwords e palavras genéricas a ignorar
+        static $stop = [
+            'sobre','onde','assistir','ao','vivo','hoje','vai','vem','que','para','pelo',
+            'pela','dos','das','para','quando','horario','horário','escala','escalações',
+            'escalacao','escalacoes','desfalques','arbitragem','jogo','partida','rodada',
+            'campeonato','brasileirao','brasileirão','copa','série','serie','time','clube',
+            'futebol','vitoria','vitória','leao','leão','rubro','negro','barradao','barradão',
+            'salvador','bahia','vai','tem','será','sera','está','esta','com','para',
+        ];
+
+        // Tokens adicionais relevantes do termo (entidades únicas, ≥5 chars, não stop)
+        if (preg_match_all('/\b([a-z][a-z\-]{4,})\b/iu', $termoNorm, $m)) {
+            foreach ($m[1] as $w) {
+                $w = mb_strtolower(trim($w), 'UTF-8');
+                if (in_array($w, $stop, true)) continue;
+                if (in_array($w, $tokens, true)) continue;
+                $tokens[] = $w;
+            }
+        }
+
+        return array_values(array_unique($tokens));
+    }
+
+    /**
      * Resolve threshold considerando override per-site no $cfg.
      * Permite que sites com fontes naturalmente mais curtas (ex: esportes — texto
      * jornalístico de jogo é breve) tenham critério mais permissivo. Outros sites
@@ -98,8 +146,17 @@ class DiscoverFontes
         $minFonteSolo = $this->thresh('min_fonte_solo');
         $maxFontes    = $this->thresh('max_fontes');
 
+        // FILTRO DE RELEVÂNCIA POR ADVERSÁRIO (caso #756 leaodabarra 2026-05-02):
+        // Pra trend tipo "Vitória x Coritiba" Serper retornava 4 fontes com palavra "Vitória"
+        // — mas 2 eram de OUTROS jogos (Confiança x Vitória, Athletico-PR x Vitória) que
+        // contaminaram extração de fatos (TV Aratu do Nordestão virou canal do Brasileirão).
+        // Solução: extrair adversário do termo (depois do " x " ou " vs ") e exigir presença
+        // dele na URL ou título da fonte antes de scrape.
+        $tokensRelevancia = self::extrairTokensRelevancia($termo);
+
         $fontesOk = [];
         $totalChars = 0;
+        $fontesRejeitadasRelevancia = [];
         foreach ($urlsCandidatas as $url) {
             try {
                 $f = $this->scraper->fetch($url);
@@ -108,10 +165,29 @@ class DiscoverFontes
                 if (!empty($f['content']['paragraphs'])) {
                     $textoLen = strlen(implode(' ', $f['content']['paragraphs']));
                 }
-                if ($textoLen >= $minPorFonte) {
-                    $fontesOk[]   = ['url' => $url, 'fonte' => $f, 'chars' => $textoLen];
-                    $totalChars  += $textoLen;
+                if ($textoLen < $minPorFonte) continue;
+
+                // Filtragem por relevância: se termo tem adversário (ex: "Vitória x Coritiba"),
+                // a fonte só passa se URL ou título mencionam o adversário. Evita contaminação
+                // de fatos entre jogos diferentes do mesmo clube.
+                if (!empty($tokensRelevancia)) {
+                    $haystack = mb_strtolower(
+                        $url . ' ' . ($f['meta']['title'] ?? '') . ' ' . ($f['meta']['description'] ?? ''),
+                        'UTF-8'
+                    );
+                    $matches = 0;
+                    foreach ($tokensRelevancia as $tok) {
+                        if (mb_strpos($haystack, $tok) !== false) $matches++;
+                    }
+                    // Exige >=1 match dos tokens significativos (adversário ou contexto único)
+                    if ($matches === 0) {
+                        $fontesRejeitadasRelevancia[] = $url;
+                        continue;
+                    }
                 }
+
+                $fontesOk[]   = ['url' => $url, 'fonte' => $f, 'chars' => $textoLen];
+                $totalChars  += $textoLen;
             } catch (Throwable $e) { /* pula */ }
             if (count($fontesOk) >= $maxFontes && $totalChars >= $minAgregado) break;
         }
@@ -145,6 +221,8 @@ class DiscoverFontes
             'fontes_ok'       => $fontesOk,
             'chars_totais'    => $totalChars,
             'fontes_tentadas' => count($urlsCandidatas),
+            'fontes_rejeitadas_relevancia' => $fontesRejeitadasRelevancia ?? [],
+            'tokens_relevancia' => $tokensRelevancia ?? [],
             'textos'          => $textos,
         ];
     }
