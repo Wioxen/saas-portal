@@ -399,7 +399,18 @@ class DiscoverGeradorGPT
         }
 
         // 8) DB update
-        $statusFinal = (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok']) ? 'suspeita' : 'publicado';
+        // POLÍTICA fidelity_warn (2026-05-02): se SourceFidelityValidator detectou alucinação,
+        // status NÃO vira 'publicado' — fica 'fidelity_warn' pra revisão humana. Post WP é
+        // default 'draft', então conteúdo não vaza ao ar até alguém aprovar.
+        $fidelityFail = isset($validationReport['fidelity']['severity'])
+            && $validationReport['fidelity']['severity'] === 'fail';
+        if ($fidelityFail) {
+            $statusFinal = 'fidelity_warn';
+        } elseif (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok']) {
+            $statusFinal = 'suspeita';
+        } else {
+            $statusFinal = 'publicado';
+        }
         if ($trendId > 0) {
             $this->db->updateStatus($trendId, $statusFinal, [
                 'url_post'        => $editUrl,
@@ -411,6 +422,7 @@ class DiscoverGeradorGPT
                 'quality_detalhes'=> $quality['detalhes'] ?? null,
                 'quality_melhorias'=> $quality['melhorias'] ?? [],
                 'gerado_por'      => "gpt:{$this->modelo}",
+                'validation'      => $validationReport ?? null,
             ]);
         }
 

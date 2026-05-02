@@ -1450,11 +1450,24 @@ class DiscoverGerador
         }
 
         // 7) Atualiza DB simulado
-        $statusFinal = (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok'])
-            ? 'suspeita'
-            : (!empty($htmlValidatorInfo) && isset($htmlValidatorInfo['ok']) && !$htmlValidatorInfo['ok']
-                ? 'html_invalido'
-                : 'publicado');
+        // POLÍTICA fidelity_warn (2026-05-02): se SourceFidelityValidator detectou alucinação
+        // (nome ou URL com path sem lastro na fonte), NÃO marca como 'publicado'. Status fica
+        // 'fidelity_warn' pra revisão humana antes de ir ao ar. Post WP já é draft por default
+        // (WP_DEFAULT_STATUS=draft), então o conteúdo não vaza enquanto não for revisado.
+        // Caso real: post #728 leaodabarra atribuiu falsamente "Kaio Jorge assume posto" à
+        // Rádio Itatiaia (fonte não dizia isso) — risco editorial e jurídico.
+        $fidelityFail = isset($validationReport['fidelity']['severity'])
+            && $validationReport['fidelity']['severity'] === 'fail';
+
+        if ($fidelityFail) {
+            $statusFinal = 'fidelity_warn';
+        } elseif (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok']) {
+            $statusFinal = 'suspeita';
+        } elseif (!empty($htmlValidatorInfo) && isset($htmlValidatorInfo['ok']) && !$htmlValidatorInfo['ok']) {
+            $statusFinal = 'html_invalido';
+        } else {
+            $statusFinal = 'publicado';
+        }
         if ($trendId > 0) {
             $extras = [
                 'url_post'        => $editUrl,
@@ -1472,6 +1485,7 @@ class DiscoverGerador
                 'onesignal_info'  => $onesignalInfo,
                 'indexing_info'   => $indexingInfo,
                 'meta_info'       => $metaInfo,
+                'validation'      => $validationReport ?? null,
             ];
             if (!empty($tituloVariantes)) {
                 $extras['titulo_variantes'] = $tituloVariantes;
