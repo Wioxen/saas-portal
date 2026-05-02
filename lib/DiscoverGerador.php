@@ -471,6 +471,32 @@ class DiscoverGerador
                       . "    de 2026 podem ter mudado. Apenas o que está nas fontes scrapeadas é factual.\n"
                       . "═══ FIM DISCIPLINA FACTUAL ═══\n";
 
+            $blocos[] = "\n═══ ESPORTES — CITAR FONTES SEM PARECER CÓPIA ═══\n"
+                      . "PROIBIDO citar veículo de imprensa como BASE do artigo. NUNCA escreva:\n"
+                      . "  ✗ 'baseado no Terra/UOL/Globo'\n"
+                      . "  ✗ 'segundo o site X' como única atribuição\n"
+                      . "  ✗ 'de acordo com o portal Y' no parágrafo de abertura\n"
+                      . "Esse padrão posiciona o artigo como CÓPIA — Google prefere o original\n"
+                      . "(o portal citado), não você. Resultado: ranking baixo, AdSense em risco.\n\n"
+                      . "Em vez disso:\n"
+                      . "  ✓ Cite a FONTE PRIMÁRIA (ex: 'CBF confirmou', 'clube divulgou em comunicado',\n"
+                      . "    'transmissora oficial anunciou', 'técnico declarou em entrevista coletiva')\n"
+                      . "  ✓ Quando precisar mencionar o veículo, use NO MEIO do texto, não como base:\n"
+                      . "    'A escalação foi divulgada na manhã desta sexta, conforme cobertura\n"
+                      . "    da imprensa esportiva.'\n"
+                      . "  ✓ NÃO mencione o veículo no parágrafo de abertura.\n"
+                      . "═══ FIM CITAR FONTES ═══\n";
+
+            $blocos[] = "\n═══ ESPORTES — ESTRUTURA DO ARTIGO ═══\n"
+                      . "  ✗ NÃO inclua <h1> no corpo do artigo. WordPress renderiza H1 do título\n"
+                      . "    automaticamente via tema. Outro H1 = duplicate H1 = penalização SEO.\n"
+                      . "  ✓ Use H2 e H3 pra estrutura interna. Subseções com H3 dentro de cada H2.\n"
+                      . "  ✓ Primeira frase do artigo é EVENTO + APOSTAS DA RODADA, não meta-narração:\n"
+                      . "    ✗ 'Buscas por onde assistir Palmeiras x Santos saltaram esta semana...'\n"
+                      . "    ✓ 'Palmeiras e Santos se enfrentam neste sábado às 18h30 no Allianz Parque,\n"
+                      . "       em jogo que pode mexer diretamente na zona de classificação.'\n"
+                      . "═══ FIM ESTRUTURA ═══\n";
+
             $blocos[] = "\n═══ ESPORTES — PROFUNDIDADE EXIGIDA ═══\n"
                       . "Quando as fontes cobrirem, INCLUA (cada um em H3 próprio):\n"
                       . "  • Forma recente: últimos 3-5 resultados de cada time (placar + adversário + local)\n"

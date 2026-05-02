@@ -227,9 +227,11 @@ return [
              'curso gratuito', 'curso ead', 'bolsa família', 'bpc', 'auxílio gás', 'inss', 'fgts',
              'consignado', 'cartão de crédito sem anuidade', 'investimento renda fixa', 'tesouro direto',
          ],
-         // Author box inline desabilitada — tema WP + RankMath já renderizam autor.
-         // Caixa do TrustBlocks duplicaria. Schema Person continua sendo injetado.
+         // Author box + breadcrumb visual desabilitados — tema WP + RankMath
+         // já renderizam ambos. TrustBlocks duplicaria. Schemas (Person +
+         // BreadcrumbList) continuam sendo injetados em JSON-LD (invisíveis).
          'author_box_inline' => false,
+         'breadcrumb_inline' => false,
          'persona' => [
              'autor'            => 'Equipe Leão da Barra',
              'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',

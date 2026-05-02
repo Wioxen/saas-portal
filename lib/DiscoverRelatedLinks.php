@@ -66,6 +66,13 @@ class DiscoverRelatedLinks
     {
         if (strpos($html, 'data-cc-breadcrumb') !== false) return $html; // idempotente
 
+        // Site pode desabilitar inline breadcrumb quando tema WP já renderiza
+        // (RankMath / Astra / etc costumam fazer isso). Schema BreadcrumbList
+        // continua sendo gerado por DiscoverSchemas (invisível, ajuda SEO).
+        if (isset($cfg['breadcrumb_inline']) && $cfg['breadcrumb_inline'] === false) {
+            return $html;
+        }
+
         $siteUrl = rtrim((string)($cfg['wp_url'] ?? ''), '/');
         $siteName = (string)($cfg['site_name'] ?? $cfg['_site_name'] ?? 'Início');
         $clusterNome = (string)($trend['cluster_detect']['nome'] ?? '');

@@ -55,6 +55,11 @@ class DiscoverPostProcess
         // 0e-bis. Dedupe de SCHEMA JSON-LD FAQPage duplicado (mantém só o último)
         $html = self::dedupeSchemaFaq($html);
 
+        // 0e-ter. Remove H1 do body — WP já renderiza H1 do título via tema.
+        // LLM às vezes inclui H1 dentro do content, gerando duplicate H1 no DOM
+        // (perigoso pra SEO: Google confunde qual é o título canônico do post).
+        $html = preg_replace('#<h1\b[^>]*>.*?</h1>#isu', '', $html) ?? $html;
+
         // 0f. Dedupe de "Leia também" / "Veja também" — mantém só 1 bloco (o último)
         $html = self::dedupeLeiaTambem($html);
 
@@ -1214,6 +1219,17 @@ class DiscoverPostProcess
     {
         $t = trim($titulo);
         if ($t === '') return $t;
+
+        // ─── REMOVE SUFIXO " - VeiculoName" típico de Google News ───
+        // Padrões: "Title - UOL", "Title - Folha de S.Paulo", "Title - LANCE!"
+        // Riscos: pode bater em título legítimo com hífen no final ("Curso X - 2026")
+        // Mitigação: só remove se sufixo for ≤30 chars E não começar com número.
+        // Lista de veículos comuns evita falsos positivos em títulos legítimos.
+        $veiculosComuns = '(?:UOL|LANCE!?|Globo|G1|Terra|Folha|Estadão|Estadao|O\s+Dia|R7|CNN(?:\s+Brasil)?|ESPN(?:\s+Brasil)?|Trivela|Veja|IstoÉ|Isto[Éé]|GE|Goal|Metrópoles|Metropoles|TecMundo|Tecnoblog|Olhar\s+Digital|Canaltech|InfoMoney|Exame|Forbes|Reuters|AP|AFP|BBC|Diário\s+\S+|Jornal\s+\S+|Folha\s+de\s+\S+(?:\s+\S+)?|Coluna\s+do\s+\S+|Rádio\s+\S+|F1Mania\.net)';
+        $t = preg_replace('/\s+[-–—]\s+' . $veiculosComuns . '\s*$/iu', '', $t) ?? $t;
+        // Fallback genérico: " - WordCapitalizadaCurta" no fim (≤25 chars, sem números)
+        $t = preg_replace('/\s+[-–—]\s+([A-ZÀ-Ý][A-Za-zÀ-ÿ\s\.\!]{0,23})\s*$/u', '', $t) ?? $t;
+
         // Primeira ocorrência de em-dash/en-dash → ":"
         $t = preg_replace('/\s*[—–]\s*/u', ': ', $t, 1) ?? $t;
         // Demais ocorrências (raras) → ", "
