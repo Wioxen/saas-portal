@@ -377,6 +377,27 @@ class DiscoverGeradorGPT
             try { $this->wp->atualizarPost($postId, ['title' => $titulo]); } catch (Throwable $e) {}
         }
 
+        // GUARD FINAL ANTI-TRAVESSÃO (paridade com Claude path)
+        // Manifesto editorial proíbe travessões (—/–) no corpo. PostProcess principal já tenta remover,
+        // mas algum stage subsequente pode re-introduzir. Esse guard re-aplica como última checagem.
+        if ($postId > 0) {
+            try {
+                $postFinal = $this->wp->getPost($postId);
+                $contentFinal = $postFinal['content']['raw'] ?? $postFinal['content']['rendered'] ?? '';
+                if ($contentFinal !== '') {
+                    $emDash = substr_count($contentFinal, "\xE2\x80\x94");
+                    $enDash = substr_count($contentFinal, "\xE2\x80\x93");
+                    if ($emDash + $enDash > 0) {
+                        $contentLimpo = DiscoverPostProcess::substituirTravessaoContextual($contentFinal);
+                        if ($contentLimpo !== $contentFinal) {
+                            $this->wp->atualizarPost($postId, ['content' => $contentLimpo]);
+                            $progress->reportar('guard_travessao', "Removidos {$emDash} em-dash + {$enDash} en-dash que escaparam do PostProcess");
+                        }
+                    }
+                }
+            } catch (Throwable $e) { /* guard não bloqueia */ }
+        }
+
         // 8) DB update
         $statusFinal = (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok']) ? 'suspeita' : 'publicado';
         if ($trendId > 0) {

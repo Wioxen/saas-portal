@@ -156,6 +156,13 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         // típico de score do nicho fica abaixo (ex: esportes raramente passa de 7).
         'trend_scoring_threshold',
         'trend_scoring_enabled',
+        // Thresholds de scraping (DiscoverFontes::thresh) — default global é conservador
+        // (1200/3000/4000/4). Override pra nichos com texto naturalmente curto (esportes:
+        // notícias de jogo/mercado costumam ter 1500-2500 chars).
+        'fontes_min_por_fonte',
+        'fontes_min_agregado',
+        'fontes_min_fonte_solo',
+        'fontes_max_fontes',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];

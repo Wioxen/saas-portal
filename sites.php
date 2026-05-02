@@ -240,6 +240,15 @@ return [
          // que aluvina nomes de técnicos/URLs e ignora o manifesto. Threshold 5.5 alinhado
          // com scoring de fonte do leaodabarra → mantém Sonnet como principal.
          'trend_scoring_threshold' => 5.5,
+         // Esportes tem texto jornalístico naturalmente curto (notícia de jogo / mercado /
+         // história individual: 1500-3000 chars). Defaults globais (1200/3000/4000) rejeitavam
+         // trends como Hulk e Kudiess (1700-1900 chars de fonte única). Override mais permissivo:
+         //   - aceita 1 fonte com ≥1500 chars (era 4000)
+         //   - aceita 2+ fontes somando ≥2000 chars (era 3000)
+         //   - mantém min por fonte em 800 (era 1200) pra acolher resumos de notícia esportiva
+         'fontes_min_por_fonte'  => 800,
+         'fontes_min_agregado'   => 2000,
+         'fontes_min_fonte_solo' => 1500,
          'persona' => [
              'autor'            => 'Equipe Leão da Barra',
              'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',

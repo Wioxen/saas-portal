@@ -675,7 +675,12 @@ class DiscoverPostProcess
      *  4. Travessão no início de item de lista (diálogo/enumeração): mantém
      *  5. Em h2/h3/h4: NÃO mexe (títulos já passam por normalizarTitulo separadamente)
      */
-    private static function substituirTravessaoContextual(string $html): string
+    /**
+     * Substitui travessão (— em-dash, – en-dash) por pontuação contextual PT-BR.
+     * Público pra permitir uso como guard final em geradores (caso travessão seja
+     * reintroduzido por algum stage do pipeline após o processar() principal).
+     */
+    public static function substituirTravessaoContextual(string $html): string
     {
         // Isola blocos que NÃO podem ser mexidos (pre, code, script, style, h2-h6, blockquote emoji-alert)
         $protegidos = [];

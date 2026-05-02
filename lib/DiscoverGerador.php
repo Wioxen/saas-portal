@@ -1426,6 +1426,29 @@ class DiscoverGerador
             }
         } catch (Throwable $e) { /* meta tags são PLUS */ }
 
+        // 6-quater) GUARD FINAL ANTI-TRAVESSÃO
+        // Manifesto editorial proíbe travessões (—/–) no corpo. PostProcess principal já tenta remover,
+        // mas algum stage subsequente (LinkValidator, internal/authority/related links, MetaTags) pode
+        // re-introduzir via concatenação. Caso real: post #716 leaodabarra ficou com 12 travessões
+        // mesmo com PostProcess passando. Esse guard re-aplica a substituição como última checagem.
+        if (!empty($postId)) {
+            try {
+                $postFinal = $this->wp->getPost((int)$postId);
+                $contentFinal = $postFinal['content']['raw'] ?? $postFinal['content']['rendered'] ?? '';
+                if ($contentFinal !== '') {
+                    $emDash = substr_count($contentFinal, "\xE2\x80\x94");
+                    $enDash = substr_count($contentFinal, "\xE2\x80\x93");
+                    if ($emDash + $enDash > 0) {
+                        $contentLimpo = DiscoverPostProcess::substituirTravessaoContextual($contentFinal);
+                        if ($contentLimpo !== $contentFinal) {
+                            $this->wp->atualizarPost((int)$postId, ['content' => $contentLimpo]);
+                            $progress->reportar('guard_travessao', "Removidos {$emDash} em-dash + {$enDash} en-dash que escaparam do PostProcess");
+                        }
+                    }
+                }
+            } catch (Throwable $e) { /* guard não bloqueia */ }
+        }
+
         // 7) Atualiza DB simulado
         $statusFinal = (!empty($auditoria) && isset($auditoria['ok']) && !$auditoria['ok'])
             ? 'suspeita'

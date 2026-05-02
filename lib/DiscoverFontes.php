@@ -15,6 +15,33 @@ class DiscoverFontes
     /** Tolerância — se só 1 fonte passou mas tem muito conteúdo, aceita. */
     public const MIN_FONTE_SOLO    = 4000;
 
+    /**
+     * Resolve threshold considerando override per-site no $cfg.
+     * Permite que sites com fontes naturalmente mais curtas (ex: esportes — texto
+     * jornalístico de jogo é breve) tenham critério mais permissivo. Outros sites
+     * mantêm o default conservador.
+     *
+     * Keys aceitas em $cfg:
+     *   fontes_min_por_fonte  → override de MIN_POR_FONTE
+     *   fontes_min_agregado   → override de MIN_AGREGADO
+     *   fontes_min_fonte_solo → override de MIN_FONTE_SOLO
+     *   fontes_max_fontes     → override de MAX_FONTES
+     */
+    private function thresh(string $key): int
+    {
+        $cfgKey = 'fontes_' . $key;
+        if (isset($this->cfg[$cfgKey]) && is_numeric($this->cfg[$cfgKey])) {
+            return (int)$this->cfg[$cfgKey];
+        }
+        $constMap = [
+            'min_por_fonte'  => self::MIN_POR_FONTE,
+            'min_agregado'   => self::MIN_AGREGADO,
+            'min_fonte_solo' => self::MIN_FONTE_SOLO,
+            'max_fontes'     => self::MAX_FONTES,
+        ];
+        return $constMap[$key] ?? 0;
+    }
+
     private TrendsArticles $artigos;
     private Scraper $scraper;
     private ?Serper $serper = null;
@@ -66,6 +93,11 @@ class DiscoverFontes
             return ['ok' => false, 'erro' => 'Sem URLs resolvidas (TrendsArticles + Serper).', 'fontes_ok' => [], 'chars_totais' => 0, 'textos' => []];
         }
 
+        $minPorFonte  = $this->thresh('min_por_fonte');
+        $minAgregado  = $this->thresh('min_agregado');
+        $minFonteSolo = $this->thresh('min_fonte_solo');
+        $maxFontes    = $this->thresh('max_fontes');
+
         $fontesOk = [];
         $totalChars = 0;
         foreach ($urlsCandidatas as $url) {
@@ -76,22 +108,22 @@ class DiscoverFontes
                 if (!empty($f['content']['paragraphs'])) {
                     $textoLen = strlen(implode(' ', $f['content']['paragraphs']));
                 }
-                if ($textoLen >= self::MIN_POR_FONTE) {
+                if ($textoLen >= $minPorFonte) {
                     $fontesOk[]   = ['url' => $url, 'fonte' => $f, 'chars' => $textoLen];
                     $totalChars  += $textoLen;
                 }
             } catch (Throwable $e) { /* pula */ }
-            if (count($fontesOk) >= self::MAX_FONTES && $totalChars >= self::MIN_AGREGADO) break;
+            if (count($fontesOk) >= $maxFontes && $totalChars >= $minAgregado) break;
         }
 
-        // Critério: 2+ fontes OU 1 fonte robusta (≥ 5000 chars = rich content tipo JSON-LD articleBody)
-        $unicaRobusta = count($fontesOk) === 1 && ($fontesOk[0]['chars'] ?? 0) >= self::MIN_FONTE_SOLO;
-        $multiOk      = count($fontesOk) >= 2 && $totalChars >= self::MIN_AGREGADO;
+        // Critério: 2+ fontes OU 1 fonte robusta (>= MIN_FONTE_SOLO chars)
+        $unicaRobusta = count($fontesOk) === 1 && ($fontesOk[0]['chars'] ?? 0) >= $minFonteSolo;
+        $multiOk      = count($fontesOk) >= 2 && $totalChars >= $minAgregado;
 
         if (!$multiOk && !$unicaRobusta) {
             return [
                 'ok'               => false,
-                'erro'             => sprintf('Fontes insuficientes: %d OK (mín 2 ou 1 com ≥%d chars), %d chars totais (mín %d). Paywall/JS.', count($fontesOk), self::MIN_FONTE_SOLO, $totalChars, self::MIN_AGREGADO),
+                'erro'             => sprintf('Fontes insuficientes: %d OK (mín 2 ou 1 com ≥%d chars), %d chars totais (mín %d). Paywall/JS.', count($fontesOk), $minFonteSolo, $totalChars, $minAgregado),
                 'fontes_ok'        => $fontesOk,
                 'chars_totais'     => $totalChars,
                 'fontes_tentadas'  => count($urlsCandidatas),
@@ -121,7 +153,7 @@ class DiscoverFontes
     private function enriquecerFonte(array $f, string $url): array
     {
         $charsAtual = strlen(implode(' ', $f['content']['paragraphs'] ?? []));
-        if ($charsAtual >= self::MIN_POR_FONTE) return $f;
+        if ($charsAtual >= $this->thresh('min_por_fonte')) return $f;
 
         // FALLBACK 1 — articleBody em JSON-LD
         $jsonld = $f['meta']['jsonld'] ?? [];
@@ -137,7 +169,7 @@ class DiscoverFontes
             }
         }
         $charsAtual = strlen(implode(' ', $f['content']['paragraphs'] ?? []));
-        if ($charsAtual >= self::MIN_POR_FONTE) return $f;
+        if ($charsAtual >= $this->thresh('min_por_fonte')) return $f;
 
         // FALLBACK 2 — versão AMP
         $ampUrl = $this->detectarAmp($url, $jsonld);
@@ -154,7 +186,7 @@ class DiscoverFontes
             } catch (Throwable $e) { /* ignora */ }
         }
         $charsAtual = strlen(implode(' ', $f['content']['paragraphs'] ?? []));
-        if ($charsAtual >= self::MIN_POR_FONTE) return $f;
+        if ($charsAtual >= $this->thresh('min_por_fonte')) return $f;
 
         // FALLBACK 3 — description/og:description
         $descritivo = '';
