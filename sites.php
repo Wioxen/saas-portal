@@ -241,13 +241,16 @@ return [
          ],
          // ─── NICHO EXCLUSIVO ESPORTE CLUBE VITÓRIA ───
          // Trend só é aceito se contém 1+ termo desta lista. Caso contrário, status='fora_escopo_vitoria'.
-         // 4 grupos de discriminação:
+         // 5 grupos de discriminação:
          //   A) apelidos/identidade do clube (alto discriminante)
          //   B) pessoas únicas (presidente, técnico, elenco — extraídas Wikipedia 2026-05-02)
-         //   C) competições + Vitória co-ocorrente (precisa palavra "vitória" no termo)
-         //   D) domínios oficiais
+         //   C) padrões esportivos com "vitória" (verbos esportivos comuns que distinguem clube
+         //      de "vitória=conquista". Caso #742 2026-05-02: "Vitória empata com Avaí no Sub-20"
+         //      foi bloqueado errado porque só "vitória" sozinho não estava na lista.)
+         //   D) competições e clássicos
+         //   E) domínios e marcas oficiais
          'nicho_required_terms' => [
-             // A — identidade do clube
+             // A — identidade do clube (sem ambiguidade)
              'esporte clube vitória', 'ec vitória', 'leão da barra', 'leao da barra',
              'rubro-negro baiano', 'rubronegro baiano', 'rubro-negro do vitória',
              'barradão', 'barradao', 'estádio manoel barradas', 'manoel barradas',
@@ -257,7 +260,7 @@ return [
              'fábio mota', 'fabio mota',
              // Técnico
              'jair ventura',
-             // Goleiros (sobrenomes únicos no contexto)
+             // Goleiros
              'lucas arcanjo', 'gabriel vasconcellos', 'yuri sena', 'fintelman',
              // Zagueiros
              'camutanga', 'riccieli',
@@ -272,11 +275,39 @@ return [
              'kike saverio', 'fabri vitória', 'renzo lópez', 'erick serafim',
              'pedro henrique vitória', 'diego tarzia', 'mário sérgio vitória',
              'osvaldo filho', 'renato kayzer', 'anderson bispo',
-             // C — competições (geralmente vêm com "vitória" no termo)
+             // C — padrões esportivos com "vitória" (clube, não conquista)
+             // Confronto / partida
+             'vitória x ', 'x vitória', 'vitória vs ', 'vs vitória', 'vitória contra ',
+             // Verbos de jogo
+             'vitória vence', 'vitória venceu', 'vitória empata', 'vitória empatou',
+             'vitória perde', 'vitória perdeu', 'vitória goleou', 'vitória derrota',
+             'vitória de virada', 'vitória nos pênaltis', 'vitória nos acréscimos',
+             'vitória sofre', 'vitória sofreu',
+             // Mercado / institucional
+             'vitória contrata', 'vitória contratou', 'vitória anuncia', 'vitória anunciou',
+             'vitória rescinde', 'vitória rescindiu', 'vitória demite', 'vitória demitiu',
+             'vitória aprova', 'vitória negocia', 'vitória oficializa', 'vitória oficializou',
+             'vitória renova', 'vitória renovou', 'vitória apresenta', 'vitória apresentou',
+             'vitória contrata', 'vitória dispensa', 'vitória inscreve',
+             'vitória relaciona', 'vitória relacionados',
+             // Status
+             'vitória escala', 'vitória escalado', 'vitória escalação', 'escalação do vitória',
+             'time do vitória', 'elenco do vitória', 'desfalque do vitória', 'desfalques do vitória',
+             'titular do vitória', 'titulares do vitória', 'reserva do vitória', 'reservas do vitória',
+             'gol do vitória', 'gols do vitória', 'penalti do vitória', 'pênalti do vitória',
+             'expulsão do vitória', 'cartão amarelo do vitória', 'lesão no vitória',
+             'pré-jogo vitória', 'pre-jogo vitória', 'pós-jogo vitória', 'pos-jogo vitória',
+             // Diretoria/SAF
+             'saf vitória', 'saf do vitória', 'sócio vitória', 'sócios vitória',
+             'eleição vitória', 'presidente do vitória',
+             // Time / classificação
+             'jogo do vitória', 'jogos do vitória', 'tabela do vitória', 'classificação do vitória',
+             'situação do vitória', 'campanha do vitória', 'sequência do vitória',
+             // D — competições e clássicos (Vitória atua)
              'ba-vi', 'bavi', 'clássico ba-vi',
-             'campeonato baiano', 'baianão',
-             // D — domínios e marcas
-             'ecvitoria.com.br', 'vitória na tv', 'vitorianatv',
+             'campeonato baiano', 'baianão', 'baiano sub-20', 'baiano sub-17',
+             // E — domínios e marcas
+             'ecvitoria.com.br', 'vitória na tv', 'vitorianatv', '@vitorianatv',
          ],
          // Author box + breadcrumb visual + schemas duplicados desabilitados —
          // tema WP + RankMath já renderizam tudo isso. RankMath gera NewsArticle

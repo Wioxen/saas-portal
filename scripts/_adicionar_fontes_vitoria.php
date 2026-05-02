@@ -30,7 +30,7 @@ if (!is_array($j) || !isset($j['fontes']) || !is_array($j['fontes'])) {
 $novas = [
     [
         'nome'                  => 'Bahia Notícias — EC Vitória',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:bahianoticias.com.br+%22Vit%C3%B3ria%22+leao&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:bahianoticias.com.br+%22Vit%C3%B3ria%22+leao+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
@@ -40,7 +40,7 @@ $novas = [
     ],
     [
         'nome'                  => 'BNews — Esporte Vitória',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:bnews.com.br+%22Vit%C3%B3ria%22+leao&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:bnews.com.br+%22Vit%C3%B3ria%22+leao+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
@@ -50,7 +50,7 @@ $novas = [
     ],
     [
         'nome'                  => 'Arena Rubro-Negra (fan-site Vitória)',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:arenarubronegra.com&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:arenarubronegra.com+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
@@ -60,7 +60,7 @@ $novas = [
     ],
     [
         'nome'                  => 'MeuVitória (fan-site)',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:meuvitoria.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:meuvitoria.com.br+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
@@ -70,7 +70,7 @@ $novas = [
     ],
     [
         'nome'                  => 'Correio 24h — EC Vitória',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:correio24horas.com.br+%22Vit%C3%B3ria%22+rubro-negro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:correio24horas.com.br+%22Vit%C3%B3ria%22+rubro-negro+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
@@ -80,7 +80,7 @@ $novas = [
     ],
     [
         'nome'                  => 'Terra — Esporte Clube Vitória',
-        'url_rss'               => 'https://news.google.com/rss/search?q=site:terra.com.br+%22Esporte+Clube+Vit%C3%B3ria%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'url_rss'               => 'https://news.google.com/rss/search?q=site:terra.com.br+%22Esporte+Clube+Vit%C3%B3ria%22+when%3A7d&hl=pt-BR&gl=BR&ceid=BR:pt-419',
         'tipo'                  => 'rss',
         'cluster_hint'          => 'esportes',
         'site_target'           => 'leaodabarra',
