@@ -77,11 +77,66 @@ class Scraper
             'jsonld'       => $this->getJsonLd($xp),
         ];
 
-        // Remove ruído
-        $this->removeNodes($xp, '//script | //style | //noscript | //iframe | //nav | //header | //footer | //aside | //form');
-        $this->removeNodes($xp, '//*[contains(@class,"ads") or contains(@class,"advertis") or contains(@class,"comment") or contains(@class,"share") or contains(@class,"related") or contains(@class,"sidebar") or contains(@class,"newsletter")]');
+        // Remove ruído — fix #36 (caso #772 leaodabarra): scraper pegava sidebar/leia-também
+        // dentro de <article> e contaminava conteúdo (ex: 'TV Aratu' do Confiança x Vitória
+        // aparecia em sidebar do post de Vitória x Coritiba e era injetado como canal).
+        // Agora limpeza muito mais agressiva ANTES de findMain().
+        $this->removeNodes($xp, '//script | //style | //noscript | //iframe | //nav | //header | //footer | //aside | //form | //embed | //object');
 
-        // Acha conteúdo principal
+        // Classes/IDs comuns de blocos NÃO-CONTEÚDO (sidebar, leia-também, share, etc.)
+        $padroesRuido = [
+            'ads', 'advertis', 'banner', 'sponsor', 'patrocin',
+            'comment', 'comentari', 'replies',
+            'share', 'social', 'compartilh',
+            'related', 'relacionad', 'leia-tambem', 'leia-mais', 'veja-tambem', 'veja-mais',
+            'mais-noticias', 'mais-noticia', 'outras-noticias', 'recomend',
+            'sidebar', 'side-bar', 'aside-content',
+            'newsletter', 'subscribe', 'inscre',
+            'breadcrumb', 'pagination', 'paginacao',
+            'nav-links', 'nav-menu', 'navigation', 'navbar',
+            'footer', 'rodape', 'copyright',
+            'menu', 'mega-menu', 'hamburger',
+            'widget', 'gadget',
+            'tag-cloud', 'tagcloud', 'post-tags',
+            'author-bio', 'author-info',
+            'embed-twitter', 'embed-instagram', 'tweet-embed',
+            'popup', 'modal', 'overlay',
+            'cookie', 'gdpr', 'consent',
+            'g1-related', 'g1-fullcard', 'g1-feed', 'g1-load-more',  // tema g1 do leaodabarra
+            'wp-block-latest-posts', 'wp-block-yoast-related', 'yarpp',
+            'jp-relatedposts', 'crp_related',
+        ];
+        $expr = [];
+        foreach ($padroesRuido as $p) {
+            $expr[] = "contains(@class,\"{$p}\")";
+            $expr[] = "contains(@id,\"{$p}\")";
+        }
+        $this->removeNodes($xp, '//*[' . implode(' or ', $expr) . ']');
+
+        // Remove tags <details> (FAQ pode ser sidebar de OUTRO artigo)
+        // E listas de "leia também" inline com múltiplos <a>
+        $this->removeNodes($xp, '//ul[count(.//a) >= 4 and count(.//p) <= 1]');
+        $this->removeNodes($xp, '//ol[count(.//a) >= 4 and count(.//p) <= 1]');
+
+        // PRIORIDADE 1: articleBody do JSON-LD (NewsArticle/Article schema)
+        // Esse é o conteúdo que o publisher MARCOU como artigo principal — sem sidebar.
+        $articleBodyJsonld = $this->extrairArticleBodyJsonld($meta['jsonld'] ?? []);
+        if ($articleBodyJsonld !== '' && mb_strlen($articleBodyJsonld) > 500) {
+            $paras = preg_split('/\n\s*\n|(?<=[.!?])\s{2,}/u', $articleBodyJsonld, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $paras = array_values(array_filter(array_map('trim', $paras), fn($p) => mb_strlen($p) >= 40));
+            return [
+                'meta'    => $meta,
+                'content' => [
+                    'headings'   => [],
+                    'paragraphs' => $paras,
+                    'lists'      => [],
+                    'images'     => [],
+                    '_source'    => 'jsonld_articleBody',
+                ],
+            ];
+        }
+
+        // Acha conteúdo principal (fallback HTML)
         $main = $this->findMain($xp);
 
         $content = [
@@ -148,6 +203,44 @@ class Scraper
         }
 
         return ['meta' => $meta, 'content' => $content];
+    }
+
+    /**
+     * Procura articleBody no JSON-LD (NewsArticle/Article schema). Esse é o campo
+     * que o publisher marca explicitamente como conteúdo do artigo — não inclui
+     * sidebar, leia-também, share bar nem outros blocos da página.
+     *
+     * Retorna string vazia se não encontrar.
+     */
+    private function extrairArticleBodyJsonld(array $jsonld): string
+    {
+        if (empty($jsonld)) return '';
+
+        $tipos = ['NewsArticle', 'Article', 'BlogPosting', 'ReportArticle', 'BackgroundNewsArticle', 'OpinionNewsArticle'];
+
+        $procurar = function($node) use (&$procurar, $tipos): string {
+            if (is_array($node)) {
+                $tipo = $node['@type'] ?? '';
+                if (is_array($tipo)) $tipo = implode(',', $tipo);
+                $tipoMatch = false;
+                foreach ($tipos as $t) {
+                    if (stripos((string)$tipo, $t) !== false) { $tipoMatch = true; break; }
+                }
+                if ($tipoMatch && !empty($node['articleBody'])) {
+                    return is_string($node['articleBody']) ? $node['articleBody'] : '';
+                }
+                // Recursivo em sub-arrays
+                foreach ($node as $v) {
+                    if (is_array($v)) {
+                        $r = $procurar($v);
+                        if ($r !== '') return $r;
+                    }
+                }
+            }
+            return '';
+        };
+
+        return $procurar($jsonld);
     }
 
     private function findMain(DOMXPath $xp): ?DOMNode
