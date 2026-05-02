@@ -70,6 +70,28 @@ class DiscoverGeradorGPT
         $progress->reportar('montando_prompt', 'Construindo system + user prompt');
         [$system, $user] = $this->montarPrompt($termo, $briefing, $fontesOk, $formato);
 
+        // SPORTS FACT EXTRACTOR — fatos literais das fontes injetados como bloco inviolável.
+        // Mesmo do path Claude (DiscoverGerador). Bloqueia alucinação de canal TV/estádio/
+        // horário/escalação que LLM tende a inventar por treinamento.
+        try {
+            require_once __DIR__ . '/SportsFactExtractor.php';
+            require_once __DIR__ . '/DiscoverClusterMatcher.php';
+            $clusterDet = DiscoverClusterMatcher::detectar(['termo' => $termo]);
+            if (($clusterDet['key'] ?? '') === 'esportes' && !empty($fontesOk)) {
+                $fatosEsportivos = SportsFactExtractor::extrair($fontesOk);
+                $blocoFatos = SportsFactExtractor::paraPrompt($fatosEsportivos);
+                if ($blocoFatos !== '') {
+                    $system .= "\n\n" . $blocoFatos;
+                    $progress->reportar('fatos_extraidos',
+                        "SportsFactExtractor: " .
+                        count($fatosEsportivos['canais_tv']) . " canais, " .
+                        count($fatosEsportivos['estadios']) . " estádios, " .
+                        count($fatosEsportivos['arbitros']) . " árbitros"
+                    );
+                }
+            }
+        } catch (Throwable $e) { /* extractor não bloqueia */ }
+
         // 4) Chama GPT
         $progress->reportar('chamando_llm', 'GPT (' . $this->modelo . ') — ~40-60s');
         try {

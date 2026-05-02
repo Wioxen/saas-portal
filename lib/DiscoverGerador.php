@@ -656,6 +656,30 @@ class DiscoverGerador
 
         // 4) Chama Maquina (pipeline existente). Se Claude falhar por erro transitório
         //    (timeout, 429 rate limit, 5xx, network), tenta GPT automaticamente.
+        // SPORTS FACT EXTRACTOR — extrai fatos literais das fontes (canais TV, estádio,
+        // horário, escalação, arbitragem, ingresso, pendurados, desfalques, pontos tabela,
+        // placares) ANTES de chamar o LLM. Injetado no prompt como bloco inviolável.
+        // Caso real #742/#1716 leaodabarra: Claude inventou TV Aratu pra Brasileirão (sabe
+        // por treinamento que Aratu transmite Baianão). Com fatos extraídos, regra dura
+        // bloqueia inferência e força uso literal só do que está nas fontes.
+        try {
+            require_once __DIR__ . '/SportsFactExtractor.php';
+            if (($cluster['key'] ?? '') === 'esportes' && !empty($fontesOk)) {
+                $fatosEsportivos = SportsFactExtractor::extrair($fontesOk);
+                $blocoFatos = SportsFactExtractor::paraPrompt($fatosEsportivos);
+                if ($blocoFatos !== '') {
+                    $blocos[] = $blocoFatos;
+                    $progress->reportar('fatos_extraidos',
+                        "SportsFactExtractor: " .
+                        count($fatosEsportivos['canais_tv']) . " canais, " .
+                        count($fatosEsportivos['estadios']) . " estádios, " .
+                        count($fatosEsportivos['arbitros']) . " árbitros, " .
+                        count($fatosEsportivos['escalacoes_blocos']) . " escalações"
+                    );
+                }
+            }
+        } catch (Throwable $e) { /* extractor não bloqueia, segue sem ele */ }
+
         $progress->reportar('chamando_llm', 'Claude ' . ($this->cfg['anthropic_model'] ?? '?') . ' (60-120s)');
         $maq = new Maquina($this->serper, $this->scraper, $this->claude, $this->wp, $this->cfg);
 
