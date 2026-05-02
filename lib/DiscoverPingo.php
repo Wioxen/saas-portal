@@ -349,6 +349,38 @@ class DiscoverPingo
         $termo = trim((string)($item['title'] ?? ''));
         if ($termo === '' || mb_strlen($termo) < 8) return null;
 
+        // FILTRO DE FRESHNESS — rejeita itens antigos (pub_ts > max_idade_dias).
+        // Pingo capturava pub_ts do RSS (PingoRssParser) mas não usava como filtro. Resultado:
+        // notícias do ano passado entravam no DB e viravam posts como se fossem atuais.
+        // Caso real #742 leaodabarra (2026-05-02): trend 'CBF libera setor visitante Barradão'
+        // veio do Correio 24h via Google News com data ~2025 e gerou post desatualizado.
+        // Default por cluster: esportes=7d (notícia esportiva fica obsoleta rápido),
+        //                      outros=30d (informativo evergreen tem vida útil maior).
+        $pubTs = (int)($item['pub_ts'] ?? 0);
+        if ($pubTs > 0) {
+            $clusterHintFonte = (string)($fonte['cluster_hint'] ?? '');
+            $defaultDiasPorCluster = ['esportes' => 7];
+            $diasMax = (int)($fonte['noticia_max_idade_dias']
+                          ?? $defaultDiasPorCluster[$clusterHintFonte]
+                          ?? 30);
+            $idadeDias = (time() - $pubTs) / 86400;
+            if ($idadeDias > $diasMax) {
+                $this->logRejeicao($termo, $fonte, [
+                    'rejeitar' => true,
+                    'modo'     => 'block',
+                    'motivo'   => 'noticia_velha',
+                    'pontos'   => 0,
+                    'detalhes' => [
+                        'idade_dias' => round($idadeDias, 1),
+                        'max_dias'   => $diasMax,
+                        'pub_ts'     => $pubTs,
+                        'pub_data'   => date('Y-m-d', $pubTs),
+                    ],
+                ]);
+                return null;
+            }
+        }
+
         // Filtro de qualidade — rejeita lixo (loteria, mortes, fofoca, política partidária)
         // E exige sinais de utilidade (verbos de ação, palavras temporais, dor monetizável).
         // Em modo 'warn', loga rejeições mas APROVA tudo — útil pra calibração inicial.
