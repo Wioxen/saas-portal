@@ -109,8 +109,14 @@ class SportsFactExtractor
             return self::emptyResult();
         }
 
+        // CANAIS DE TV — extração com tier-aware: cada canal é mapeado pra fonte que cita.
+        // Caso real #772 leaodabarra: MeuVitória (tier C) disse Aratu, Placar (tier A) disse
+        // Premiere — antes pegava ambos. Agora resolve por tier (Premiere ganha).
+        $canaisTier = self::extrairCanaisComTier($fontesOk);
+
         return [
-            'canais_tv'          => self::extrairCanais($blob),
+            'canais_tv'          => array_column($canaisTier, 'valor'),
+            'canais_tv_tiers'    => $canaisTier,
             'estadios'           => self::extrairEstadios($blob),
             'horarios'           => self::extrairHorarios($blob),
             'datas'              => self::extrairDatas($blob),
@@ -140,7 +146,16 @@ class SportsFactExtractor
 
         $linhas = [];
         if (!empty($fatos['canais_tv'])) {
-            $linhas[] = "📺 Canais de TV/streaming citados: " . implode(', ', $fatos['canais_tv']);
+            // Mostra canais com tier da fonte (S=oficial, A=imprensa grande, B=regional, C=fan-site)
+            $linhasCanais = [];
+            foreach (($fatos['canais_tv_tiers'] ?? []) as $info) {
+                $host = parse_url($info['fonte'] ?? '', PHP_URL_HOST) ?: '?';
+                $linhasCanais[] = "{$info['valor']} (Tier {$info['tier']} — {$host})";
+            }
+            if (empty($linhasCanais)) {
+                $linhasCanais = $fatos['canais_tv'];
+            }
+            $linhas[] = "📺 Canais de TV/streaming (priorize fontes Tier S/A sobre C): " . implode(' | ', $linhasCanais);
         } else {
             $linhas[] = "📺 Canais de TV: NENHUM citado nas fontes — escreva 'Transmissão a confirmar pela emissora oficial'.";
         }
@@ -203,6 +218,78 @@ class SportsFactExtractor
         }
         // Dedupe variações (ex: 'SporTV' e 'Sportv' — preserva a primeira encontrada)
         return array_keys($achados);
+    }
+
+    /**
+     * Versão tier-aware: pra cada fonte, extrai canais que ela cita; depois aplica
+     * regra de hierarquia (Tier S/A vencem sobre B/C/D em caso de divergência).
+     *
+     * Caso real #772/#776 leaodabarra:
+     *   - MeuVitória (Tier C) cita: TV Aratu
+     *   - Placar (Tier A) cita: Premiere
+     *   - Resultado: vencedor = Premiere (Tier A); Aratu descartado pq Tier diff ≥ 2.
+     *
+     * @return array de {valor: string, fonte: string, tier: string, score: int, descartado: bool}
+     */
+    private static function extrairCanaisComTier(array $fontesOk): array
+    {
+        require_once __DIR__ . '/SourceTrustScore.php';
+
+        // Coleta canais por fonte
+        $porFonte = [];
+        foreach ($fontesOk as $f) {
+            $url = (string)($f['url'] ?? '');
+            $textoFonte = '';
+            $meta = $f['fonte']['meta'] ?? [];
+            if (!empty($meta['title']))       $textoFonte .= $meta['title'] . ' ';
+            if (!empty($meta['description'])) $textoFonte .= $meta['description'] . ' ';
+            $paras = $f['fonte']['content']['paragraphs'] ?? [];
+            if (!empty($paras))               $textoFonte .= implode(' ', $paras);
+            $textoLow = mb_strtolower($textoFonte, 'UTF-8');
+
+            foreach (self::CANAIS_TV as $canal) {
+                $needle = mb_strtolower($canal, 'UTF-8');
+                $pattern = '/\b' . preg_quote($needle, '/') . '\b/iu';
+                if (preg_match($pattern, $textoLow)) {
+                    $porFonte[] = ['valor' => $canal, 'fonte' => $url];
+                }
+            }
+        }
+
+        if (empty($porFonte)) return [];
+
+        // Encontra tier máximo entre as fontes que citam
+        $maxScore = 0;
+        foreach ($porFonte as $p) {
+            $s = SourceTrustScore::scoreUrl($p['fonte']);
+            if ($s > $maxScore) $maxScore = $s;
+        }
+
+        // Regra: se diferença ≥ 4 pontos (tier diff ≥ 2) entre canal de tier alto vs baixo,
+        // mantém SÓ os de tier alto. Se diff ≤ 2 (tiers vizinhos), mantém todos.
+        $thresholdDescarte = 4;
+
+        $resultado = [];
+        $vistoCanal = [];
+        foreach ($porFonte as $p) {
+            $score = SourceTrustScore::scoreUrl($p['fonte']);
+            $tier  = SourceTrustScore::tierUrl($p['fonte']);
+            $descartado = ($maxScore - $score) >= $thresholdDescarte;
+            $key = strtolower($p['valor']);
+            // Dedup: se mesmo canal já vimos com score igual ou maior, pula
+            if (isset($vistoCanal[$key]) && $vistoCanal[$key] >= $score) continue;
+            $vistoCanal[$key] = $score;
+            $resultado[] = [
+                'valor'      => $p['valor'],
+                'fonte'      => $p['fonte'],
+                'tier'       => $tier,
+                'score'      => $score,
+                'descartado' => $descartado,
+            ];
+        }
+
+        // Filtra os descartados (canais de tier muito baixo quando há tier alto disponível)
+        return array_values(array_filter($resultado, fn($r) => !$r['descartado']));
     }
 
     /** Whitelist match pra estádios. */

@@ -110,6 +110,22 @@ class Maquina
             $organicos = [];
         }
 
+        // ── PRIORIZAÇÃO POR CONFIABILIDADE — fontes Tier S/A primeiro ──
+        // Caso real #772 leaodabarra: MeuVitória (Tier C, fan-site) reportou TV Aratu
+        // pra Brasileirão (errado); Placar (Tier A, imprensa) reportou Premiere (correto).
+        // Pipeline scrapeava ordem do Serper. Agora reordena por SourceTrustScore.
+        require_once __DIR__ . '/SourceTrustScore.php';
+        $organicos = SourceTrustScore::ordenarPorTier($organicos);
+        if (!empty($organicos)) {
+            $diagOrd = [];
+            foreach (array_slice($organicos, 0, 5) as $r) {
+                $u = (string)($r['link'] ?? $r['url'] ?? '');
+                $tier = SourceTrustScore::tierUrl($u);
+                $diagOrd[] = "{$tier}:" . parse_url($u, PHP_URL_HOST);
+            }
+            $this->log('🏆 Fontes ordenadas por tier: ' . implode(' > ', $diagOrd));
+        }
+
         // ── ETAPA 2: Scrape SERP ──
         $alvo = $this->cfg['scrape_top_n'];
         foreach ($organicos as $r) {
