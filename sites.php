@@ -228,7 +228,8 @@ return [
              'consignado', 'cartão de crédito sem anuidade', 'investimento renda fixa', 'tesouro direto',
          ],
          'persona' => [
-             'autor'            => 'Redação Leão da Barra',
+             'autor'            => 'Equipe Leão da Barra',
+             'autor_descricao'  => 'Cobertura especializada em futebol brasileiro com análise baseada em dados, escalações confirmadas e desempenho recente. Verificação cruzada em fontes oficiais (CBF, clubes, transmissoras) antes de cada publicação.',
              'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',
              'especialidade'    => 'futebol brasileiro, Brasileirão, Libertadores, Copa do Brasil, escalações confirmadas, transmissões ao vivo, pré-jogo e pós-jogo, multi-modalidades esportivas (NBA, F1, MMA, vôlei)',
              'audiencia'        => 'torcedor brasileiro adulto, multi-clube, busca informação útil rápida (ondê passa, que horas, escalação)',
