@@ -270,7 +270,11 @@ class TrendsTaxonomia
             'threshold'       => 8.0,
             'gatilho'         => 'Paixão, Rivalidade, Superação, Polêmica, Previsão',
             'persona'         => 'comentarista esportivo apaixonado e analista tático, com foco em gerar debate e revelar bastidores — sempre com base em fatos',
-            'keywords_match'  => ['futebol','brasileirão','libertadores','copa do brasil','champions','copa do mundo','copa mundial','campeonato mundial','mundial de clubes','mundial sub-20','seleção brasileira','flamengo','palmeiras','corinthians','são paulo fc','spfc','vasco da gama','fluminense','atlético mineiro','atlético-mg','atlético-pr','athletico-pr','cruzeiro esporte clube','santos fc','santos futebol','nba','f1','formula 1','ufc','boxe','vôlei','basquete','olimpíada','tênis','natação','placar','escalação','técnico','treinador','artilheiro','goleiro','atacante','zagueiro','meio-campo','pênalti','lance livre','gol de','gol contra','derrota','vitória por','empate em'],
+            // 'cruzeiro' (sozinho) e apelidos de clubes adicionados em 2026-05-02 — caso #733:
+            // 'Cruzeiro x Atlético' caía em viagem_transporte. No contexto editorial BR, 'Cruzeiro'
+            // sozinho é majoritariamente o clube. Mantida ambiguidade pra viagem só com qualificador
+            // (cruzeiro marítimo / pelo caribe / etc.).
+            'keywords_match'  => ['futebol','brasileirão','libertadores','copa do brasil','champions','copa do mundo','copa mundial','campeonato mundial','mundial de clubes','mundial sub-20','seleção brasileira','flamengo','palmeiras','corinthians','são paulo fc','spfc','vasco da gama','fluminense','atlético mineiro','atlético-mg','atlético-pr','athletico-pr','atlético','cruzeiro esporte clube','cruzeiro','santos fc','santos futebol','botafogo','vasco','grêmio','internacional','bahia','sport','fortaleza','ceará','vitória','remo','paysandu','nba','f1','formula 1','ufc','boxe','vôlei','basquete','olimpíada','tênis','natação','placar','escalação','técnico','treinador','artilheiro','goleiro','atacante','zagueiro','meio-campo','pênalti','lance livre','gol de','gol contra','derrota','vitória por','empate em','clássico','dérbi','rivalidade','x atlético','x cruzeiro','x flamengo','x palmeiras','x corinthians','x santos','x são paulo','galo','raposa','celeste','tricolor','rubro-negro','alvinegro','colorado','timão','peixe'],
             'termos_semanticos' => ['tabela','classificação','gol','escalação','tática','lesão','transferência','contratação','campeonato'],
             'compliance'      => [
                 'resultados, placares, estatísticas: LITERALMENTE corretos (checar com duas fontes)',
@@ -431,7 +435,11 @@ class TrendsTaxonomia
             'threshold'       => 6.5,
             'gatilho'         => 'Desejo (experiências), Economia (passagens), Praticidade, Medo (problemas em viagem)',
             'persona'         => 'viajante experiente e especialista em turismo, com foco em revelar segredos de viagem, dicas de economia e alertar sobre armadilhas',
-            'keywords_match'  => ['viagem','turismo','passagem aérea','voo','hotel','pousada','airbnb','resort','pacote turístico','decolar','latam','gol','azul','anac','infraero','passaporte','visto','viagem internacional','nacional','roteiro','destino','praia','montanha','cruzeiro','excursão','mochilão'],
+            // 'cruzeiro' removido em 2026-05-02: ambíguo (também é nome de clube de futebol).
+            // Pegava trends esportivos como Viagens (caso #733: "Cruzeiro x Atlético"). Substituído
+            // por padrões inequívocos de turismo marítimo. 'gol' e 'azul' também removidos —
+            // empresas aéreas têm nome conflitante (gol = futebol, azul = palmeiras anos atrás).
+            'keywords_match'  => ['viagem','turismo','passagem aérea','voo','hotel','pousada','airbnb','resort','pacote turístico','decolar','latam','anac','infraero','passaporte','visto','viagem internacional','nacional','roteiro','destino','praia','montanha','cruzeiro marítimo','cruzeiro pelo caribe','cruzeiro pelo mediterrâneo','navio de cruzeiro','msc cruzeiros','excursão','mochilão'],
             'termos_semanticos' => ['destino','passagem','hotel','hospedagem','roteiro','visto','documentação','seguro viagem'],
             'compliance'      => [
                 'preço/promo: sempre com DATA da consulta ("em [mês/ano]") — preços mudam em horas',

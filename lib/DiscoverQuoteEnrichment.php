@@ -82,7 +82,19 @@ class DiscoverQuoteEnrichment
         }
         if (empty($candidatos)) return null;
         usort($candidatos, fn($a, $b) => $b['score'] <=> $a['score']);
-        return $candidatos[0];
+
+        // Política editorial 2026-05-02: SÓ injeta blockquote com link se a fonte é OFICIAL.
+        // Quote de fonte de imprensa (Itatiaia, UOL, Globo, etc.) seria backlink dofollow pra
+        // concorrente editorial — vaza autoridade SEO. Em vez disso, prompt esportes deve
+        // extrair aspas do FALANTE (jogador/técnico) e injetar como citação atribuída ao falante,
+        // não como blockquote com link pra fonte de imprensa.
+        $top = $candidatos[0];
+        if (empty($top['oficial'])) {
+            // Tem candidatos mas NENHUM é fonte oficial — não injeta. Mantém o post sem
+            // a blockquote enrichment (perde 1 sinal E-E-A-T, mas evita vazar SEO).
+            return null;
+        }
+        return $top;
     }
 
     /**
@@ -127,9 +139,48 @@ class DiscoverQuoteEnrichment
         return true;
     }
 
+    /**
+     * É fonte oficial = recebe link DOFOLLOW (passa autoridade legítima).
+     * Inclui:
+     *   - Domínios governamentais BR (.gov.br/.edu.br/.jus.br/.mil.br/.leg.br)
+     *   - Federações/organizações esportivas internacionais (FIFA, UEFA, CBF, Conmebol, NBA, F1, UFC, MMA)
+     *   - Clubes brasileiros oficiais (whitelist)
+     *
+     * Fontes de IMPRENSA (Itatiaia, UOL, Globo, etc.) NÃO entram aqui — link delas vai
+     * com nofollow pra evitar vazar autoridade SEO pra concorrente editorial.
+     */
     private static function ehFonteOficial(string $url): bool
     {
-        return (bool)preg_match('#https?://[^/]*\.(gov|edu|jus|mil|leg)\.br#i', $url);
+        // Domínios governamentais e educacionais BR
+        if (preg_match('#https?://[^/]*\.(gov|edu|jus|mil|leg)\.br#i', $url)) return true;
+
+        // Federações / organizações esportivas oficiais (PT-BR e internacionais)
+        $oficiaisEsporte = [
+            'cbf.com.br', 'conmebol.com', 'fifa.com', 'uefa.com', 'libertadores.conmebol',
+            'fia.com', 'formula1.com', 'fiagt.com',
+            'nba.com', 'wnba.com', 'ufc.com', 'fifaranking.fifa',
+            'olympics.com', 'cob.org.br', 'cpb.org.br',
+            'fivb.com', 'cbv.com.br',                                 // vôlei
+            'cbb.com.br', 'fiba.com',                                 // basquete
+            'stjd.org.br', 'cbsm.org.br',                             // tribunais e sports management
+        ];
+
+        // Clubes brasileiros oficiais (Brasileirão Série A — adicionar Série B/C conforme necessidade)
+        $clubesOficiais = [
+            'flamengo.com.br', 'palmeiras.com.br', 'corinthians.com.br', 'saopaulofc.net',
+            'atletico.com.br', 'cruzeiro.com.br', 'cam.com.br',
+            'gremio.net', 'internacional.com.br', 'sccoritiba.com.br',
+            'fluminense.com.br', 'botafogo.com.br', 'vasco.com.br',
+            'ecvitoria.com.br', 'eccr.com.br', 'cearasc.com', 'fortalezaec.net',
+            'bahia.com.br', 'sportrecife.com.br', 'mirassolfc.com.br',
+            'remo.com.br', 'sccrb.com.br', 'paysandu.com.br',
+        ];
+
+        $hostMatch = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
+        foreach (array_merge($oficiaisEsporte, $clubesOficiais) as $dom) {
+            if ($hostMatch === $dom || str_ends_with($hostMatch, '.' . $dom)) return true;
+        }
+        return false;
     }
 
     private static function montarBlockquote(array $melhor): string
