@@ -784,10 +784,63 @@ class DiscoverGerador
 
         // 5) PÓS-PROCESSAMENTO + AUDITORIA
         $auditoria = null;
+        $validationReport = ['anti_ai' => null, 'fidelity' => null];
         if ($postId > 0) {
             try {
                 $post = $this->wp->getPost($postId);
                 $content = $post['content']['raw'] ?? $post['content']['rendered'] ?? '';
+
+                // ─── VALIDADORES PÓS-GERAÇÃO (paridade com DiscoverGeradorGPT) ───
+                // Mesmos validators do path GPT, agora também no path Claude (default p/ leaodabarra
+                // após threshold per-site = 5.5). Detectam frases banidas, truncamentos, hype não
+                // factual (AntiAI) e nomes/URLs sem lastro na fonte (SourceFidelity).
+                if ($content !== '') {
+                    if (!class_exists('AntiAIValidator')) {
+                        $aiPath = __DIR__ . '/AntiAIValidator.php';
+                        if (file_exists($aiPath)) require_once $aiPath;
+                    }
+                    if (class_exists('AntiAIValidator')) {
+                        try {
+                            $aiVal = new AntiAIValidator();
+                            $aiReport = $aiVal->validate($content);
+                            $validationReport['anti_ai'] = $aiReport;
+                            $progress->reportar('validando_anti_ai', $aiVal->reportToLogLine($aiReport));
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+                    if (!class_exists('SourceFidelityValidator')) {
+                        $sfPath = __DIR__ . '/SourceFidelityValidator.php';
+                        if (file_exists($sfPath)) require_once $sfPath;
+                    }
+                    if (class_exists('SourceFidelityValidator')) {
+                        try {
+                            // Extrai texto bruto das fontes scrapeadas (paragraphs por fonte)
+                            $textosFontes = [];
+                            foreach ($fontesOk as $f) {
+                                $paragraphs = $f['fonte']['content']['paragraphs'] ?? [];
+                                if (!empty($paragraphs)) $textosFontes[] = implode("\n", $paragraphs);
+                                // Inclui meta title + description também (fonte pode trazer dados ali)
+                                $meta = $f['fonte']['meta'] ?? [];
+                                if (!empty($meta['title'])) $textosFontes[] = (string)$meta['title'];
+                                if (!empty($meta['description'])) $textosFontes[] = (string)$meta['description'];
+                            }
+                            $fidReport = SourceFidelityValidator::validar($content, $textosFontes);
+                            $validationReport['fidelity'] = $fidReport;
+                            $progress->reportar('validando_fidelidade', SourceFidelityValidator::reportToLogLine($fidReport));
+                            // Grava report quando severity=fail (não bloqueia publicação aqui — orquestrador decide)
+                            if (($fidReport['severity'] ?? '') === 'fail') {
+                                $dbgPath = __DIR__ . '/../data/debug/fidelity_fail_' . date('Ymd_His') . '_' . $trendId . '.json';
+                                @mkdir(dirname($dbgPath), 0777, true);
+                                @file_put_contents($dbgPath, json_encode([
+                                    'trend_id' => $trendId,
+                                    'post_id'  => $postId,
+                                    'termo'    => $termo,
+                                    'modelo'   => 'claude',
+                                    'report'   => $fidReport,
+                                ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                            }
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+                }
 
                 $progress->reportar('pos_processing', 'Cards, schemas, auto-links, cluster');
                 // 5a) Pós-processamento: auto-links de tel/WhatsApp + FAQPage/HowTo schemas + limpeza de Article + CTA
@@ -1428,6 +1481,7 @@ class DiscoverGerador
             'fontes_tentadas'=> $col['fontes_tentadas'] ?? count($urlsFinais),
             'chars_fontes'   => $totalChars,
             'auditoria'      => $auditoria,
+            'validation'     => $validationReport ?? null,
             'quality'        => $quality,
             'status'         => $statusFinal,
             'provedor'       => 'Claude ' . ($this->cfg['anthropic_model'] ?? ''),
