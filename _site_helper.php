@@ -163,6 +163,10 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         'fontes_min_agregado',
         'fontes_min_fonte_solo',
         'fontes_max_fontes',
+        // Filtro de nicho — trend só é aprovado pelo Pingo se contém 1+ termo desta lista.
+        // Trends fora do nicho ficam status='fora_escopo_<site>'. Usado em sites mono-nicho
+        // (ex: leaodabarra cobre SÓ Esporte Clube Vitória — pivot 2026-05-02).
+        'nicho_required_terms',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];

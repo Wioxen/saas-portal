@@ -106,6 +106,10 @@ class SourceFidelityValidator
             $urls = self::extrairUrlsEspecificas($html);
             $stats['urls_extraidas'] = count($urls);
             foreach ($urls as $url) {
+                // Whitelist oficial: domínios reconhecidos (gov, federações, clubes oficiais,
+                // ferramentas como Sofascore/Transfermarkt) sempre passam. Backlinks pra esses
+                // são E-E-A-T legítimo, não alucinação.
+                if (self::isUrlWhitelist($url)) continue;
                 $urlLower = mb_strtolower($url);
                 if (str_contains($sourceBlob, $urlLower)) continue;
                 // Tenta domínio + path raiz
@@ -151,6 +155,43 @@ class SourceFidelityValidator
         'Taça', 'Torneio', 'Estadual', 'Internacional',
         'Clássico', 'Derby', 'Decisão', 'Final', 'Semifinal', 'Quartas',
     ];
+
+    /**
+     * Domínios oficiais SEMPRE aceitos como link legítimo, mesmo se não estão LITERAIS
+     * nas fontes scrapeadas. Sites editoriais reconhecidos do nicho (clubes oficiais,
+     * federações, órgãos governamentais esportivos). Backlink pra esses passa autoridade
+     * legítima e fortalece E-E-A-T.
+     */
+    private const URLS_WHITELIST_OFICIAIS = [
+        // Governamental BR
+        'gov.br', 'edu.br', 'jus.br', 'mil.br', 'leg.br',
+        // Esportes BR — federações
+        'cbf.com.br', 'fbf.org.br', 'stjd.org.br',
+        // Clubes BR oficiais
+        'ecvitoria.com.br', 'flamengo.com.br', 'palmeiras.com.br', 'corinthians.com.br',
+        'saopaulofc.net', 'atletico.com.br', 'cruzeiro.com.br', 'cam.com.br',
+        'gremio.net', 'internacional.com.br', 'fluminense.com.br', 'botafogo.com.br',
+        'vasco.com.br', 'ecbahia.com', 'sportrecife.com.br', 'fortalezaec.net',
+        'cearasc.com', 'remo.com.br',
+        // Internacionais
+        'fifa.com', 'conmebol.com', 'uefa.com', 'fia.com', 'formula1.com',
+        'nba.com', 'ufc.com', 'olympics.com',
+        // Mídia esportiva oficial (autoridade alta — não competitiva editorial direta)
+        'sofascore.com', 'sofascore.com.br', 'transfermarkt.com.br', 'transfermarkt.com',
+    ];
+
+    /**
+     * Verifica se URL bate com algum domínio da whitelist oficial.
+     */
+    private static function isUrlWhitelist(string $url): bool
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
+        if ($host === '') return false;
+        foreach (self::URLS_WHITELIST_OFICIAIS as $dom) {
+            if ($host === $dom || str_ends_with($host, '.' . $dom)) return true;
+        }
+        return false;
+    }
 
     private static function extrairNomesProprios(string $text, int $minWords): array
     {

@@ -408,6 +408,32 @@ class DiscoverPingo
             $siteTarget = self::roteamentoPorCluster($clusterPraRota);
         }
 
+        // FILTRO DE NICHO (sites.php → nicho_required_terms)
+        // Se o site alvo tem lista de termos exigidos, trend só passa quando contém 1+ deles
+        // (no termo OU nos relacionados). Caso #leaodabarra (pivot 2026-05-02): site nicho
+        // exclusivo do Esporte Clube Vitória — trends de outros clubes/esportes ficam
+        // status='fora_escopo_nicho' em vez de poluir a fila.
+        $nichoTerms = self::nichoRequiredTerms($siteTarget);
+        if (!empty($nichoTerms)) {
+            $haystack = mb_strtolower($termo . ' ' . implode(' ', $relacionados), 'UTF-8');
+            $bateu = false;
+            foreach ($nichoTerms as $t) {
+                $tNorm = mb_strtolower(trim($t), 'UTF-8');
+                if ($tNorm === '') continue;
+                if (mb_strpos($haystack, $tNorm) !== false) { $bateu = true; break; }
+            }
+            if (!$bateu) {
+                // Não bate com nenhum termo do nicho — rejeita silenciosamente.
+                // Loga pra debug (último parâmetro de logRejeicao).
+                $this->logRejeicao($termo, $fonte, [
+                    'rejeitar' => true,
+                    'motivo'   => 'fora_escopo_nicho',
+                    'detalhes' => ['site' => $siteTarget, 'termos_exigidos' => count($nichoTerms)],
+                ]);
+                return null;
+            }
+        }
+
         // Decide status: auto_aprovar_score_min da fonte é o gate
         $limiteAutoAprovar = (float)($fonte['auto_aprovar_score_min'] ?? 7.0);
         $status = $scoreOut['final'] >= $limiteAutoAprovar ? 'aprovado' : 'novo';
@@ -467,6 +493,26 @@ class DiscoverPingo
             'curiosidades_geral'    => 'comocomprar',
         ];
         return $mapa[$clusterKey] ?? 'comocomprar';
+    }
+
+    /**
+     * Carrega lista nicho_required_terms do sites.php pra um site específico.
+     * Cacheada em memória estática pra evitar re-load. Retorna [] se site não tem nicho restrito.
+     */
+    private static array $nichoCache = [];
+    public static function nichoRequiredTerms(string $siteSlug): array
+    {
+        if (array_key_exists($siteSlug, self::$nichoCache)) return self::$nichoCache[$siteSlug];
+        $sitesPath = dirname(__DIR__) . '/_site_helper.php';
+        if (!is_file($sitesPath)) { self::$nichoCache[$siteSlug] = []; return []; }
+        if (!function_exists('sitesDisponiveis')) {
+            require_once $sitesPath;
+        }
+        $sites = sitesDisponiveis();
+        $cfg = $sites[$siteSlug] ?? [];
+        $terms = (array)($cfg['nicho_required_terms'] ?? []);
+        self::$nichoCache[$siteSlug] = $terms;
+        return $terms;
     }
 
     // ═══════════════════════════════════════════════════════════════

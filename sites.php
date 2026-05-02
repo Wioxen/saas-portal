@@ -210,14 +210,17 @@ return [
          'site_name'         => 'Leão da Barra',
          'whatsapp_number'   => '71992354308',
          'whatsapp_group_url'=> '',
-         'whatsapp_cta_text' => 'Receba alertas de jogos no WhatsApp',
+         'whatsapp_cta_text' => 'Receba alertas de jogos do Vitória no WhatsApp',
          'pretty_links_prefix' => 'go',
          'empresa' => [
              'nome'      => 'Sistema 3 Mídia Digital',
-             'descricao' => 'Editora brasileira de mídia esportiva — futebol, F1, NBA, MMA, vôlei e multi-modalidades',
+             'descricao' => 'Editora brasileira especializada na cobertura editorial do Esporte Clube Vitória (BA) — Brasileirão Série A, Copa do Nordeste, Copa do Brasil, Campeonato Baiano, base e mercado rubro-negro',
              'cnpj'      => '',
          ],
-         'subtipo_nicho' => 'esportes ao vivo, escalações, transmissões e calendário esportivo (futebol, F1, NBA, MMA)',
+         // PIVOT 2026-05-02: leaodabarra virou nicho EXCLUSIVO do Esporte Clube Vitória.
+         // Antes cobria esportes em geral (multi-clube, F1, NBA, MMA) — diluía autoridade.
+         // Outro domínio será registrado pra cobrir esportes gerais.
+         'subtipo_nicho' => 'Esporte Clube Vitória (BA) — Brasileirão Série A 2026, Copa do Brasil, Copa do Nordeste, Campeonato Baiano, mercado da bola rubro-negro, base (sub-20/sub-17), elenco principal, Estádio Manoel Barradas (Barradão), bastidores institucionais e clássico Ba-Vi',
          'termos_canibal' => [
              // comocomprar cobre tech/shopping
              'comparativo de preço', 'review smartphone', 'cashback', 'amazon ofertas',
@@ -226,6 +229,54 @@ return [
              // vafast cobre cursos/benefícios/finanças
              'curso gratuito', 'curso ead', 'bolsa família', 'bpc', 'auxílio gás', 'inss', 'fgts',
              'consignado', 'cartão de crédito sem anuidade', 'investimento renda fixa', 'tesouro direto',
+             // Nicho exclusivo Vitória — outros clubes/modalidades viram canibal
+             // (vão pro futuro domínio de esportes gerais, ainda não registrado)
+             'flamengo escalação', 'flamengo desfalque', 'palmeiras escalação',
+             'corinthians escalação', 'são paulo escalação', 'cruzeiro escalação',
+             'atlético-mg escalação', 'fluminense escalação', 'botafogo escalação',
+             'vasco escalação', 'grêmio escalação', 'internacional escalação',
+             'fórmula 1', 'gp de', 'corrida da', 'pole position',
+             'nba', 'wnba', 'ufc', 'mma luta',
+             'vôlei superliga', 'kudiess', 'tandara',
+         ],
+         // ─── NICHO EXCLUSIVO ESPORTE CLUBE VITÓRIA ───
+         // Trend só é aceito se contém 1+ termo desta lista. Caso contrário, status='fora_escopo_vitoria'.
+         // 4 grupos de discriminação:
+         //   A) apelidos/identidade do clube (alto discriminante)
+         //   B) pessoas únicas (presidente, técnico, elenco — extraídas Wikipedia 2026-05-02)
+         //   C) competições + Vitória co-ocorrente (precisa palavra "vitória" no termo)
+         //   D) domínios oficiais
+         'nicho_required_terms' => [
+             // A — identidade do clube
+             'esporte clube vitória', 'ec vitória', 'leão da barra', 'leao da barra',
+             'rubro-negro baiano', 'rubronegro baiano', 'rubro-negro do vitória',
+             'barradão', 'barradao', 'estádio manoel barradas', 'manoel barradas',
+             'lelê leão', 'fábrica de talentos',
+             // B — pessoas únicas
+             // Diretoria
+             'fábio mota', 'fabio mota',
+             // Técnico
+             'jair ventura',
+             // Goleiros (sobrenomes únicos no contexto)
+             'lucas arcanjo', 'gabriel vasconcellos', 'yuri sena', 'fintelman',
+             // Zagueiros
+             'camutanga', 'riccieli',
+             // Laterais
+             'ramon ramos', 'luan cândido', 'jamerson', 'matheusinho vitória',
+             'nathan gabriel', 'claudinho vitória',
+             // Volantes
+             'rúben ismael', 'gabriel baralhas', 'caíque gonçalves',
+             // Meias
+             'matheuzinho', 'lucas silva vitória', 'emmanuel martínez', 'aitor cantalapiedra',
+             // Atacantes
+             'kike saverio', 'fabri vitória', 'renzo lópez', 'erick serafim',
+             'pedro henrique vitória', 'diego tarzia', 'mário sérgio vitória',
+             'osvaldo filho', 'renato kayzer', 'anderson bispo',
+             // C — competições (geralmente vêm com "vitória" no termo)
+             'ba-vi', 'bavi', 'clássico ba-vi',
+             'campeonato baiano', 'baianão',
+             // D — domínios e marcas
+             'ecvitoria.com.br', 'vitória na tv', 'vitorianatv',
          ],
          // Author box + breadcrumb visual + schemas duplicados desabilitados —
          // tema WP + RankMath já renderizam tudo isso. RankMath gera NewsArticle
@@ -250,14 +301,24 @@ return [
          'fontes_min_agregado'   => 2000,
          'fontes_min_fonte_solo' => 1500,
          'persona' => [
-             'autor'            => 'Equipe Leão da Barra',
-             'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',
-             'especialidade'    => 'futebol brasileiro, Brasileirão, Libertadores, Copa do Brasil, escalações confirmadas, transmissões ao vivo, pré-jogo e pós-jogo, multi-modalidades esportivas (NBA, F1, MMA, vôlei)',
-             'audiencia'        => 'torcedor brasileiro adulto, multi-clube, busca informação útil rápida (ondê passa, que horas, escalação)',
-             'tom'              => 'factual e direto, urgente em horários de bola rolando, claro em escalação/onde assistir, sem clickbait barato nem aforismos de torcida',
+             'autor'            => 'Redação Leão da Barra',
+             'voz'              => 'jornalismo investigativo dedicado ao Esporte Clube Vitória, voz de quem mora em Salvador e respira o Barradão; respeita o leitor rubro-negro com informação verificada, sem fanatismo, sem apostas, sem ofender a rivalidade Ba-Vi. Apura na fonte (clube oficial, CBF, Federação Baiana, comunicados, entrevistas) e contextualiza pra quem acompanha o Leão há décadas',
+             'especialidade'    => 'Esporte Clube Vitória 100% — elenco 2026 (Lucas Arcanjo, Camutanga, Riccieli, Jamerson, Ronald, Matheuzinho, Erick Serafim, Renato Kayzer, Osvaldo Filho, Renzo López e companheiros), técnico Jair Ventura, presidente Fábio Mota, Estádio Manoel Barradas (Barradão), Brasileirão Série A 2026, Copa do Brasil 2026, Copa do Nordeste 2026, Campeonato Baiano, mercado da bola rubro-negro, base sub-20 e sub-17 (Fábrica de Talentos), bastidores institucionais (eleições, finanças, SAF), histórico do clube desde 1899, clássico Ba-Vi (rivalidade com Esporte Clube Bahia), Copa do Nordeste (campeão 1997, 1999, 2003, 2010), 30 títulos baianos',
+             'audiencia'        => 'torcedor rubro-negro do Vitória — baiano, residente em Salvador e interior da Bahia, ou exportado pra outras capitais; conhece a história do clube, acompanha o Barradão presencial ou via Vitória na TV/Premiere; busca info útil, escalação confirmada, mercado e bastidores. Idade ampla (18-65), engajamento alto em rede social, fidelidade ao clube acima do bairrismo institucional',
+             'tom'              => 'rubro-negro identitário SEM fanatismo cego: critica diretoria, técnico e jogadores quando há base factual; celebra vitória sem clichê; trata Bahia (rival) com respeito mas sem apologia; frase curta na intro, narrativa nas análises; usa "Leão", "Rubro-Negro", "rubro-negro" como sinônimos do clube; jamais "Galo", "Mengão", "Verdão" (esses são outros clubes)',
              'clusters_foco'    => ['esportes'],
-             'termos_proibidos' => ['aposte agora', 'palpite garantido', 'odds', 'casa de apostas', 'tip seguro', 'cravo', 'palpiteiro', 'galera do gol', 'maravilha', 'sensacional'],
-             'cta_estilo'       => 'ver onde assistir · ver escalação confirmada · acompanhar tempo real · ver tabela atualizada',
+             'termos_proibidos' => [
+                 // Apostas (manifesto editorial Discover proíbe)
+                 'aposte agora', 'palpite garantido', 'odds', 'casa de apostas', 'tip seguro',
+                 'cravo', 'palpiteiro',
+                 // Clichês de torcida
+                 'galera do gol', 'maravilha', 'sensacional', 'magnífico', 'imbatível',
+                 // Anti-fanatismo (manifesto)
+                 'tricolor lixo', 'bahia lixo', 'rivalreco', 'ladrão',
+                 // Clubes irmãos (não é nicho — vai pro outro domínio)
+                 'flamengo titular', 'palmeiras titular', 'corinthians titular',
+             ],
+             'cta_estilo'       => 'ver onde assistir o Vitória · ver escalação confirmada · acompanhar Leão tempo real · ver tabela do Brasileirão · ler última coletiva de Jair Ventura',
          ],
      ],
 	 'ondecompraragora' => [

@@ -274,7 +274,19 @@ class TrendsTaxonomia
             // 'Cruzeiro x Atlético' caía em viagem_transporte. No contexto editorial BR, 'Cruzeiro'
             // sozinho é majoritariamente o clube. Mantida ambiguidade pra viagem só com qualificador
             // (cruzeiro marítimo / pelo caribe / etc.).
-            'keywords_match'  => ['futebol','brasileirão','libertadores','copa do brasil','champions','copa do mundo','copa mundial','campeonato mundial','mundial de clubes','mundial sub-20','seleção brasileira','flamengo','palmeiras','corinthians','são paulo fc','spfc','vasco da gama','fluminense','atlético mineiro','atlético-mg','atlético-pr','athletico-pr','atlético','cruzeiro esporte clube','cruzeiro','santos fc','santos futebol','botafogo','vasco','grêmio','internacional','bahia','sport','fortaleza','ceará','vitória','remo','paysandu','nba','f1','formula 1','ufc','boxe','vôlei','basquete','olimpíada','tênis','natação','placar','escalação','técnico','treinador','artilheiro','goleiro','atacante','zagueiro','meio-campo','pênalti','lance livre','gol de','gol contra','derrota','vitória por','empate em','clássico','dérbi','rivalidade','x atlético','x cruzeiro','x flamengo','x palmeiras','x corinthians','x santos','x são paulo','galo','raposa','celeste','tricolor','rubro-negro','alvinegro','colorado','timão','peixe'],
+            // 2026-05-02 (pivot leaodabarra): adicionadas entidades específicas do EC Vitória
+            // pra garantir que trends sobre o clube pontuem alto em 'esportes' mesmo quando
+            // ambíguos (palavra 'vitória' isolada já era keyword; agora reforçada com apelidos
+            // únicos pra prevenir confusão com sentido literal de 'vitória=conquista').
+            'keywords_match'  => ['futebol','brasileirão','libertadores','copa do brasil','champions','copa do mundo','copa mundial','campeonato mundial','mundial de clubes','mundial sub-20','seleção brasileira','flamengo','palmeiras','corinthians','são paulo fc','spfc','vasco da gama','fluminense','atlético mineiro','atlético-mg','atlético-pr','athletico-pr','atlético','cruzeiro esporte clube','cruzeiro','santos fc','santos futebol','botafogo','vasco','grêmio','internacional','bahia','sport','fortaleza','ceará','vitória','remo','paysandu','nba','f1','formula 1','ufc','boxe','vôlei','basquete','olimpíada','tênis','natação','placar','escalação','técnico','treinador','artilheiro','goleiro','atacante','zagueiro','meio-campo','pênalti','lance livre','gol de','gol contra','derrota','vitória por','empate em','clássico','dérbi','rivalidade','x atlético','x cruzeiro','x flamengo','x palmeiras','x corinthians','x santos','x são paulo','galo','raposa','celeste','tricolor','rubro-negro','alvinegro','colorado','timão','peixe',
+                // Entidades únicas do Esporte Clube Vitória (pivot leaodabarra)
+                'esporte clube vitória','ec vitória','leão da barra','leao da barra','rubro-negro baiano',
+                'barradão','barradao','manoel barradas','lelê leão','fábrica de talentos',
+                'jair ventura','fábio mota','ba-vi','clássico ba-vi','campeonato baiano','baianão',
+                'jamerson','camutanga','riccieli','matheuzinho','lucas arcanjo','renato kayzer',
+                'erick serafim','osvaldo filho','renzo lópez','kike saverio','aitor cantalapiedra',
+                'emmanuel martínez','ronald vitória','dudu vitória',
+            ],
             'termos_semanticos' => ['tabela','classificação','gol','escalação','tática','lesão','transferência','contratação','campeonato'],
             'compliance'      => [
                 'resultados, placares, estatísticas: LITERALMENTE corretos (checar com duas fontes)',
