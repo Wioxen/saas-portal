@@ -879,16 +879,30 @@ class DiscoverGerador
                     // FIX 11: validação inteligente em vez de threshold rígido 90%.
                     // dedupeFaq/dedupeLeiaTambem REMOVEM conteúdo legitimamente — antes o threshold
                     // descartava TODA a melhoria, deixando FAQs duplicadas no post final.
-                    // Agora aceita se: >=50% do tamanho E >=1 H2 E >=3 parágrafos no resultado.
+                    // 2026-05-02: threshold 50% era ainda agressivo demais (post #716 leaodabarra
+                    // teve PostProcess descartado e ficou com 12 travessões). Relaxado pra 35%
+                    // + log de descarte pra debug.
                     if ($contentPos !== $content) {
-                        $tamOk    = strlen($contentPos) >= strlen($content) * 0.5;
-                        $estruOk  = preg_match('/<h2[^>]*>/i', $contentPos)
-                                  && preg_match_all('/<p[^>]*>/i', $contentPos) >= 3;
+                        $tamOriginal = strlen($content);
+                        $tamPos      = strlen($contentPos);
+                        $tamOk       = $tamPos >= $tamOriginal * 0.35;
+                        $estruOk     = preg_match('/<h2[^>]*>/i', $contentPos)
+                                     && preg_match_all('/<p[^>]*>/i', $contentPos) >= 3;
                         if ($tamOk && $estruOk) {
                             try {
                                 $this->wp->atualizarPost($postId, ['content' => $contentPos]);
                                 $content = $contentPos;
+                                $progress->reportar('postprocess_aplicado', "PostProcess OK ({$tamOriginal} → {$tamPos} bytes)");
                             } catch (Throwable $e) { /* mantém original em caso de erro */ }
+                        } else {
+                            // DESCARTE — grava log pra investigação. Antes era silencioso.
+                            $motivo = !$tamOk
+                                ? "tamanho caiu " . round((1 - $tamPos / max(1, $tamOriginal)) * 100, 1) . "% (threshold 35%)"
+                                : "estrutura inválida (sem H2 ou <3 <p>)";
+                            $progress->reportar('postprocess_descartado', "PostProcess descartado: {$motivo}");
+                            $dbgPath = __DIR__ . '/../data/debug/postprocess_discard_' . date('Ymd_His') . '_' . $trendId . '.txt';
+                            @mkdir(dirname($dbgPath), 0777, true);
+                            @file_put_contents($dbgPath, "MOTIVO: {$motivo}\n\n=== ANTES ({$tamOriginal} bytes) ===\n{$content}\n\n=== DEPOIS ({$tamPos} bytes) ===\n{$contentPos}\n");
                         }
                     }
 
