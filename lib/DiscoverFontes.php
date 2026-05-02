@@ -35,6 +35,9 @@ class DiscoverFontes
 
         // Stopwords + nicho-stopwords (palavras do clube alvo do site, comuns em TODAS
         // as fontes do leaodabarra — não discriminam jogos diferentes do mesmo clube).
+        // INCLUI nomes de fontes de imprensa (meuvitoria, bahianoticias, etc.) — termos
+        // do Google News frequentemente terminam com " - [Nome do Site]" e essa palavra
+        // bate com a URL da fonte → todas passam, filtro inútil.
         static $stop = [
             // genéricas
             'sobre','onde','assistir','ao','vivo','hoje','vai','vem','que','para','pelo',
@@ -42,9 +45,17 @@ class DiscoverFontes
             'escalacao','escalacoes','desfalques','arbitragem','jogo','partida','rodada',
             'campeonato','brasileirao','brasileirão','copa','série','serie','time','clube',
             'futebol','tem','será','sera','está','esta','com',
+            // verbos / palavras genéricas comuns em títulos de notícia
+            'saiba','veja','confira','descubra','entenda','revela','revelou','anuncia',
+            'anunciou','divulga','divulgou','contra','noticias','notícia','noticia',
             // nicho do leaodabarra (vão estar em TODAS as fontes do site, não discriminam)
             'vitoria','vitória','leao','leão','rubro','negro','rubro-negro','barradao','barradão',
             'salvador','bahia','baiano','baiana','manoel','barradas',
+            // Nomes de fontes de imprensa (bate com URL/title da fonte → quebra filtro)
+            'meuvitoria','meuvitória','bahianoticias','bnews','arenarubronegra','correio24horas',
+            'terra','placar','itatiaia','globo','uol','ge','espn','sportv','premiere',
+            'estadao','folha','oglobo','metropoles','cnn','cnnbrasil','revista','portal',
+            'fogaonet','fogaonet.com','umdois','umdoisesportes','noataque',
             // outros clubes — vão estar quando rival visita ou é mencionado em sidebar
             // (não usar como discriminador único)
         ];
