@@ -70,6 +70,11 @@ class SourceFidelityValidator
         $checkUrls     = $opts['check_urls'] ?? true;
         $minNameWords  = (int)($opts['min_name_words'] ?? 2);
         $allowlist     = array_map('mb_strtolower', $opts['allowlist_names'] ?? []);
+        // Domínio do próprio site (pra excluir backlinks internos da validação).
+        // DiscoverInternalLinks injeta links pra posts próprios — esses NÃO são alucinação.
+        $ownDomain     = strtolower((string)($opts['own_domain'] ?? ''));
+        $ownDomain     = preg_replace('#^https?://#', '', $ownDomain);
+        $ownDomain     = preg_replace('#/.*$#', '', $ownDomain ?: '');
 
         $issues = [];
         $sourceBlob = mb_strtolower(implode("\n\n", array_filter(array_map('strval', $sourceTexts))));
@@ -106,6 +111,12 @@ class SourceFidelityValidator
             $urls = self::extrairUrlsEspecificas($html);
             $stats['urls_extraidas'] = count($urls);
             foreach ($urls as $url) {
+                // Backlink interno do próprio site: NÃO é alucinação, é internal-linking
+                // legítimo (DiscoverInternalLinks busca posts publicados pra cross-link).
+                if ($ownDomain !== '') {
+                    $hostUrl = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
+                    if ($hostUrl === $ownDomain || str_ends_with($hostUrl, '.' . $ownDomain)) continue;
+                }
                 // Whitelist oficial: domínios reconhecidos (gov, federações, clubes oficiais,
                 // ferramentas como Sofascore/Transfermarkt) sempre passam. Backlinks pra esses
                 // são E-E-A-T legítimo, não alucinação.
