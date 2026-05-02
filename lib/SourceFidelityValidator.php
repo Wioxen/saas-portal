@@ -142,22 +142,29 @@ class SourceFidelityValidator
      */
     private static function extrairNomesProprios(string $text, int $minWords): array
     {
-        $padrao = '/(?<![\.\!\?]\s)\b([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}'
-                . '(?:\s+[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}){' . ($minWords - 1) . ',3})\b/u';
-        if (!preg_match_all($padrao, $text, $m)) return [];
+        // Processa linha por linha pra evitar match cross-line tipo "Brasileirão\nUma vitória"
+        $linhas = preg_split('/[\r\n]+/u', $text) ?: [];
+        // Padrão: 2+ palavras com inicial maiúscula separadas APENAS por espaço (não \n).
+        // Espaço ASCII e non-breaking space — explicitamente sem \s pra não pegar quebra de linha.
+        $padrao = '/(?<![\.\!\?\n]\s)\b([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}'
+                . '(?:[ \xC2\xA0]+[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}){' . ($minWords - 1) . ',3})\b/u';
 
         $nomes = [];
-        foreach ($m[1] as $cap) {
-            $cap = trim($cap);
-            $partes = preg_split('/\s+/', $cap) ?: [];
-            // Descarta se 1ª palavra é stop-word
-            if (in_array($partes[0] ?? '', self::STOP_CAPS, true)) continue;
-            // Descarta se TODAS as palavras são stop (raro)
-            $stopCount = 0;
-            foreach ($partes as $p) if (in_array($p, self::STOP_CAPS, true)) $stopCount++;
-            if ($stopCount === count($partes)) continue;
-            // Descarta nome de mês/dia (ex: "16 de Maio" — Maio cai em STOP, mas dois nomes "Maio Junho" também)
-            $nomes[$cap] = true;
+        foreach ($linhas as $linha) {
+            $linha = trim($linha);
+            if ($linha === '' || mb_strlen($linha) < 6) continue;
+            if (!preg_match_all($padrao, $linha, $m)) continue;
+            foreach ($m[1] as $cap) {
+                $cap = trim($cap);
+                $partes = preg_split('/\s+/', $cap) ?: [];
+                // Descarta se 1ª palavra é stop-word
+                if (in_array($partes[0] ?? '', self::STOP_CAPS, true)) continue;
+                // Descarta se TODAS as palavras são stop
+                $stopCount = 0;
+                foreach ($partes as $p) if (in_array($p, self::STOP_CAPS, true)) $stopCount++;
+                if ($stopCount === count($partes)) continue;
+                $nomes[$cap] = true;
+            }
         }
         return array_keys($nomes);
     }
@@ -180,10 +187,13 @@ class SourceFidelityValidator
         }
 
         // URLs em texto plano: domínio.tld/algo
-        $text = strip_tags($html);
-        if (preg_match_all('#\b([a-z0-9-]+\.(com\.br|com|net|org|gov\.br|edu\.br)(?:/[^\s,\.]*)?)#i', $text, $m)) {
+        // strip_tags pode juntar texto de tags adjacentes sem whitespace ("Ingressos:" + "<p>site.com")
+        // resultando em "Ingressossite.com" — exigimos whitespace ou pontuação antes do domínio.
+        $text = strip_tags(preg_replace('/<\/(p|h[1-6]|li|td|tr|div)>/i', " </$1>", $html) ?? $html);
+        if (preg_match_all('#(?:^|[\s>:.,;!?\(\)])([a-z0-9-]+\.(com\.br|com|net|org|gov\.br|edu\.br)(?:/[^\s,\.]*)?)#i', $text, $m)) {
             foreach ($m[1] as $u) {
                 $clean = rtrim($u, ".,;:");
+                // Path obrigatório pra entrar como "específico" (apenas domínio sem path tem menos risco)
                 if (str_contains($clean, '/')) $urls[$clean] = true;
             }
         }
