@@ -44,22 +44,29 @@ class DiscoverSchemas
 
         $graph = [];
 
-        // Sempre
-        $news = self::newsArticle($meta, $trend, $cfg);
-        if ($news) $graph[] = $news;
+        // RankMath gera NewsArticle + BreadcrumbList + Person + Organization + WebPage
+        // automaticamente. Quando o site tem RankMath ativo, evitamos duplicar — só
+        // geramos os tipos rich que ele NÃO cobre (FAQPage, HowTo, ItemList, Course,
+        // Event, SportsEvent). Flag é per-site no sites.php.
+        $rankmathOn = !empty($cfg['rankmath_handles_schemas']);
 
-        $breadcrumb = self::breadcrumbList($meta, $trend, $cfg);
-        if ($breadcrumb) $graph[] = $breadcrumb;
+        if (!$rankmathOn) {
+            $news = self::newsArticle($meta, $trend, $cfg);
+            if ($news) $graph[] = $news;
 
-        $author = self::personAutor($trend, $cfg);
-        if ($author) $graph[] = $author;
+            $breadcrumb = self::breadcrumbList($meta, $trend, $cfg);
+            if ($breadcrumb) $graph[] = $breadcrumb;
 
-        // Organization próprio por site — sinaliza identidade institucional distinta
-        // (mitigação anti-PBN: cada site é "outra editora", não cluster artificial)
-        $org = self::organization($cfg);
-        if ($org) $graph[] = $org;
+            $author = self::personAutor($trend, $cfg);
+            if ($author) $graph[] = $author;
 
-        // Condicional
+            // Organization próprio por site — sinaliza identidade institucional distinta
+            // (mitigação anti-PBN: cada site é "outra editora", não cluster artificial)
+            $org = self::organization($cfg);
+            if ($org) $graph[] = $org;
+        }
+
+        // Condicional — RankMath NÃO gera esses, então sempre rodamos
         $course = self::course($meta, $trend, $cfg);
         if ($course) $graph[] = $course;
 

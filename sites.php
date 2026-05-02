@@ -227,11 +227,14 @@ return [
              'curso gratuito', 'curso ead', 'bolsa família', 'bpc', 'auxílio gás', 'inss', 'fgts',
              'consignado', 'cartão de crédito sem anuidade', 'investimento renda fixa', 'tesouro direto',
          ],
-         // Author box + breadcrumb visual desabilitados — tema WP + RankMath
-         // já renderizam ambos. TrustBlocks duplicaria. Schemas (Person +
-         // BreadcrumbList) continuam sendo injetados em JSON-LD (invisíveis).
-         'author_box_inline' => false,
-         'breadcrumb_inline' => false,
+         // Author box + breadcrumb visual + schemas duplicados desabilitados —
+         // tema WP + RankMath já renderizam tudo isso. RankMath gera NewsArticle
+         // + BreadcrumbList + Person + Organization + WebPage automaticamente.
+         // Continuamos gerando schemas rich que RankMath não cobre: FAQPage,
+         // HowTo, ItemList, Course, Event, SportsEvent (quando ativar).
+         'author_box_inline'        => false,
+         'breadcrumb_inline'        => false,
+         'rankmath_handles_schemas' => true,
          'persona' => [
              'autor'            => 'Equipe Leão da Barra',
              'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',

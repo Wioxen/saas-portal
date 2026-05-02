@@ -150,6 +150,7 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         // Flags de UI — se tema WP / RankMath já renderizam, evita duplicação
         'author_box_inline',
         'breadcrumb_inline',
+        'rankmath_handles_schemas',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];

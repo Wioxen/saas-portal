@@ -495,7 +495,27 @@ class DiscoverGerador
                       . "    ✗ 'Buscas por onde assistir Palmeiras x Santos saltaram esta semana...'\n"
                       . "    ✓ 'Palmeiras e Santos se enfrentam neste sábado às 18h30 no Allianz Parque,\n"
                       . "       em jogo que pode mexer diretamente na zona de classificação.'\n"
+                      . "  ✓ Logo APÓS o lead inicial, INSIRA 1 bloco de urgência destacado:\n"
+                      . "    <p><strong>⚽ AO VIVO HOJE às [horário] — veja onde assistir, escalações\n"
+                      . "    e [GANCHO específico do dia].</strong></p>\n"
+                      . "    Esse bloco aumenta CTR no Discover (urgência visual).\n"
                       . "═══ FIM ESTRUTURA ═══\n";
+
+            $blocos[] = "\n═══ ESPORTES — ENTIDADES + PALAVRAS-CHAVE SECUNDÁRIAS ═══\n"
+                      . "Pra Google entender o tema (NER) e ranquear em queries variadas:\n\n"
+                      . "REPITA NOME COMPLETO das entidades 2-3x ao longo do artigo:\n"
+                      . "  ✓ 'Campeonato Brasileiro Série A' (não só 'Brasileirão')\n"
+                      . "  ✓ 'Sociedade Esportiva Palmeiras' (1ª menção) → 'Palmeiras' (depois)\n"
+                      . "  ✓ 'Esporte Clube Vitória' (1ª) → 'Vitória' (depois)\n"
+                      . "  ✓ 'Conmebol Libertadores' (não só 'Libertadores')\n"
+                      . "  ✓ Nome dos jogadores com posição na 1ª menção: 'Endrick (atacante)'\n\n"
+                      . "INCLUA palavras-chave secundárias NATURALMENTE:\n"
+                      . "  ✓ 'ao vivo' — 2-3 vezes ao longo do texto\n"
+                      . "  ✓ 'transmissão ao vivo' / 'assistir ao vivo'\n"
+                      . "  ✓ 'jogo do [Time A] hoje' / 'jogo do [Time B] hoje'\n"
+                      . "  ✓ 'horário do jogo' / '[Time] x [Time] horário'\n"
+                      . "Sem stuffing. Cada uso precisa fazer sentido na frase.\n"
+                      . "═══ FIM ENTIDADES ═══\n";
 
             $blocos[] = "\n═══ ESPORTES — PROFUNDIDADE EXIGIDA ═══\n"
                       . "Quando as fontes cobrirem, INCLUA (cada um em H3 próprio):\n"
