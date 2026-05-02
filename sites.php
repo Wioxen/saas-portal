@@ -235,6 +235,11 @@ return [
          'author_box_inline'        => false,
          'breadcrumb_inline'        => false,
          'rankmath_handles_schemas' => true,
+         // Esportes raramente passa de score 7.0 (faixa típica 5.5-7.0 vista no pingo).
+         // Threshold global default 7.0 desviava 100% dos trends esportivos pra GPT-mini,
+         // que aluvina nomes de técnicos/URLs e ignora o manifesto. Threshold 5.5 alinhado
+         // com scoring de fonte do leaodabarra → mantém Sonnet como principal.
+         'trend_scoring_threshold' => 5.5,
          'persona' => [
              'autor'            => 'Equipe Leão da Barra',
              'voz'              => 'jornalismo esportivo direto, foco em utilidade prática pro torcedor (onde assistir, horário, escalação confirmada), sem fanatismo nem opinião disfarçada de notícia',

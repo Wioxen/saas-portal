@@ -318,6 +318,78 @@ class AntiAIValidator
         $headingsVagos = $this->detectarVaguenessHeadings($html);
         foreach ($headingsVagos as $issue) $issues[] = $issue;
 
+        /* Truncamento de P1 — frase termina em fragmento curto e desconexo após vírgula.
+           Bug observado em #711 leaodabarra: "...saltaram nas últimas horas, já pesquisaram."
+           Padrão: vírgula + 2-4 palavras + verbo no passado plural + ponto final. */
+        $truncamentos = $this->detectarTruncamentos($html);
+        foreach ($truncamentos as $issue) $issues[] = $issue;
+
+        /* Hype não-factual — frases template inventadas pelo modelo sem lastro na fonte.
+           Ex: "Buscas por X saltaram nas últimas horas", "viralizou nas redes", "ganhou repercussão" */
+        $hype = $this->detectarHypeNaoFactual($html);
+        foreach ($hype as $issue) $issues[] = $issue;
+
+        return $issues;
+    }
+
+    /**
+     * Detecta sentenças truncadas: vírgula seguida de fragmento curto (2-4 palavras) com
+     * verbo no passado plural (-aram/-eram/-iram) e ponto final, sem sujeito explícito.
+     *
+     * Caso real: "Buscas saltaram nas últimas horas, já pesquisaram." (post #711)
+     * O fragmento "já pesquisaram" não tem sujeito claro e parece artefato de pós-processador
+     * que cortou texto entre o `<strong>` e o `—` original.
+     */
+    private function detectarTruncamentos(string $html): array
+    {
+        $issues = [];
+        if (!preg_match_all('/<p[^>]*>(.*?)<\/p>/is', $html, $ps)) return $issues;
+
+        foreach ($ps[1] as $i => $p) {
+            $clean = trim(strip_tags($p));
+            if ($clean === '' || mb_strlen($clean) < 30) continue;
+            // Procura padrão: ", [adverb opcional 2-5 chars] [palavra terminada em verbo passado plural].$"
+            // Verbo passado plural PT-BR: -aram, -eram, -iram (ex: pesquisaram, buscaram, viram)
+            // Ou 1ª pessoa plural: -mos no fim de palavra curta
+            $padroes = [
+                // ", já pesquisaram." / ", todos buscaram." / ", muitos viram."
+                '/,\s+(já|todos|muitos|alguns|ainda|também)\s+\S{4,15}(aram|eram|iram)\.\s*$/iu',
+                // ", X Y." onde X é monossílabo e Y é verbo curto (max 12 chars) terminado em verbo
+                '/,\s+\S{2,5}\s+\S{4,12}(aram|eram|iram|ou)\.\s*$/iu',
+            ];
+            foreach ($padroes as $regex) {
+                if (preg_match($regex, $clean, $m)) {
+                    $trecho = mb_substr($clean, max(0, mb_strlen($clean) - 60));
+                    $issues[] = "P{$i} possível truncamento: \"...{$trecho}\" — fragmento curto após vírgula sugere artefato de pós-processador";
+                    break;
+                }
+            }
+        }
+        return $issues;
+    }
+
+    /**
+     * Detecta frases de hype não-factual que GPT/Claude inventam sem lastro na fonte.
+     * Padrão clássico: "Buscas saltaram", "viralizou nas redes", "ganhou repercussão".
+     * Não é bloqueante por si só (pode ter lastro real), mas marca pra revisão.
+     */
+    private function detectarHypeNaoFactual(string $html): array
+    {
+        $issues = [];
+        $body = strip_tags($html);
+        $padroes = [
+            '/buscas?\s+(por|sobre)\s+[^.,]{3,40}\s+(saltaram|dispararam|exploraram|cresceram)\s+(nas?\s+últimas\s+horas?|nas?\s+redes|na?\s+internet)/iu',
+            '/viralizou\s+(nas?\s+redes|na?\s+internet|no\s+twitter|no\s+x)/iu',
+            '/ganhou\s+repercussão\s+(nas?\s+redes|internacional|sem\s+precedentes)/iu',
+            '/bombou\s+(nas?\s+redes|na?\s+internet)/iu',
+            '/tomou\s+conta\s+das?\s+redes/iu',
+            '/movimentou\s+a\s+internet/iu',
+        ];
+        foreach ($padroes as $regex) {
+            if (preg_match($regex, $body, $m)) {
+                $issues[] = "hype não-factual detectado: \"" . trim($m[0]) . "\" — verifica se a fonte sustenta ou é alucinação";
+            }
+        }
         return $issues;
     }
 

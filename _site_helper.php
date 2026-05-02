@@ -151,6 +151,11 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         'author_box_inline',
         'breadcrumb_inline',
         'rankmath_handles_schemas',
+        // Trend Scoring Gate — score abaixo do threshold desvia de Claude pra GPT-mini.
+        // Default global = 7.0 (em DiscoverGerador::gerar). Override per-site quando o range
+        // típico de score do nicho fica abaixo (ex: esportes raramente passa de 7).
+        'trend_scoring_threshold',
+        'trend_scoring_enabled',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];

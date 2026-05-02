@@ -94,6 +94,50 @@ class DiscoverGeradorGPT
         $content      = (string)($json['content_html'] ?? '');
         $metaTitle    = DiscoverPostProcess::normalizarTitulo((string)($json['meta_title'] ?? $titulo));
 
+        // ─── VALIDADORES DE QUALIDADE PÓS-GERAÇÃO ───
+        // Caso real (post #711 leaodabarra): GPT inventou técnicos, URLs, número errado.
+        // Esses validadores marcam alucinações ANTES de salvar no WP.
+        $validationReport = ['anti_ai' => null, 'fidelity' => null];
+
+        // 1) AntiAIValidator — frases banidas, padrões robóticos, truncamento, hype
+        if (!class_exists('AntiAIValidator')) {
+            $aiPath = __DIR__ . '/AntiAIValidator.php';
+            if (file_exists($aiPath)) require_once $aiPath;
+        }
+        if (class_exists('AntiAIValidator')) {
+            try {
+                $aiVal = new AntiAIValidator();
+                $aiReport = $aiVal->validate($content);
+                $validationReport['anti_ai'] = $aiReport;
+                $progress->reportar('validando_anti_ai', $aiVal->reportToLogLine($aiReport));
+            } catch (Throwable $e) { /* validador não bloqueia geração */ }
+        }
+
+        // 2) SourceFidelityValidator — nomes próprios e URLs sem lastro na fonte
+        if (!class_exists('SourceFidelityValidator')) {
+            $sfPath = __DIR__ . '/SourceFidelityValidator.php';
+            if (file_exists($sfPath)) require_once $sfPath;
+        }
+        if (class_exists('SourceFidelityValidator')) {
+            try {
+                $fidReport = SourceFidelityValidator::validar($content, $textosFontes);
+                $validationReport['fidelity'] = $fidReport;
+                $progress->reportar('validando_fidelidade', SourceFidelityValidator::reportToLogLine($fidReport));
+                // Se severity=fail (nome ou URL inventada), grava report num arquivo de debug
+                // mas continua o fluxo (decisão de bloquear publicação fica pro orquestrador).
+                if (($fidReport['severity'] ?? '') === 'fail') {
+                    $dbgPath = __DIR__ . '/../data/debug/fidelity_fail_' . date('Ymd_His') . '_' . $trendId . '.json';
+                    @mkdir(dirname($dbgPath), 0777, true);
+                    @file_put_contents($dbgPath, json_encode([
+                        'trend_id' => $trendId,
+                        'termo'    => $termo,
+                        'modelo'   => $this->modelo,
+                        'report'   => $fidReport,
+                    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                }
+            } catch (Throwable $e) { /* validador não bloqueia geração */ }
+        }
+
         // Validator + retry de título (GPT delega pro Claude pra evitar custo de 2º call no OpenAI).
         // Se anthropic_api_key está configurado, retry roda; caso contrário skip.
         $tituloInfo = ['refeito' => false, 'score' => null, 'falhas' => []];
@@ -383,6 +427,7 @@ class DiscoverGeradorGPT
             'edit_url'       => $editUrl,
             'fontes_usadas'  => count($fontesOk),
             'chars_fontes'   => $totalChars,
+            'validation'     => $validationReport ?? null,
             'auditoria'      => $auditoria,
             'quality'        => $quality,
             'status'         => $statusFinal,
