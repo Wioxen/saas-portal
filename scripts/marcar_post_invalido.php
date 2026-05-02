@@ -56,7 +56,7 @@ echo "Status atual: {$trend['status']}\n\n";
 if ($postId > 0) {
     try {
         $wp = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
-        $wp->atualizarPost($postId, ['status' => 'trash']);
+        $wp->trashPost($postId, false);  // force=false = move pro trash, não delete permanente
         echo "✓ Post #{$postId} movido pro trash no WP\n";
     } catch (Throwable $e) {
         echo "✗ Falha ao trashar post no WP: " . $e->getMessage() . "\n";

@@ -147,6 +147,21 @@ class Wordpress
     }
 
     /**
+     * Move um post pro trash (default) ou deleta permanentemente.
+     * WP REST não aceita atualizarPost(['status' => 'trash']) — precisa de DELETE.
+     *
+     * @param int  $id
+     * @param bool $force true = delete permanente, false (default) = move pro trash
+     * @return array resposta da API
+     */
+    public function trashPost(int $id, bool $force = false): array
+    {
+        $path = "/posts/{$id}";
+        if ($force) $path .= '?force=true';
+        return $this->request('DELETE', $path);
+    }
+
+    /**
      * Purga URL no Cloudflare quando cfg tem cloudflare_zone_id + .env tem token.
      * Falha silenciosa: purge é PLUS.
      */
