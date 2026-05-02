@@ -121,6 +121,13 @@ class DiscoverGeradorGPT
         $metaDesc     = (string)($json['meta_description'] ?? '');
         $slug         = (string)($json['slug'] ?? '');
         $focusKw      = (string)($json['focus_keyword'] ?? $termo);
+        // Combina focus + secondary keywords pra rank_math_focus_keyword (CSV)
+        $allKws = [trim($focusKw)];
+        foreach ((array)($json['secondary_keywords'] ?? []) as $sk) {
+            $sk = trim((string)$sk);
+            if ($sk !== '' && !in_array($sk, $allKws, true)) $allKws[] = $sk;
+        }
+        $kwsStr = implode(', ', array_filter($allKws));
 
         // 5b) FEATURED IMAGE — cascata Pexels → DALL-E → og:image (paridade com Sonnet/Maquina)
         // Antes desse bloco, GPT path NUNCA gerava imagem. Bug histórico de paridade.
@@ -161,7 +168,7 @@ class DiscoverGeradorGPT
                 'meta'    => [
                     'rank_math_title'         => $metaTitle,
                     'rank_math_description'   => $metaDesc,
-                    'rank_math_focus_keyword' => $focusKw,
+                    'rank_math_focus_keyword' => $kwsStr,
                 ],
             ];
             if ($featuredId) $payloadPost['featured_media'] = $featuredId;

@@ -471,10 +471,23 @@ class Maquina
 
     private function metaRankMath(array $a): array
     {
+        // Combina focus_keyword + secondary_keywords em uma string CSV.
+        // RankMath aceita múltiplas keywords separadas por vírgula no mesmo campo,
+        // melhorando match semântico em queries variadas (vs só 1 frase exata).
+        $kws = [];
+        if (!empty($a['focus_keyword'])) $kws[] = trim((string)$a['focus_keyword']);
+        if (!empty($a['secondary_keywords']) && is_array($a['secondary_keywords'])) {
+            foreach ($a['secondary_keywords'] as $sk) {
+                $sk = trim((string)$sk);
+                if ($sk !== '' && !in_array($sk, $kws, true)) $kws[] = $sk;
+            }
+        }
+        $kwsStr = implode(', ', $kws);
+
         return [
             'rank_math_title'                => $a['meta_title'] ?? $a['title'],
             'rank_math_description'          => $a['meta_description'] ?? $a['excerpt'] ?? '',
-            'rank_math_focus_keyword'        => $a['focus_keyword'] ?? '',
+            'rank_math_focus_keyword'        => $kwsStr,
             'rank_math_facebook_title'       => $a['meta_title'] ?? $a['title'],
             'rank_math_facebook_description' => $a['meta_description'] ?? '',
             'rank_math_twitter_title'        => $a['meta_title'] ?? $a['title'],
