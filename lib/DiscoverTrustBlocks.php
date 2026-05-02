@@ -45,6 +45,13 @@ class DiscoverTrustBlocks
     {
         if (strpos($html, 'data-cc-author-box') !== false) return $html; // idempotente
 
+        // Site pode desabilitar inline author box quando tema WP / RankMath já
+        // renderiza autor no template (evita duplicação visual no post).
+        // Schema.org/Person continua sendo gerado por DiscoverSchemas (não conflita).
+        if (isset($cfg['author_box_inline']) && $cfg['author_box_inline'] === false) {
+            return $html;
+        }
+
         $persona = $cfg['persona'] ?? [];
         if (empty($persona) || empty($persona['autor'])) return $html;
 
