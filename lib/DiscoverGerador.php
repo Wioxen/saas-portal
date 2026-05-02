@@ -85,6 +85,56 @@ class DiscoverGerador
     }
 
     /**
+     * Mapeia cluster editorial detectado → nomes de categoria WP.
+     * CategoryMatcher faz fuzzy match com categorias existentes (threshold 70%).
+     * Se nenhuma match, cria nova com esse nome.
+     *
+     * Pra cluster=esportes, refina baseado no termo (Brasileirão/Libertadores/etc)
+     * pra silo SEO mais específico — útil pro leaodabarra.
+     */
+    private static function clusterParaCategorias(array $cluster, array $trend): array
+    {
+        $key = (string)($cluster['key'] ?? 'curiosidades_geral');
+        $termoLow = mb_strtolower((string)($trend['termo'] ?? ''));
+
+        $base = match ($key) {
+            'esportes'                   => ['Esportes'],
+            'noticias_info_critica'      => ['Notícias'],
+            'negocios_financas'          => ['Economia'],
+            'leis_governo'               => ['Direitos'],
+            'saude_bem_estar'            => ['Saúde'],
+            'educacao_servicos_publicos' => ['Educação'],
+            'educacao'                   => ['Educação'],
+            'entretenimento'             => ['Entretenimento'],
+            'tecnologia'                 => ['Tecnologia'],
+            'viagem_transporte'          => ['Viagens'],
+            'automoveis'                 => ['Carros'],
+            'comidas_bebidas'            => ['Comida'],
+            'lifestyle_consumo'          => ['Lifestyle'],
+            'curiosidades_geral'         => ['Curiosidades'],
+            default                      => ['Notícias'],
+        };
+
+        // Refinement esportes: adiciona subcategoria por torneio detectado no termo
+        if ($key === 'esportes') {
+            $torneio = match (true) {
+                str_contains($termoLow, 'brasileirão') || str_contains($termoLow, 'brasileirao') => 'Brasileirão',
+                str_contains($termoLow, 'libertadores') => 'Libertadores',
+                str_contains($termoLow, 'sul-americana') || str_contains($termoLow, 'sulamericana') => 'Sul-Americana',
+                str_contains($termoLow, 'champions') => 'Champions League',
+                str_contains($termoLow, 'copa do mundo') || str_contains($termoLow, 'seleção brasileira') => 'Seleção',
+                str_contains($termoLow, 'fórmula 1') || str_contains($termoLow, 'formula 1') || str_contains($termoLow, ' f1 ') => 'Fórmula 1',
+                str_contains($termoLow, 'ufc') || str_contains($termoLow, 'mma') => 'MMA',
+                str_contains($termoLow, 'nba') => 'Basquete',
+                default => null,
+            };
+            if ($torneio !== null) $base[] = $torneio;
+        }
+
+        return $base;
+    }
+
+    /**
      * Extrai URLs oficiais (gov.br, edu.br, jus.br, *.org.br) das fontes scrapeadas.
      * Inclui URLs DE atributos href OU texto cru (alguns scrapers perdem o href).
      * Retorna lista única, ordenada por especificidade (subdomínios > domínios genéricos).
@@ -404,16 +454,55 @@ class DiscoverGerador
         $cluster = DiscoverClusterMatcher::detectar($trend);
         $blocos[] = DiscoverClusterMatcher::instrucaoProPrompt($cluster);
 
-        // 3b-bis) Cluster=esportes → instrução SportsEvent estava aqui mas DESATIVADA.
-        // Razão: a instrução pedia "retorne no JSON final um campo sports_event",
-        // mas o prompt.md atual instrui formato texto (## ANÁLISE + ## ARTIGO HTML).
-        // Mid-prompt JSON cria contradição → Claude/GPT confundem formato → JSON
-        // parser falha no fallback. Reativar quando refatorar pra formato compatível
-        // com text-mode (ex: HTML comment <!--SPORTS_EVENT ... -->).
-        // if (($cluster['key'] ?? '') === 'esportes') {
-        //     require_once __DIR__ . '/DiscoverSportsEvent.php';
-        //     $blocos[] = DiscoverSportsEvent::instrucaoProPrompt();
-        // }
+        // 3b-bis) Cluster=esportes → blocos compatíveis com formato texto do prompt.md
+        // (não pede JSON mid-prompt, evita o bug do SportsEvent original).
+        // Foca em 4 pilares: anti-alucinação, profundidade, diferencial, título Discover-friendly.
+        if (($cluster['key'] ?? '') === 'esportes') {
+            $blocos[] = "\n═══ ESPORTES — DISCIPLINA FACTUAL (anti-alucinação) ═══\n"
+                      . "ESCALAÇÕES, TRANSFERÊNCIAS E CONFRONTOS DIRETOS:\n"
+                      . "  ✓ Cite APENAS jogadores, técnicos e formações que aparecem EXPLICITAMENTE\n"
+                      . "    nas fontes anexadas. Se a fonte não diz 'X jogou ontem' ou 'Y foi escalado',\n"
+                      . "    NÃO inclua o nome.\n"
+                      . "  ✓ Se as fontes NÃO trazem escalação confirmada, escreva: 'escalação a confirmar'\n"
+                      . "    ou 'técnico ainda não divulgou time provável' — NUNCA invente lista de 11.\n"
+                      . "  ✓ Para forma recente (últimos jogos): cite SOMENTE placar/data que estão\n"
+                      . "    explícitos na fonte. Sem fonte = 'forma recente: dado não disponível'.\n"
+                      . "  ✗ NÃO use seu conhecimento de treino pra completar lacuna. Transferências\n"
+                      . "    de 2026 podem ter mudado. Apenas o que está nas fontes scrapeadas é factual.\n"
+                      . "═══ FIM DISCIPLINA FACTUAL ═══\n";
+
+            $blocos[] = "\n═══ ESPORTES — PROFUNDIDADE EXIGIDA ═══\n"
+                      . "Quando as fontes cobrirem, INCLUA (cada um em H3 próprio):\n"
+                      . "  • Forma recente: últimos 3-5 resultados de cada time (placar + adversário + local)\n"
+                      . "  • Retrospecto direto: últimos 3-5 confrontos entre os 2 times\n"
+                      . "  • Quem chega melhor: análise comparativa baseada em forma + desfalques + casa/fora\n"
+                      . "  • Contexto da rodada: posição na tabela, importância (G6/Z4/Libertadores)\n"
+                      . "Se a fonte NÃO traz esse dado, OMITA o bloco — não invente. Profundidade vem dos\n"
+                      . "dados reais, não de prosa genérica. Artigo curto e factual > artigo longo e oco.\n"
+                      . "═══ FIM PROFUNDIDADE ═══\n";
+
+            $blocos[] = "\n═══ ESPORTES — DIFERENCIAL ANTI-GENÉRICO ═══\n"
+                      . "Identifique nas fontes 1 DADO ESPECÍFICO que matérias genéricas sobre o jogo\n"
+                      . "NÃO citariam. Pode ser:\n"
+                      . "  - Estatística rara (ex: 'time X não vence o Y há 8 jogos como mandante')\n"
+                      . "  - Curiosidade tática (ex: 'técnico mudou esquema 3 vezes no último mês')\n"
+                      . "  - Histórico psicológico (ex: 'visitante perdeu últimos 3 clássicos por gols nos minutos finais')\n"
+                      . "  - Detalhe contextual (ex: 'jogador X retorna após 6 meses — primeira vez em campo')\n"
+                      . "INSIRA esse dado em destaque (caixa, negrito ou H3). É o gancho que diferencia.\n"
+                      . "Se NÃO encontrar nada específico nas fontes, OMITA — não invente fato pra preencher.\n"
+                      . "═══ FIM DIFERENCIAL ═══\n";
+
+            $blocos[] = "\n═══ ESPORTES — TÍTULO PRO DISCOVER ═══\n"
+                      . "Padrão alvo (ordem de prioridade):\n"
+                      . "  1. [Time A] x [Time B]: onde assistir, escalação e [GANCHO ESPECÍFICO]\n"
+                      . "  2. [Time A] x [Time B]: horário, escalações e quem chega mais forte\n"
+                      . "  3. [Time A] x [Time B]: o detalhe nas escalações que pode decidir o jogo\n"
+                      . "GANCHO ESPECÍFICO sai do bloco DIFERENCIAL acima — usa o dado raro como hook.\n"
+                      . "Limite: 60-68 caracteres. Sem números inventados. Sem 'imperdível' / 'incrível'.\n"
+                      . "Para tabelas/classificações (não-partida), use padrão diferente:\n"
+                      . "  - Tabela do [Campeonato]: [INSIGHT atualizado]\n"
+                      . "═══ FIM TÍTULO ESPORTES ═══\n";
+        }
 
         // 3c) E-E-A-T — bloco "Humano-Especialista" universal (voz autoridade, pulo do gato, transparência)
         // Sinais que Google Helpful Content premia. Não conflita com persona (que é por nicho).
@@ -531,6 +620,25 @@ class DiscoverGerador
 
         $postId = (int)($primeiro['post_id'] ?? 0);
         $titulo = (string)($primeiro['titulo'] ?? '');
+
+        // ─── CATEGORIA — fim do "sem-categoria" no fluxo tick_filas ───
+        // Maquina/Claude criou o post sem categoria atribuída. CategoryMatcher
+        // resolve via fuzzy match (existente em 5 níveis) ou cria nova. Cluster
+        // editorial detectado vira nome de categoria base.
+        if ($postId > 0) {
+            try {
+                require_once __DIR__ . '/CategoryMatcher.php';
+                $cm = new CategoryMatcher($this->wp, 70.0);
+                $catNomes = self::clusterParaCategorias($cluster, $trend);
+                if (!empty($catNomes)) {
+                    $catIds = $cm->resolverComMatch($catNomes);
+                    if (!empty($catIds)) {
+                        $this->wp->atualizarPost($postId, ['categories' => $catIds]);
+                        $progress->reportar('categoria_set', 'Categoria atribuída: ' . implode(', ', $catNomes));
+                    }
+                }
+            } catch (Throwable $e) { /* categoria é importante mas não bloqueia post */ }
+        }
         $editUrl = (string)($primeiro['edit_url'] ?? '');
 
         // ═══ PARIDADE COM REVIEWER: valida título + retry + normaliza ═══
