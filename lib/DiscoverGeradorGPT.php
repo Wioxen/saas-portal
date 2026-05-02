@@ -174,6 +174,22 @@ class DiscoverGeradorGPT
 
         $editUrl = ($this->cfg['wp_url'] ?? '') . '/wp-admin/post.php?post=' . $postId . '&action=edit';
 
+        // ─── CATEGORIA — fim do "sem-categoria" também no fluxo GPT (fallback) ───
+        // Mesma lógica do DiscoverGerador (Claude path). Garante que post saia com
+        // categoria mapeada do cluster mesmo quando Claude falha e cai pra GPT.
+        try {
+            require_once __DIR__ . '/CategoryMatcher.php';
+            $cm = new CategoryMatcher($this->wp, 70.0);
+            $clusterKey = (string)($trend['cluster_detect']['key'] ?? 'curiosidades_geral');
+            $catNomes = self::clusterParaCategorias($clusterKey, (string)($trend['termo'] ?? ''));
+            if (!empty($catNomes)) {
+                $catIds = $cm->resolverComMatch($catNomes);
+                if (!empty($catIds)) {
+                    $this->wp->atualizarPost($postId, ['categories' => $catIds]);
+                }
+            }
+        } catch (Throwable $e) { /* categoria não bloqueia post */ }
+
         // 7) PostProcess (auto-links, cards, schemas, cluster interlink)
         $progress->reportar('pos_processing', 'Cards, schemas, auto-links, cluster');
         $auditoria = null;
@@ -365,6 +381,48 @@ class DiscoverGeradorGPT
             'status'         => $statusFinal,
             'provedor'       => "GPT ({$this->modelo})",
         ];
+    }
+
+    /**
+     * Mapeia cluster editorial → nomes de categoria WP.
+     * Mesma lógica de DiscoverGerador::clusterParaCategorias mas duplicada aqui
+     * por simplicidade (evita refactor pra utility class).
+     */
+    private static function clusterParaCategorias(string $key, string $termo): array
+    {
+        $termoLow = mb_strtolower($termo);
+        $base = match ($key) {
+            'esportes'                   => ['Esportes'],
+            'noticias_info_critica'      => ['Notícias'],
+            'negocios_financas'          => ['Economia'],
+            'leis_governo'               => ['Direitos'],
+            'saude_bem_estar'            => ['Saúde'],
+            'educacao_servicos_publicos' => ['Educação'],
+            'educacao'                   => ['Educação'],
+            'entretenimento'             => ['Entretenimento'],
+            'tecnologia'                 => ['Tecnologia'],
+            'viagem_transporte'          => ['Viagens'],
+            'automoveis'                 => ['Carros'],
+            'comidas_bebidas'            => ['Comida'],
+            'lifestyle_consumo'          => ['Lifestyle'],
+            'curiosidades_geral'         => ['Curiosidades'],
+            default                      => ['Notícias'],
+        };
+        if ($key === 'esportes') {
+            $torneio = match (true) {
+                str_contains($termoLow, 'brasileirão') || str_contains($termoLow, 'brasileirao') => 'Brasileirão',
+                str_contains($termoLow, 'libertadores') => 'Libertadores',
+                str_contains($termoLow, 'sul-americana') || str_contains($termoLow, 'sulamericana') => 'Sul-Americana',
+                str_contains($termoLow, 'champions') => 'Champions League',
+                str_contains($termoLow, 'copa do mundo') || str_contains($termoLow, 'seleção brasileira') => 'Seleção',
+                str_contains($termoLow, 'fórmula 1') || str_contains($termoLow, 'formula 1') || str_contains($termoLow, ' f1 ') => 'Fórmula 1',
+                str_contains($termoLow, 'ufc') || str_contains($termoLow, 'mma') => 'MMA',
+                str_contains($termoLow, 'nba') => 'Basquete',
+                default => null,
+            };
+            if ($torneio !== null) $base[] = $torneio;
+        }
+        return $base;
     }
 
     /** Monta system + user prompt usando regras do CLAUDE.md + schema de saída esperado. */

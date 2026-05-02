@@ -147,6 +147,9 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         'gsc_site_url',
         // Amazon Associates BR tag — pra ProductRanker incluir ?tag={X}
         'amazon_associates_tag',
+        // Flags de UI — se tema WP / RankMath já renderizam, evita duplicação
+        'author_box_inline',
+        'breadcrumb_inline',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];
