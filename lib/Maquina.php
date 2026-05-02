@@ -394,25 +394,32 @@ class Maquina
         $nowIso = date('c');
         $siteName = $this->cfg['site_name'] ?? 'Redação';
         $siteUrl  = $this->cfg['wp_url'] ?? '';
-        $schemas[] = [
-            '@context'      => 'https://schema.org',
-            '@type'         => $a['schema_type'] ?? 'Article',
-            'headline'      => mb_substr($a['title'] ?? '', 0, 110),
-            'description'   => $a['meta_description'] ?? $a['excerpt'] ?? '',
-            'datePublished' => $nowIso,
-            'dateModified'  => $nowIso,
-            'author'        => [
-                '@type' => 'Organization',
-                'name'  => $siteName,
-                'url'   => $siteUrl,
-            ],
-            'publisher'     => [
-                '@type' => 'Organization',
-                'name'  => $siteName,
-                'url'   => $siteUrl,
-            ],
-            'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $siteUrl],
-        ];
+
+        // Schema_type='none' é sentinela do formato 'discover' (Claude.php:62) —
+        // significa "RankMath cuida do Article/NewsArticle". NÃO emitir schema
+        // template aqui (causa "@type":"none" inválido no JSON-LD final).
+        $schemaType = $a['schema_type'] ?? 'Article';
+        if ($schemaType !== 'none') {
+            $schemas[] = [
+                '@context'      => 'https://schema.org',
+                '@type'         => $schemaType,
+                'headline'      => mb_substr($a['title'] ?? '', 0, 110),
+                'description'   => $a['meta_description'] ?? $a['excerpt'] ?? '',
+                'datePublished' => $nowIso,
+                'dateModified'  => $nowIso,
+                'author'        => [
+                    '@type' => 'Organization',
+                    'name'  => $siteName,
+                    'url'   => $siteUrl,
+                ],
+                'publisher'     => [
+                    '@type' => 'Organization',
+                    'name'  => $siteName,
+                    'url'   => $siteUrl,
+                ],
+                'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $siteUrl],
+            ];
+        }
 
         if (!empty($a['faq'])) {
             $schemas[] = [
