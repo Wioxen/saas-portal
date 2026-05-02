@@ -142,7 +142,9 @@ class DiscoverGeradorGPT
         }
         if (class_exists('SourceFidelityValidator')) {
             try {
-                $fidReport = SourceFidelityValidator::validar($content, $textosFontes);
+                $fidReport = SourceFidelityValidator::validar($content, $textosFontes, [
+                    'own_domain' => (string)($this->cfg['wp_url'] ?? ''),
+                ]);
                 $validationReport['fidelity'] = $fidReport;
                 $progress->reportar('validando_fidelidade', SourceFidelityValidator::reportToLogLine($fidReport));
                 // Se severity=fail (nome ou URL inventada), grava report num arquivo de debug

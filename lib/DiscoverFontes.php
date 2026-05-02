@@ -32,23 +32,31 @@ class DiscoverFontes
         // Remove acentos pra match robusto (URL slugs frequentemente sem acento)
         $termoNorm = strtr($termoLow, ['á'=>'a','à'=>'a','â'=>'a','ã'=>'a','é'=>'e','ê'=>'e','í'=>'i','ó'=>'o','ô'=>'o','õ'=>'o','ú'=>'u','ç'=>'c']);
 
-        // Padrão "X x Y" ou "X vs Y" (jogo) — extrai os 2 lados
-        if (preg_match('/\b([a-zA-Z\-]+)\s*(?:x|vs)\s+([a-zA-Z\-]+)/iu', $termoNorm, $m)) {
-            // Adversários: ambos os lados
-            $a = trim($m[1]); $b = trim($m[2]);
-            if (mb_strlen($a) >= 4) $tokens[] = $a;
-            if (mb_strlen($b) >= 4) $tokens[] = $b;
-        }
-
-        // Stopwords e palavras genéricas a ignorar
+        // Stopwords + nicho-stopwords (palavras do clube alvo do site, comuns em TODAS
+        // as fontes do leaodabarra — não discriminam jogos diferentes do mesmo clube).
         static $stop = [
+            // genéricas
             'sobre','onde','assistir','ao','vivo','hoje','vai','vem','que','para','pelo',
-            'pela','dos','das','para','quando','horario','horário','escala','escalações',
+            'pela','dos','das','quando','horario','horário','escala','escalações',
             'escalacao','escalacoes','desfalques','arbitragem','jogo','partida','rodada',
             'campeonato','brasileirao','brasileirão','copa','série','serie','time','clube',
-            'futebol','vitoria','vitória','leao','leão','rubro','negro','barradao','barradão',
-            'salvador','bahia','vai','tem','será','sera','está','esta','com','para',
+            'futebol','tem','será','sera','está','esta','com',
+            // nicho do leaodabarra (vão estar em TODAS as fontes do site, não discriminam)
+            'vitoria','vitória','leao','leão','rubro','negro','rubro-negro','barradao','barradão',
+            'salvador','bahia','baiano','baiana','manoel','barradas',
+            // outros clubes — vão estar quando rival visita ou é mencionado em sidebar
+            // (não usar como discriminador único)
         ];
+
+        // Padrão "X x Y" ou "X vs Y" (jogo) — extrai os 2 lados, IGNORANDO o lado nicho
+        // do site (ex: 'vitória' em leaodabarra). Só o ADVERSÁRIO conta como discriminante.
+        if (preg_match('/\b([a-zA-Z\-]+)\s*(?:x|vs)\s+([a-zA-Z\-]+)/iu', $termoNorm, $m)) {
+            $a = trim($m[1]);
+            $b = trim($m[2]);
+            // Filtra cada lado: ignora se é stopword (nicho) ou < 4 chars
+            if (mb_strlen($a) >= 4 && !in_array($a, $stop, true)) $tokens[] = $a;
+            if (mb_strlen($b) >= 4 && !in_array($b, $stop, true)) $tokens[] = $b;
+        }
 
         // Tokens adicionais relevantes do termo (entidades únicas, ≥5 chars, não stop)
         if (preg_match_all('/\b([a-z][a-z\-]{4,})\b/iu', $termoNorm, $m)) {

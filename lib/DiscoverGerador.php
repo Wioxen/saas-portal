@@ -847,7 +847,9 @@ class DiscoverGerador
                                 if (!empty($meta['title'])) $textosFontes[] = (string)$meta['title'];
                                 if (!empty($meta['description'])) $textosFontes[] = (string)$meta['description'];
                             }
-                            $fidReport = SourceFidelityValidator::validar($content, $textosFontes);
+                            $fidReport = SourceFidelityValidator::validar($content, $textosFontes, [
+                                'own_domain' => (string)($this->cfg['wp_url'] ?? ''),
+                            ]);
                             $validationReport['fidelity'] = $fidReport;
                             $progress->reportar('validando_fidelidade', SourceFidelityValidator::reportToLogLine($fidReport));
                             // Grava report quando severity=fail (não bloqueia publicação aqui — orquestrador decide)
