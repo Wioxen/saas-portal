@@ -424,10 +424,12 @@ class DiscoverPingo
             }
             if (!$bateu) {
                 // Não bate com nenhum termo do nicho — rejeita silenciosamente.
-                // Loga pra debug (último parâmetro de logRejeicao).
+                // Loga pra debug (logRejeicao espera modo/motivo/pontos/detalhes).
                 $this->logRejeicao($termo, $fonte, [
                     'rejeitar' => true,
+                    'modo'     => 'block',
                     'motivo'   => 'fora_escopo_nicho',
+                    'pontos'   => 0,
                     'detalhes' => ['site' => $siteTarget, 'termos_exigidos' => count($nichoTerms)],
                 ]);
                 return null;
