@@ -206,6 +206,14 @@ class DiscoverPostProcess
             $html = DiscoverResourceHints::aplicar($html);
         } catch (Throwable $e) { /* hints são PLUS — não bloqueia post */ }
 
+        // 8. BACKSTOP DEDUPE FAQ — roda DE NOVO no final, depois de TODOS os enrichers
+        // (FaqEnricher, LandingBuilder buildFaqHtml em Maquina, etc.) que podem ter injetado
+        // bloco FAQ extra mesmo após o dedupe inicial da etapa 0e. Caso real #738 leaodabarra:
+        // Claude gerou FAQ inline + Maquina concatenou buildFaqHtml(faq) extra → 2 FAQs no post.
+        // O dedupeFaq do início rodou antes dessa concatenação. Backstop garante 1 só.
+        $html = self::dedupeFaq($html);
+        $html = self::dedupeSchemaFaq($html);
+
         return $html;
     }
 
