@@ -167,6 +167,10 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         // Trends fora do nicho ficam status='fora_escopo_<site>'. Usado em sites mono-nicho
         // (ex: leaodabarra cobre SÓ Esporte Clube Vitória — pivot 2026-05-02).
         'nicho_required_terms',
+        // Glossário de backlinks internos: mapa termo → URL canônica do site.
+        // Aplicado pelo InternalLinkGlossary no PostProcess pra construir cluster topical
+        // authority (cada termo aponta sempre pra mesma URL hub do nicho).
+        'internal_link_glossary',
     ];
     foreach ($campos as $k) {
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];

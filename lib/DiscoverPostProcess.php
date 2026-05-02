@@ -133,6 +133,24 @@ class DiscoverPostProcess
             } catch (Throwable $e) { /* falha silenciosa */ }
         }
 
+        // 4c-bis. GLOSSÁRIO DE BACKLINKS FIXOS (cluster topical authority)
+        // Termo recorrente → URL canônica do site. Cada match na 1ª ocorrência (fora de
+        // headings/tabelas/details/anchors). Configurado em sites.php → internal_link_glossary.
+        // Pivot leaodabarra 2026-05-02: 'Esporte Clube Vitória' → /historia-do-...,
+        // 'Copa do Nordeste' → /category/copa-do-nordeste/, 'Barradão' → /barradao/, etc.
+        if (!empty($cfg['internal_link_glossary']) && is_array($cfg['internal_link_glossary'])) {
+            try {
+                require_once __DIR__ . '/InternalLinkGlossary.php';
+                $glossarioRet = InternalLinkGlossary::aplicar($html, [
+                    'wp_url'    => (string)($cfg['wp_url'] ?? ''),
+                    'glossario' => $cfg['internal_link_glossary'],
+                ]);
+                if (!empty($glossarioRet['html']) && $glossarioRet['html'] !== $html) {
+                    $html = $glossarioRet['html'];
+                }
+            } catch (Throwable $e) { /* falha silenciosa — glossário é PLUS */ }
+        }
+
         // 4d. TRUST BLOCKS T1 — Affiliate disclosure + Fontes consultadas + Sobre o autor
         if (!empty($trend) && !empty($cfg)) {
             try {

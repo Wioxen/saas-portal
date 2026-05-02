@@ -351,6 +351,36 @@ return [
              ],
              'cta_estilo'       => 'ver onde assistir o Vitória · ver escalação confirmada · acompanhar Leão tempo real · ver tabela do Brasileirão · ler última coletiva de Jair Ventura',
          ],
+         // ─── GLOSSÁRIO DE BACKLINKS INTERNOS (cluster topical authority) ───
+         // Termos recorrentes que aparecem em quase todo artigo de Vitória → URLs canônicas.
+         // Aplicado pelo InternalLinkGlossary no PostProcess. 1ª ocorrência por termo, fora
+         // de h1-3/table/details/anchors. Termos longos têm prioridade ('Esporte Clube
+         // Vitória' antes de 'Vitória').
+         //
+         // IMPORTANTE: cada URL DEVE existir no WP — link 404 fere autoridade. Antes de
+         // ativar um termo aqui, criar a página correspondente como hub editorial.
+         'internal_link_glossary' => [
+             // Identidade do clube → página de história/sobre
+             'Esporte Clube Vitória' => '/historia-do-esporte-clube-vitoria/',
+             'EC Vitória'            => '/historia-do-esporte-clube-vitoria/',
+             // 'Vitória' (sozinho) é ambíguo (= conquista) — ativar quando tiver URL específica
+             // Competições — categorias WP
+             'Copa do Nordeste'      => '/category/copa-do-nordeste/',
+             'Copa do Brasil'        => '/category/copa-do-brasil/',
+             'Brasileirão Série A'   => '/category/brasileirao-2026/',
+             'Brasileirão'           => '/category/brasileirao-2026/',
+             'Campeonato Baiano'     => '/category/campeonato-baiano/',
+             'Baianão'               => '/category/campeonato-baiano/',
+             // Estádio
+             'Barradão'              => '/barradao/',
+             'Estádio Manoel Barradas' => '/barradao/',
+             // Pessoas-chave (criar páginas /tecnico/X e /presidente/X depois)
+             // 'Jair Ventura'        => '/tecnico/jair-ventura/',
+             // 'Fábio Mota'          => '/presidente/fabio-mota/',
+             // Clássico
+             'Ba-Vi'                 => '/classico/ba-vi/',
+             'Clássico Ba-Vi'        => '/classico/ba-vi/',
+         ],
      ],
 	 'ondecompraragora' => [
          'name'              => 'Onde comprar agora',
