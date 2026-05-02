@@ -35,6 +35,7 @@ require_once __DIR__ . '/../lib/DiscoverDb.php';
 require_once __DIR__ . '/../lib/Wordpress.php';
 require_once __DIR__ . '/../lib/Scraper.php';
 require_once __DIR__ . '/../lib/Serper.php';
+require_once __DIR__ . '/../lib/GoogleNewsRss.php';
 require_once __DIR__ . '/../lib/TrendsArticles.php';
 require_once __DIR__ . '/../lib/DiscoverFontes.php';
 require_once __DIR__ . '/../lib/AntiAIValidator.php';
