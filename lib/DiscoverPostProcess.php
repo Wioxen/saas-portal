@@ -727,8 +727,10 @@ class DiscoverPostProcess
         ) ?? $html;
 
         // REGRA 2b: Travessão isolado geral — escolhe pontuação conforme contexto
+        // Inclui dígitos no charset depois do travessão pra cobrir casos tipo
+        // "112 pontos no total — 15 a mais que..." que escapavam antes.
         $html = preg_replace_callback(
-            '/([^—–\n])\s*[—–]\s*([a-záéíóúâêôãõçA-ZÁÉÍÓÚÂÊÔÃÕÇ])/u',
+            '/([^—–\n])\s*[—–]\s*([a-záéíóúâêôãõçA-ZÁÉÍÓÚÂÊÔÃÕÇ0-9])/u',
             function($m) {
                 // Travessão em notícia PT-BR quase sempre pode virar vírgula sem perda de sentido.
                 return rtrim($m[1]) . ', ' . $m[2];

@@ -140,13 +140,26 @@ class SourceFidelityValidator
      * Captura: "Franclim Carvalho", "Léo Condé", "Júlia Kudiess"
      * Ignora:  "Botafogo" (1 palavra só), "O Botafogo" (artigo), "Estádio Nilton Santos" (sobrenome basta)
      */
+    /**
+     * Prefixos de entidades institucionais — capturados pelo regex mas não devem ser flagados
+     * como nome de pessoa. Ex: "Campeonato Brasileiro Série", "Copa do Brasil", "Liga das Nações".
+     * Se o nome composto começa com um destes, considera entidade institucional → skip.
+     */
+    private const INSTITUCIONAIS_PREFIXOS = [
+        'Campeonato', 'Copa', 'Liga', 'Brasileirão', 'Série', 'Mundial',
+        'Sudamericana', 'Libertadores', 'Nordestão', 'Recopa', 'Supercopa',
+        'Taça', 'Torneio', 'Estadual', 'Internacional',
+        'Clássico', 'Derby', 'Decisão', 'Final', 'Semifinal', 'Quartas',
+    ];
+
     private static function extrairNomesProprios(string $text, int $minWords): array
     {
         // Processa linha por linha pra evitar match cross-line tipo "Brasileirão\nUma vitória"
         $linhas = preg_split('/[\r\n]+/u', $text) ?: [];
         // Padrão: 2+ palavras com inicial maiúscula separadas APENAS por espaço (não \n).
         // Espaço ASCII e non-breaking space — explicitamente sem \s pra não pegar quebra de linha.
-        $padrao = '/(?<![\.\!\?\n]\s)\b([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}'
+        // Lookbehind inclui `:` pra não capturar palavras após "ATENÇÃO:" como nome próprio.
+        $padrao = '/(?<![\.\!\?\:\n]\s)\b([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}'
                 . '(?:[ \xC2\xA0]+[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][a-záâãàéêíóôõúç]{2,}){' . ($minWords - 1) . ',3})\b/u';
 
         $nomes = [];
@@ -163,6 +176,9 @@ class SourceFidelityValidator
                 $stopCount = 0;
                 foreach ($partes as $p) if (in_array($p, self::STOP_CAPS, true)) $stopCount++;
                 if ($stopCount === count($partes)) continue;
+                // Descarta se 1ª palavra é prefixo institucional (Campeonato/Copa/Liga/Clássico)
+                // — esses formam entidades como "Campeonato Brasileiro Série A" que NÃO são pessoa.
+                if (in_array($partes[0] ?? '', self::INSTITUCIONAIS_PREFIXOS, true)) continue;
                 $nomes[$cap] = true;
             }
         }
