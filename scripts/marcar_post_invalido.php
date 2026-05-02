@@ -11,16 +11,19 @@
  * Sem motivo → default 'reprovado_qualidade'.
  */
 
-$siteArg = '';
-$trendId = 0;
-$motivo  = 'reprovado_qualidade';
+$siteArg   = '';
+$trendId   = 0;
+$postIdArg = 0;
+$motivo    = 'reprovado_qualidade';
 foreach ($argv as $a) {
     if (preg_match('/^--site=(.+)$/', $a, $m)) $siteArg = $m[1];
     if (preg_match('/^--trend-id=(\d+)$/', $a, $m)) $trendId = (int)$m[1];
+    if (preg_match('/^--post-id=(\d+)$/', $a, $m)) $postIdArg = (int)$m[1];
     if (preg_match('/^--motivo=(.+)$/', $a, $m)) $motivo = $m[1];
 }
 if ($siteArg === '' || $trendId <= 0) {
-    fwrite(STDERR, "Uso: php scripts/marcar_post_invalido.php --site=SLUG --trend-id=N [--motivo=X]\n");
+    fwrite(STDERR, "Uso: php scripts/marcar_post_invalido.php --site=SLUG --trend-id=N [--post-id=N] [--motivo=X]\n");
+    fwrite(STDERR, "  --post-id é necessário quando trends.post_id está como 0 no DB (bug recorrente).\n");
     exit(2);
 }
 
@@ -45,8 +48,9 @@ if (($trend['site'] ?? '') !== $siteArg) {
 }
 
 $postId = (int)($trend['post_id'] ?? 0);
+if ($postId === 0 && $postIdArg > 0) $postId = $postIdArg;
 echo "Trend: #{$trendId} · termo: {$trend['termo']}\n";
-echo "Post WP: #{$postId}\n";
+echo "Post WP: #{$postId}" . ($postIdArg > 0 && $postId === $postIdArg ? " (override via --post-id)" : "") . "\n";
 echo "Status atual: {$trend['status']}\n\n";
 
 if ($postId > 0) {
