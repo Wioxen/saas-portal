@@ -105,13 +105,35 @@ if ($trend && !empty($trend['termo']) && !empty($cfg['serper_api_key'])) {
         echo "  ✓ " . count($fontesOk) . " fontes scrapeadas, " . $col['chars_totais'] . " chars\n";
 
         $textosFontes = [];
-        foreach ($fontesOk as $f) {
+        $dumpId = $trendId ?: $postId;
+        $dumpDir = __DIR__ . '/../data/debug/fontes_' . $dumpId . '_' . date('Ymd_His');
+        @mkdir($dumpDir, 0777, true);
+        $dumpAll = "═══ FONTES SCRAPEADAS — trend #{$dumpId} · " . date('c') . " ═══\n\n";
+
+        foreach ($fontesOk as $idx => $f) {
             $paragraphs = $f['fonte']['content']['paragraphs'] ?? [];
-            if (!empty($paragraphs)) $textosFontes[] = implode("\n", $paragraphs);
             $meta = $f['fonte']['meta'] ?? [];
+            $url = $f['url'] ?? '?';
+            $bloco = "── FONTE " . ($idx + 1) . " · " . $url . " ──\n";
+            if (!empty($meta['title']))       $bloco .= "TÍTULO: " . $meta['title'] . "\n";
+            if (!empty($meta['site_name']))   $bloco .= "SITE:   " . $meta['site_name'] . "\n";
+            if (!empty($meta['published']))   $bloco .= "DATA:   " . $meta['published'] . "\n";
+            if (!empty($meta['description'])) $bloco .= "DESC:   " . $meta['description'] . "\n";
+            $bloco .= "\nCONTEÚDO:\n" . implode("\n\n", $paragraphs) . "\n";
+
+            // Dump por arquivo individual + agregado
+            $fname = $dumpDir . '/fonte_' . ($idx + 1) . '.txt';
+            @file_put_contents($fname, $bloco);
+            $dumpAll .= $bloco . "\n══════════════════════════════════════\n\n";
+
+            // Pra validação fidelity
+            if (!empty($paragraphs)) $textosFontes[] = implode("\n", $paragraphs);
             if (!empty($meta['title'])) $textosFontes[] = (string)$meta['title'];
             if (!empty($meta['description'])) $textosFontes[] = (string)$meta['description'];
         }
+        @file_put_contents($dumpDir . '/_todas.txt', $dumpAll);
+        echo "  📂 Fontes dumpadas em: $dumpDir\n";
+        echo "     Pra grepar nomes:   grep -i 'NOME' $dumpDir/_todas.txt\n";
 
         echo "\n═══ SourceFidelityValidator ═══\n";
         $fidReport = SourceFidelityValidator::validar($content, $textosFontes);
