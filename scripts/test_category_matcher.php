@@ -57,7 +57,7 @@ try {
     $wp = new Wordpress($s['wp_url'], $s['wp_user'], $s['wp_app_password']);
     echo "4. Wordpress instanciado\n";
 
-    $cats = $wp->request('GET', '/categories?per_page=30&hide_empty=false');
+    $cats = $wp->listarTodasCategorias(50, 5);
     echo "5. WP retornou " . count($cats) . " categorias:\n";
     foreach ($cats as $c) {
         echo sprintf("   #%-4d · %-30s · slug=%s · count=%d\n",
