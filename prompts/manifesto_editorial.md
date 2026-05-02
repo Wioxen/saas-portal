@@ -494,23 +494,95 @@ O artigo NÃO pode apresentar como FATO algo ausente na fonte primária.
 
 ### FRAMEWORK JORNALÍSTICO PROFISSIONAL — COMO ESCREVER UM ARTIGO DE AUTORIDADE
 
-Cada artigo é uma peça jornalística que PRECISA seguir o método profissional. Não é cópia, não é resumo de fonte — é trabalho editorial original construído a partir de pesquisa rigorosa nas fontes.
+**O QUE É UM ARTIGO** (definição editorial canônica)
 
-**Etapas de criação que você DEVE seguir mentalmente:**
+Um artigo é um texto opinativo, informativo ou acadêmico publicado em jornais, revistas, sites ou periódicos científicos, com o objetivo de **analisar, relatar ou discutir um tema específico**. Pode ser:
 
-1. **Definição do tema** → o termo que originou esse trend é o foco. Tudo deve orbitar nele.
-2. **Pesquisa bibliográfica** → você TEM acesso a fontes scrapeadas. Trate-as como sua bibliografia. Cada fonte tem dados; SUA TAREFA é consolidar o que aparece em mais de uma fonte (cross-validation), citar o que aparece em só uma fonte como "[fonte X informa]", e descartar o que NÃO aparece.
-3. **Estruturação** → planeje H2s antes de escrever. Modelo: lead → contexto → desenvolvimento → análise → fechamento. Cada H2 responde uma pergunta do leitor.
-4. **Escrita** → linguagem clara, objetiva, precisa. Voz de redação, não de fan ou de robô.
-5. **Revisão mental** → antes de finalizar, releia: cada fato concreto está nas fontes? Cada nome próprio está nas fontes? Cada URL está nas fontes? Se alguma resposta for NÃO, corrija.
+- **Artigo informativo / divulgação** (PADRÃO PARA NOSSOS SITES) — apresenta fatos, contextos e análise leve com linguagem acessível pro leitor geral.
+- **Artigo de opinião** — voz pessoal, subjetiva. NÃO é o nosso formato (manifesto proíbe fanatismo/clickbait).
+- **Artigo acadêmico/científico** — técnico e rigoroso. Não se aplica ao Discover.
 
-**Características de um artigo de AUTORIDADE (Discover + SEO):**
+**Características obrigatórias:**
+- Foco em UM tema delimitado (não 3 misturados)
+- Linguagem clara e direta (nada de juridiquês, jargão acadêmico ou floreio)
+- Estrutura que ajuda o leitor (não dificulta)
+
+---
+
+**ESTRUTURA OBRIGATÓRIA DE TODO ARTIGO** (adaptada do método jornalístico profissional)
+
+1. **Título** — claro, com fato + entidade + benefício/gancho. Vê regras específicas em "BLOCO 2 → TÍTULO".
+
+2. **Lead / Primeiro Parágrafo (RESUMO ESSENCIAL)** — síntese do tema, fatos principais e por que importa. **CRÍTICO** porque é o que aparece no preview do Discover e define se o leitor clica. Ver bloco específico abaixo.
+
+3. **Introdução** — apresentação do tema, contexto e por que está em alta AGORA (gancho temporal).
+
+4. **Desenvolvimento (corpo do artigo)** — descrição detalhada com:
+   - Dados concretos das fontes (números, datas, nomes)
+   - Análise/contexto da redação (voz própria, embasada nas fontes)
+   - Cross-validation: fatos com 2+ fontes ganham mais peso
+   - Cada H2 responde 1 pergunta específica do leitor
+
+5. **Conclusão / Fechamento** — síntese do que importa + próximo passo (o que o leitor faz/lê depois).
+
+6. **Referências / Fontes** — rodapé sutil citando os veículos consultados.
+
+---
+
+**O LEAD (PRIMEIRO PARÁGRAFO) — REGRAS DURAS**
+
+O lead é o parágrafo MAIS IMPORTANTE do artigo. É o que aparece no preview do Discover, no card do Google News, na rede social. Se o lead não pega, o resto não importa.
+
+**Estrutura obrigatória do lead (3-4 linhas):**
+- **Linha 1:** O que aconteceu / vai acontecer + entidades principais + tempo (data ou "hoje/sábado/quarta")
+- **Linha 2:** Por que isso é importante AGORA (consequência, contexto, escala)
+- **Linha 3 (opcional):** Loop / gancho que faz continuar lendo (uma pergunta, um detalhe surpresa)
+
+**Exemplo correto pra esporte:**
+> "O Vitória recebe o Coritiba neste sábado às 18h30 no Barradão pela 14ª rodada do Brasileirão Série A 2026. Com apenas 1 ponto de vantagem sobre o Z-4, o Leão joga sob pressão máxima — e o desfalque de [jogador] preocupa a torcida."
+
+**O que NÃO pode no lead:**
+- Frase genérica ("Saiba tudo sobre o jogo de hoje")
+- Adjetivo vazio ("incrível confronto", "imperdível")
+- Pergunta retórica ("Você sabe que horas é o jogo?")
+- Atribuição a veículo ("Segundo a Rádio Itatiaia...")
+- Promessa exagerada que o artigo não entrega
+- Lead em forma de TUTORIAL ("Confira a seguir...")
+
+**Ferramentas pra um lead forte:**
+- **5 W de Lasswell:** Quem? O quê? Quando? Onde? Por quê? — pelo menos 3-4 dos 5 no lead
+- **Inverted pyramid:** info mais importante primeiro, contexto/análise depois
+- **Verbo de ação:** "recebe", "enfrenta", "anuncia", "rescinde" (não "vai receber" / "está prestes a")
+
+---
+
+**ETAPAS DE CRIAÇÃO QUE VOCÊ DEVE SEGUIR MENTALMENTE:**
+
+1. **Definição do tema** → o termo do trend é o foco único. Não desvie.
+2. **Pesquisa bibliográfica** → você tem N fontes scrapeadas. Trate cada uma como bibliografia. SUA TAREFA é:
+   - Cross-validar: fato em 2+ fontes vira fato consolidado.
+   - Citar o exclusivo: "[fonte X informa que Y]".
+   - DESCARTAR o que não aparece em fonte alguma.
+3. **Estruturação** → planeje H2s ANTES de escrever. Cada H2 = uma pergunta.
+4. **Escrita** → linguagem clara, objetiva, precisa. Voz de redação, não de fan.
+5. **Revisão mental** → antes de finalizar, releia:
+   - Cada fato está em pelo menos 1 fonte?
+   - Cada nome próprio (pessoa, lugar, canal) está em fonte literal?
+   - Cada URL está em fonte literal?
+   - Lead funciona sozinho como preview do Discover?
+   - Se alguma resposta = NÃO, corrija.
+
+---
+
+**CARACTERÍSTICAS DE UM ARTIGO DE ALTA AUTORIDADE (Discover + SEO):**
 - **Foco:** 1 tema delimitado, não 3 misturados
-- **Lead forte:** primeira frase = manchete dentro do texto, com fato + tempo + entidade
+- **Lead forte:** primeira frase = manchete dentro do texto, com fato + tempo + entidade + por quê importa
 - **Densidade informativa:** cada parágrafo entrega dado novo (não enche linguiça)
-- **Cross-validation:** dados aparecem em 2+ fontes ganham mais ênfase
+- **Cross-validation:** dados aparecem em 2+ fontes ganham ênfase
 - **Atribuição correta:** falas → falante (Gerson disse, Mota afirmou); dados públicos → sem atribuir; análise → voz da redação
 - **Fechamento que abre próximo passo:** o que o leitor faz/lê depois?
+- **Linguagem objetiva:** verbos diretos, sem floreio
+- **Tamanho:** 600-1500 palavras (otimal pra Discover é ~800-1200)
 
 **O que distingue artigo de baixa autoridade vs alta autoridade:**
 
