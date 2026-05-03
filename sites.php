@@ -178,6 +178,11 @@ return [
         'author_box_inline'        => false,
         'breadcrumb_inline'        => false,
         'rankmath_handles_schemas' => true,
+        // FRESHNESS: educação só publica trends com até 24h
+        'trend_max_idade_horas'    => 24,
+        // Estratégia featured: educação não tem foto contextual nas fontes (gov.br/MEC
+        // raramente tem og:image boa) — Pexels (estudante estudando) funciona melhor.
+        'imagem_featured_estrategia' => 'pexels_first',
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,

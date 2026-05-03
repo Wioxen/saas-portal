@@ -301,10 +301,12 @@ class Maquina
                     if (!empty($prod['wp_media_id'])) { $featuredId = $prod['wp_media_id']; break; }
                 }
 
-                // CASCATA Pexels → DALL-E → og:image. Override do og:image cru que pegava
-                // logo do site / banner sem relação. Slug SEO no nome do arquivo.
+                // CASCATA Pexels → DALL-E → og:image (estratégia per-site).
+                // SEMPRE chama o serviço pra respeitar imagem_featured_estrategia.
+                // Bug anterior: só rodava se pexels_api_key existisse, deixando sites
+                // og_only (leaodabarra) sem featured.
                 $imagemMeta = null;
-                if (!$featuredId && !empty($this->cfg['pexels_api_key'])) {
+                if (!$featuredId) {
                     try {
                         require_once __DIR__ . '/DiscoverImagemFeatured.php';
                         $imgSvc = new DiscoverImagemFeatured($this->cfg);
