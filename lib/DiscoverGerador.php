@@ -829,6 +829,37 @@ class DiscoverGerador
                             $aiReport = $aiVal->validate($content);
                             $validationReport['anti_ai'] = $aiReport;
                             $progress->reportar('validando_anti_ai', $aiVal->reportToLogLine($aiReport));
+
+                            // AUTO-REVISÃO Haiku 4.5 se severity != ok (custo extra ~$0.02)
+                            if (($aiReport['severity'] ?? 'ok') !== 'ok') {
+                                if (!class_exists('AutoRevisor')) {
+                                    $arPath = __DIR__ . '/AutoRevisor.php';
+                                    if (file_exists($arPath)) require_once $arPath;
+                                }
+                                if (class_exists('AutoRevisor')) {
+                                    $persona = (array)($this->cfg['persona'] ?? []);
+                                    $rev = (new AutoRevisor((string)($this->cfg['anthropic_api_key'] ?? '')))->revisar($content, [
+                                        'site_name'      => (string)($this->cfg['site_name'] ?? ''),
+                                        'persona_autor'  => (string)($persona['autor'] ?? "Equipe " . ($this->cfg['site_name'] ?? '')),
+                                        'persona_voz'    => (string)($persona['voz'] ?? 'jornalística direta'),
+                                        'persona_tom'    => (string)($persona['tom'] ?? 'direto e factual'),
+                                        'subtipo_nicho'  => (string)($this->cfg['subtipo_nicho'] ?? ''),
+                                    ]);
+                                    if (!empty($rev['reescreveu']) && !empty($rev['html'])) {
+                                        $content = (string)$rev['html'];
+                                        $validationReport['anti_ai_revisado'] = [
+                                            'severity_antes'  => $rev['antes']['severity'] ?? '?',
+                                            'severity_depois' => $rev['depois']['severity'] ?? '?',
+                                            'ok'              => $rev['ok'] ?? false,
+                                        ];
+                                        $progress->reportar('auto_revisao_haiku', sprintf(
+                                            'severity %s → %s',
+                                            $rev['antes']['severity'] ?? '?',
+                                            $rev['depois']['severity'] ?? '?'
+                                        ));
+                                    }
+                                }
+                            }
                         } catch (Throwable $e) { /* não bloqueia */ }
                     }
                     if (!class_exists('SourceFidelityValidator')) {
