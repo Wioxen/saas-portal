@@ -47,7 +47,7 @@ $statusIntocaveis = "'enfileirado','gerando','publicado','fora_escopo_nicho','ab
 
 $sql = "SELECT id, termo, payload, score_discover, status
         FROM trends
-        WHERE site_target = :site
+        WHERE site = :site
           AND status NOT IN ({$statusIntocaveis})
         ORDER BY id DESC
         LIMIT 500";
