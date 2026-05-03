@@ -23,6 +23,9 @@ scripts/_empacotar_deploy.php
 data/**
 !data/**/
 !data/**/.gitkeep
+# Config (não-runtime) — devem versionar:
+!data/jogos_vitoria.json
+!data/hubs_vitoria.php
 pages/**
 !pages/.gitkeep
 *.log

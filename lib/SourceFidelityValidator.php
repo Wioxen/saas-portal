@@ -80,8 +80,12 @@ class SourceFidelityValidator
         $sourceBlob = mb_strtolower(implode("\n\n", array_filter(array_map('strval', $sourceTexts))));
         $sourceChars = mb_strlen($sourceBlob);
 
-        // Texto plano do artigo (sem tags) pra extração
-        $articleText = strip_tags(html_entity_decode($html, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
+        // Texto plano do artigo (sem tags) pra extração.
+        // Remove conteúdo de headings (h1-h6) ANTES — títulos de seção são decisões
+        // estruturais do redator, não claims factuais que precisam estar nas fontes.
+        // Sem isso, hubs com H2 "Estatísticas Históricas" são flaggeados como alucinação.
+        $htmlSemHeadings = preg_replace('#<h[1-6]\b[^>]*>.*?</h[1-6]>#is', ' ', $html) ?? $html;
+        $articleText = strip_tags(html_entity_decode($htmlSemHeadings, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
 
         $stats = ['nomes_extraidos' => 0, 'urls_extraidas' => 0, 'fontes_chars' => $sourceChars];
 

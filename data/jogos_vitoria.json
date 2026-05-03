@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "descricao": "Calendário de jogos do Esporte Clube Vitória. Atualizado por scripts/atualizar_jogos.php (cron 1x/dia + ad-hoc). Fonte primária: ge.globo (JSON embedado na main page do clube). Fonte fallback: Serper Knowledge Graph.",
+    "fontes_validas": ["ge.globo", "serper-kg", "manual"],
+    "atualizado_em": "2026-05-02T20:05:00-03:00",
+    "ultimo_scrape_ge": "2026-05-02T20:05:00-03:00",
+    "ultimo_scrape_status": "ok"
+  },
+  "jogos": [
+    {
+      "id": "2026-05-02-vit-cfc",
+      "data": "2026-05-02",
+      "hora": "18:30",
+      "timezone": "America/Sao_Paulo",
+      "competicao": "Brasileirão Série A",
+      "rodada": 14,
+      "mando": "casa",
+      "adversario": {
+        "nome": "Coritiba",
+        "sigla": "CFC",
+        "escudo": ""
+      },
+      "estadio": "Barradão",
+      "transmissao": null,
+      "status": "finalizado",
+      "placar": {
+        "vitoria": 4,
+        "adversario": 1
+      },
+      "destaque_editorial": "Goleada com olé — Vitória dominou e provocou nos passes finais",
+      "fonte": "manual",
+      "fonte_url": null,
+      "scraped_at": "2026-05-02T20:35:00-03:00"
+    },
+    {
+      "id": "2026-05-06-vit-cea",
+      "data": "2026-05-06",
+      "hora": "21:30",
+      "timezone": "America/Sao_Paulo",
+      "competicao": "Copa do Nordeste",
+      "fase": "Quartas de final",
+      "rodada": null,
+      "mando": "casa",
+      "adversario": {
+        "nome": "Ceará",
+        "sigla": "CEA",
+        "escudo": "https://s.sde.globo.com/media/organizations/2019/10/10/ceara-30x30.png"
+      },
+      "estadio": "Barradão",
+      "transmissao": null,
+      "status": "agendado",
+      "placar": {
+        "vitoria": null,
+        "adversario": null
+      },
+      "fonte": "ge.globo",
+      "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
+      "scraped_at": "2026-05-02T20:05:00-03:00"
+    }
+  ]
+}

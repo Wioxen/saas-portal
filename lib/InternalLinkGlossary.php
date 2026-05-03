@@ -56,6 +56,20 @@ class InternalLinkGlossary
         $wpUrl = rtrim((string)($opts['wp_url'] ?? ''), '/');
         $maxLinksTotal = (int)($opts['max_links_total'] ?? 8);
         $maxLinksPorTermo = (int)($opts['max_links_por_termo'] ?? 1);
+        // Self-link guard: pula termos cujo destino bate com current_url.
+        // Evita que página-hub /barradao/ linke pra ela mesma com anchor "Barradão".
+        $currentUrl = trim((string)($opts['current_url'] ?? ''));
+        $currentPath = '';
+        if ($currentUrl !== '') {
+            $currentPath = parse_url($currentUrl, PHP_URL_PATH) ?: $currentUrl;
+            $currentPath = '/' . trim($currentPath, '/') . '/';
+        }
+        if ($currentPath !== '' && !empty($glossario)) {
+            foreach ($glossario as $termo => $url) {
+                $destPath = '/' . trim((string)$url, '/') . '/';
+                if ($destPath === $currentPath) unset($glossario[$termo]);
+            }
+        }
 
         // Ordena termos por tamanho desc — pra match 'Esporte Clube Vitória' antes de 'Vitória'
         $termosOrdenados = array_keys($glossario);
