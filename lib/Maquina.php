@@ -356,6 +356,14 @@ class Maquina
                     $tagIds = $this->wp->resolverTags($artigo['tags']);
                 }
 
+                // FAQ DEDUPE — Sonnet pode criar H2 'Perguntas frequentes' com Q&A textual,
+                // e FaqEnricher (chamado depois) injeta OUTRO bloco com <details>. dedupeFaq
+                // identifica seções FAQ (palavra-chave OR 3+ details) e mantém só a melhor.
+                try {
+                    require_once __DIR__ . '/DiscoverPostProcess.php';
+                    $contentFinal = DiscoverPostProcess::dedupeFaq($contentFinal);
+                } catch (Throwable $e) { $this->log('  ✗ dedupeFaq: ' . $e->getMessage()); }
+
                 // Cluster backlinks via InternalLinkGlossary (termo→URL canônica do site)
                 // Aplicar ANTES de relacionados pra não competir com mesmas anchors.
                 if (!empty($this->cfg['internal_link_glossary'])) {

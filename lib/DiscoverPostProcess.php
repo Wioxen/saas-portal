@@ -899,7 +899,7 @@ class DiscoverPostProcess
      * Heurística: procura <h2> cujo texto contém "Pergunta" / "FAQ" / "Dúvida". Se houver 2+,
      * remove todos exceto o último (com seu conteúdo até o próximo <h2>).
      */
-    private static function dedupeFaq(string $html): string
+    public static function dedupeFaq(string $html): string
     {
         if (!preg_match_all('/<h2[^>]*>([\s\S]*?)<\/h2>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
             return $html;
