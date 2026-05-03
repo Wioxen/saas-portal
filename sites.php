@@ -377,8 +377,10 @@ return [
          // entrega cara genérica chutando bola. og:image da fonte (ge.globo,
          // bahianoticias, lance) é foto contextual real. og_only força usar.
          'imagem_featured_estrategia' => 'og_only',
-         // Esporte muda rápido: pré-jogo D-3 + pós-jogo D+1 = 4 dias úteis máx
-         'trend_max_idade_horas'    => 96,
+         // Esporte muda rápido: pré-jogo dura horas (escalação/arbitragem morre no apito),
+         // pós-jogo dura ~36h. 96h era folgado demais e deixava entrar pré-jogo de partida
+         // já realizada — ver descarte de #1710/#1721 em 03/05.
+         'trend_max_idade_horas'    => 36,
          // Esportes raramente passa de score 7.0 (faixa típica 5.5-7.0 vista no pingo).
          // Threshold global default 7.0 desviava 100% dos trends esportivos pra GPT-mini,
          // que aluvina nomes de técnicos/URLs e ignora o manifesto. Threshold 5.5 alinhado
