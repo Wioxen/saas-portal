@@ -52,8 +52,10 @@ function wpReq(string $m, string $u, string $a): array {
 }
 
 // Busca posts publicados últimas N horas
-$after = gmdate('c', time() - $horas * 3600);
-$url = "{$base}/posts?per_page={$maxPosts}&orderby=date&order=desc&after={$after}&status=publish&_fields=id,title,link,content,date";
+// WP REST 'after' espera ISO 8601 SEM timezone (interpreta como local do site).
+// Removemos o sufixo +00:00 do gmdate('c') pra evitar zero-results em alguns sites.
+$after = date('Y-m-d\TH:i:s', time() - $horas * 3600);
+$url = "{$base}/posts?per_page={$maxPosts}&orderby=date&order=desc&after=" . urlencode($after) . "&status=publish&_fields=id,title,link,content,date";
 $posts = wpReq('GET', $url, $auth);
 
 echo "═══ QA AUTOMÁTICO · {$siteSlug} · janela {$horas}h · " . date('Y-m-d H:i') . " ═══\n\n";
