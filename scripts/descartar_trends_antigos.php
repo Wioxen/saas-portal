@@ -34,23 +34,23 @@ foreach ($alvos as $slug) {
 
     // Busca trends novos/aprovados sem post + idade maior que limite
     // Idade: prefere pingo_pub_ts (do JSON payload? Não. Coluna direta? Vamos ver schema)
-    // Default: usa created_at
-    $sql = "SELECT id, status, score_discover, created_at, LEFT(termo,60) AS termo
+    // Default: usa data_detectada
+    $sql = "SELECT id, status, score_discover, data_detectada, LEFT(termo,60) AS termo
             FROM trends
             WHERE site = :site
               AND status IN ('novo','aprovado')
               AND (post_id IS NULL OR post_id = 0)
-              AND created_at < :lim
-            ORDER BY created_at ASC
+              AND data_detectada < :lim
+            ORDER BY data_detectada ASC
             LIMIT 500";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':site' => $slug, ':lim' => $dtLimite]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo "═══ {$slug} · max_idade={$maxH}h · limite created_at < {$dtLimite} ═══\n";
+    echo "═══ {$slug} · max_idade={$maxH}h · limite data_detectada < {$dtLimite} ═══\n";
     echo "  trends candidatos a descarte: " . count($rows) . "\n";
     foreach (array_slice($rows, 0, 5) as $r) {
-        echo "    #{$r['id']} [{$r['status']}] {$r['created_at']} score={$r['score_discover']} · {$r['termo']}\n";
+        echo "    #{$r['id']} [{$r['status']}] {$r['data_detectada']} score={$r['score_discover']} · {$r['termo']}\n";
     }
     if (count($rows) > 5) echo "    ... +" . (count($rows) - 5) . "\n";
 
