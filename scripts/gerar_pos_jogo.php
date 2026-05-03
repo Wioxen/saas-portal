@@ -211,17 +211,10 @@ if (!empty($cfg['internal_link_glossary'])) {
     }
 }
 
-// Schema.org NewsArticle pra pós-jogo
-$schema = [
-    '@context' => 'https://schema.org',
-    '@type'    => 'SportsEvent',
-    'name'     => "Vitória {$placarStr} {$advNome}",
-    'startDate' => "{$jogo['data']}T{$jogo['hora']}:00-03:00",
-    'location' => ['@type' => 'Place', 'name' => $jogo['estadio']],
-    'homeTeam' => ['@type' => 'SportsTeam', 'name' => $jogo['mando']==='casa'?'Esporte Clube Vitória':$advNome],
-    'awayTeam' => ['@type' => 'SportsTeam', 'name' => $jogo['mando']==='casa'?$advNome:'Esporte Clube Vitória'],
-];
-$html .= "\n<script type=\"application/ld+json\">" . json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "</script>";
+// Schema.org — NewsArticle (sempre) + SportsEvent COMPLETO (resolve avisos GSC
+// "campo X não foi encontrado em location/event"). Schema é injetado via
+// scripts/fix_schema_post.php após criar post (precisa de featured_media + dateModified
+// que só existem depois do criarPost). Aqui não injetamos — fix_schema roda no fim.
 
 // Cria post WP
 $status = $publicar ? 'publish' : 'draft';
@@ -242,6 +235,23 @@ try {
     echo "\n✓ POST CRIADO id={$pid} status={$status}\n";
     echo "  Edit: {$cfg['wp_url']}/wp-admin/post.php?post={$pid}&action=edit\n";
     if ($status === 'publish') echo "  URL : {$post['link']}\n";
+
+    // Injeta schemas NewsArticle + SportsEvent completos via fix_schema_post.php
+    // (precisa rodar APÓS criar post pra ter dateModified + featured_media — quando
+    // existir; aqui sem featured ainda, mas schema fica válido pra Google)
+    $jogoId = $hubConfig['jogo_id'] ?? ($jogo['id'] ?? '');
+    if ($pid > 0 && $jogoId !== '') {
+        echo "  → injetando schemas NewsArticle + SportsEvent...\n";
+        $cmd = sprintf(
+            'php %s --site=%s --post-id=%d --jogo-id=%s 2>&1',
+            escapeshellarg(__DIR__ . '/fix_schema_post.php'),
+            escapeshellarg($siteSlug),
+            $pid,
+            escapeshellarg($jogoId)
+        );
+        $out = shell_exec($cmd);
+        echo "  " . trim((string)$out) . "\n";
+    }
 } catch (Throwable $e) {
     fwrite(STDERR, "[erro] criar post WP: " . $e->getMessage() . "\n");
     exit(6);
