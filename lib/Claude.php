@@ -1491,8 +1491,15 @@ TXT;
      */
     private function escaparContentHtml(string $json): string
     {
-        $marker = '"content_html":';
-        $start = strpos($json, $marker);
+        // Procura por múltiplos markers comuns ("content_html", "html", "body")
+        // — o primeiro encontrado vira o foco. Fix gerar_noticia.php que usa "html".
+        $markers = ['"content_html":', '"html":', '"body":', '"content":'];
+        $marker = null;
+        $start = false;
+        foreach ($markers as $m) {
+            $p = strpos($json, $m);
+            if ($p !== false) { $marker = $m; $start = $p; break; }
+        }
         if ($start === false) return $json;
 
         // Posição da aspa de abertura do valor

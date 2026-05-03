@@ -143,7 +143,18 @@ REGRAS DURAS:
 - Usar <h2> pra seções, <h3> pra subseções, <p> pra parágrafos
 - Listas <ul><li> ok pra enumerar prazos, requisitos, etc.
 - <strong> pra destacar palavras-chave críticas (datas, valores, prazos)
-- <a href> apenas pra fontes oficiais (gov.br, sites institucionais) com target="_blank"
+- <a href> apenas pra fontes oficiais (gov.br, sites institucionais) com target='_blank'
+
+═══ ASPAS DENTRO DO HTML — REGRA CRÍTICA ═══
+Você está retornando JSON. O valor de "html" é uma string JSON que NÃO PODE
+conter aspas duplas (") soltas. Pra QUALQUER aspa dentro do conteúdo HTML:
+- Atributos HTML (class, href, style, target): usar APENAS aspas SIMPLES
+  ✓ certo: <a href='https://exemplo.com' target='_blank'>link</a>
+  ❌ errado: <a href="https://exemplo.com" target="_blank">link</a>
+- Aspas em texto (citações, palavras com ênfase): usar ENTITY HTML &quot;
+  ✓ certo: <p>resposta diferente de &quot;nenhuma vez&quot; foi marcada</p>
+  ❌ errado: <p>resposta diferente de "nenhuma vez" foi marcada</p>
+- Apóstrofo em texto: usar &#39; OU palavra natural sem apóstrofo
 
 ═══ SAÍDA OBRIGATÓRIA ═══
 JSON: { html, meta_title (50-60c), meta_description (140-160c), focus_keyword, titulo_h1 }
