@@ -48,6 +48,16 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # data/audit_posjogo_status.json + loga em /var/log/audit_posjogo.log
 0 12 * * * root php /app/scripts/audit_pos_jogo.php --site=leaodabarra >> /var/log/audit_posjogo.log 2>&1
 
+# ─── QA automático de posts publicados (anti-IA + schemas + h1 dup) ────────
+
+# Roda 1x/dia 09:15 BR pra leaodabarra (15min após audit pós-jogo, sem colisão)
+# Pega posts publicados últimas 24h, roda AntiAIValidator + check schema duplo
+# + check H1 no content. Se issues → cria WP draft "🚨 QA posts {data}".
+15 12 * * * root php /app/scripts/validar_posts_publicados.php --site=leaodabarra --horas=24 >> /var/log/qa_posts.log 2>&1
+
+# Idem cursosenacgratuito (20min após — escalonado)
+20 12 * * * root php /app/scripts/validar_posts_publicados.php --site=cursosenac --horas=24 >> /var/log/qa_posts.log 2>&1
+
 # ─── (Opcional/futuro) ─────────────────────────────────────────────────────
 
 # Re-aplicar filtro de nicho nos trends (após editar nicho_required_terms):
