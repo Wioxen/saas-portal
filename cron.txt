@@ -40,6 +40,14 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # Idempotência via posts_gerados[tipo] em data/jogos_vitoria.json
 */5 * * * * root php /app/scripts/pos_jogo_auto.php --site=leaodabarra >> /var/log/posjogo.log 2>&1
 
+# ─── Auditoria pós-jogo (alerta automático) ────────────────────────────────
+
+# Roda 1x/dia 09:00 BR (12:00 UTC). Se algum jogo finalizado nas últimas 24h
+# NÃO tem pos_jogo gerado → cria WP draft "🚨 AUDIT pós-jogo {data}" no
+# leaodabarra (você vê no admin sem precisar lembrar) + grava
+# data/audit_posjogo_status.json + loga em /var/log/audit_posjogo.log
+0 12 * * * root php /app/scripts/audit_pos_jogo.php --site=leaodabarra >> /var/log/audit_posjogo.log 2>&1
+
 # ─── (Opcional/futuro) ─────────────────────────────────────────────────────
 
 # Re-aplicar filtro de nicho nos trends (após editar nicho_required_terms):
