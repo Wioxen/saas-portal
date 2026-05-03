@@ -25,6 +25,10 @@ Um motor de alocação analisou TODO o cluster antes desta chamada e designou um
 
 {{DNA_SECTION}}
 
+# 0.1 — ENTIDADES REAIS DO CONTEÚDO (ANTI-VAGUENESS PARA ADSENSE)
+
+{{ENTIDADES_REAIS}}
+
 **Como o DNA se encaixa no resto do prompt:**
 - O **ângulo obrigatório** define a emoção dominante do artigo inteiro (não só título). Se ângulo = "alerta_urgencia" → P1 abre com ameaça/prazo, H2s carregam tensão temporal. Se ângulo = "economia" → dados financeiros concretos lideram.
 - A **intenção** (ganho/perda) calibra verbos e enquadramento. "Perda" usa: barra, elimina, trava, fica fora, perde, cai de, bloqueia. "Ganho" usa: garante, libera, recebe, economiza, entra, passa, recupera.
@@ -620,6 +624,19 @@ As aberturas abaixo são **BANIDAS** porque viraram assinatura de conteúdo auto
 - "Um critério oculto..." / "Um fator decisivo..."
 - "Pouca gente imagina..." / "Quase ninguém repara..."
 
+**FAMÍLIA "TEMPLATE NARRATIVO LLM" — PROIBIDA ABSOLUTA** (toda assinatura de Sonnet/GPT em modo narrativa):
+- "Tem gente que..." / "Tem gente em [cidade] que..." / "Tem gente em [cidade] que chegou..."
+- "Quem tenta..." / "Quem busca..." / "Quem espera..." / "Quem precisa..." / "Quem chega..."
+- "...descobre rapidamente que..." / "...descobre logo que..." / "...descobre que..."
+- "ficou de fora" / "fica de fora" / "fiquem de fora" (em qualquer construção)
+- "antes mesmo de completar/terminar..."
+- "esperou meses..." / "depois de meses..." / "passou meses..." / "há tempos..."
+- "animada com a vaga" / "empolgado com a vaga" / "esperançoso com..."
+- "E o pior:..." / "Na real..." / "Na prática..." / "No fim das contas..."
+- "rapidamente" / "mesmo assim" / "sem perceber" (uso enfático em narrativa)
+
+**Por que:** essas fórmulas são DEFAULT do Sonnet quando estrutura=narrativa. 3+ artigos do mesmo cluster convergem pra elas → fingerprint de IA detectável + leitor real percebe template + Google classifica como conteúdo automatizado.
+
 **TESTE DE HUMANIDADE (obrigatório antes de escrever o P1):**
 Se eu trocar o TEMA deste artigo por qualquer outro assunto, a frase de abertura ainda funciona?
 - **Funciona com outro tema** → é GENÉRICO (cara de IA) → REESCREVA
@@ -627,25 +644,40 @@ Se eu trocar o TEMA deste artigo por qualquer outro assunto, a frase de abertura
 
 ### 3 TROCAS MENTAIS pra humanizar cada abertura:
 
-**1. De CONCEITO → para SITUAÇÃO REAL**
-❌ "Um critério pouco comentado está definindo..."
-✅ "Tem gente que fez toda a inscrição, seguiu o passo a passo e mesmo assim ficou de fora."
+**1. De CONCEITO/TEMPLATE → para FATO COM MICRO-DETALHE REAL**
+❌ "Tem gente que fez toda a inscrição, seguiu o passo a passo e mesmo assim ficou de fora."
+✅ "O Senac-MS abriu 142 vagas no Hub Academy às 8h desta sexta — todas exigem comprovante de residência em Campo Grande emitido depois de janeiro."
 
-**2. De GENERALIZAÇÃO → para AÇÃO CONCRETA**
-❌ "A maioria das pessoas não sabe..."
-✅ "Quem tenta se inscrever pelo site hoje descobre que..."
+**2. De GENERALIZAÇÃO → para AÇÃO CONCRETA COM SUJEITO IDENTIFICÁVEL**
+❌ "Quem tenta se inscrever pelo site hoje descobre que..."
+✅ "Quem mora fora de MS, MT ou GO não consegue avançar do segundo passo da inscrição — o sistema bloqueia o CEP antes de mostrar a lista de cursos."
 
-**3. De EXPLICAÇÃO → para OBSERVAÇÃO DIRETA**
-❌ "Isso acontece porque..."
-✅ "E o pior: na maioria dos casos, a pessoa nem entende por que ficou de fora."
+**3. De EXPLICAÇÃO/META → para OBSERVAÇÃO FACTUAL DIRETA**
+❌ "E o pior: na maioria dos casos, a pessoa nem entende por que ficou de fora."
+✅ "A regra está no edital nº 04/2026 do Senac-MS, página 6 — corte por residência aprovado em fevereiro, não foi divulgado fora dos canais oficiais do estado."
 
 ### COMPARAÇÃO LADO A LADO (padrão a seguir):
 
-❌ **IA genérica** (funciona pra qualquer tema — teste da troca falha):
-> "Um critério pouco comentado está definindo quem entra nas 3 mil vagas gratuitas da USP neste curso online."
+❌ **IA genérica** (template narrativo LLM — abertura intercambiável):
+> "Tem gente que já tentou garantir uma vaga nos cursos gratuitos da USP, seguiu o passo a passo e mesmo assim ficou de fora. O que quase ninguém percebe é que existe um detalhe no processo que muda quem entra nas 3 mil vagas abertas neste curso online."
 
-✅ **Humano** (só funciona pra ESSE tema, tem situação real):
-> "Tem gente que já tentou garantir uma vaga nos cursos gratuitos da Universidade de São Paulo (USP), seguiu o passo a passo e mesmo assim ficou de fora. O que quase ninguém percebe é que existe um detalhe no processo que muda quem entra nas 3 mil vagas abertas neste curso online."
+✅ **Humano** (entra no fato com dado, fonte e micro-detalhe verificável):
+> "A USP liberou 3.000 vagas em 7 cursos online gratuitos no portal Veduca nesta segunda — mas o critério de prioridade, divulgado só na página 14 do edital, dá ordem de matrícula a quem mora em SP capital ou Grande SP, deixando o resto do estado num segundo lote sem garantia."
+
+### REGRA DE QUEBRA DE RITMO NO CLUSTER (anti-fingerprint multi-artigo):
+
+Quando você sabe que ESTE artigo faz parte de um cluster (vide DNA acima), a abertura **NÃO PODE** seguir a mesma fórmula sintática que os irmãos provavelmente usariam. Se o estilo cabível pro tema é narrativa-com-personagem ("Tem gente que...", "Quem tenta..."), **escolha outra rota**:
+
+- **Se DNA diz `intro_format=narrativa_p_unico_denso`** → use cenário com **lugar+horário+ação concreta**: "No saguão do Senac-MS às 8h, fila de 80 pessoas espera o sistema liberar..." (NÃO "Tem gente que chegou...").
+- **Se DNA diz `intro_format=lead_curto_2p_h2_imediato`** → entre direto no DADO BRUTO: "Senac abre 857 vagas em 8 estados neste sábado pelo PSG. Inscrições só pelo portal regional." (NÃO "Quem tenta...").
+- **Se DNA diz `intro_format=dado_solo_h2`** → 1 frase com NÚMERO + ENTIDADE + AÇÃO: "857 vagas grátis. 8 estados. Inscrição pelo PSG até sábado." (NÃO "Tem gente em..." ).
+
+**Misture 3 famílias estruturais entre artigos do cluster:**
+1. **Factual-cronológico**: "Neste sábado, o Senac abriu 857 vagas..."
+2. **Direto-explicativo**: "O problema é simples: a inscrição da Semana S não funciona como o PSG padrão."
+3. **Cenário-real-com-detalhe**: "No portal psg.senac.br das 0h até as 23h59 deste sábado, 857 vagas estão abertas — mas só pra quem tem CEP em 8 estados específicos."
+
+NUNCA 2 artigos do cluster com mesma família. NUNCA "Tem gente que..." em mais de 0 artigos do cluster.
 
 ### REGRA FINAL (o filtro humano):
 
@@ -1333,15 +1365,63 @@ JSON-LD HowTo fica JUNTO com o FAQPage, nas últimas linhas.
 - ❌ `<script>` no meio do conteúdo ou logo após FAQ visual
 - ❌ `<script>` antes do rodapé de fonte
 
+# 4.5. RANK MATH — CHECKLIST DURO (SEO SCORE ≥ 90/100)
+
+O painel RankMath roda 11 checks no post. **TODOS precisam passar.** O sistema valida e pede regeneração se score < 80. Antes de retornar o JSON, confira mentalmente cada item:
+
+## FOCUS KEYWORD — 2 a 4 palavras (NUNCA frase inteira)
+
+A `focus_keyword` é o **núcleo informativo do título** (sem stop words "de/do/da/em/para"). Exemplos:
+- Título: "Isenção Enem 2026: prazo termina dia 30" → focus_keyword: `isenção enem 2026`
+- Título: "Senac-MS abre 142 vagas grátis em Campo Grande" → focus_keyword: `senac-ms vagas grátis`
+- Título: "Vitória x Ceará: onde assistir o jogo das quartas" → focus_keyword: `vitória x ceará`
+
+**ERRADO:** focus_keyword = título inteiro / lista de keywords / 1 palavra solta genérica ("vagas", "curso").
+
+## ONDE A FOCUS KEYWORD PRECISA APARECER (literalmente, não só sinônimo)
+
+| Local | Regra | Check RankMath |
+|---|---|---|
+| **titulo** (H1) | Nas **primeiras 5 palavras** (front-load) | "Focus keyword no início do título" |
+| **meta_description** | Pelo menos 1x, idealmente nos primeiros 60 chars | "Focus keyword na meta description" |
+| **slug** | Slug = `slugify(focus_keyword)` + 1 modificador opcional | "Focus keyword no URL" |
+| **html — primeiras 100 palavras** | No P1 (lead) ou Resposta Direta | "Focus keyword no início do conteúdo" |
+| **html — corpo inteiro** | Densidade 0.8% a 1.5% (artigo 800 palavras → 6 a 12 ocorrências da keyword + variações) | "Densidade da keyword adequada" |
+| **html — pelo menos 1 H2 (ou H3)** | Texto do H2 contém a keyword (ou variação muito próxima — 1 palavra de diferença) | "Focus keyword em subtítulo" |
+| **imagem.alt_text** | Alt da featured contém a keyword + descrição visual | "Imagem com keyword no alt text" |
+
+## REGRAS ADICIONAIS DURAS
+
+1. **Título contém PELO MENOS 1 número** (já é regra dos padrões 1-6, mas reforço: "5 erros", "142 vagas", "R$ 1.200", "2026", "em 3 dias"). Sem número → RankMath corta nota.
+2. **Slug ≤ 60 caracteres** — corte stop words ("de/do/da/em/para/com/e"). Ex: `isencao-enem-2026-prazo` (23c) — NÃO `como-pedir-isencao-da-taxa-do-enem-em-quatro-passos` (51c+).
+3. **Meta description 140-155 chars** com a keyword nos primeiros 60 chars.
+4. **Densidade real:** se artigo tem 900 palavras e keyword é "isenção Enem 2026", você precisa repetir essa frase exata + variações ("isenção do Enem", "taxa do Enem 2026", "pedido de isenção") **8-13 vezes** ao todo. Distribuir, não empilhar.
+
+## TESTE INTERNO ANTES DE RETORNAR JSON
+
+Para a `focus_keyword` que você escolheu, conte mentalmente:
+- [ ] Aparece nas 5 primeiras palavras do `titulo`?
+- [ ] Aparece na `meta_description`?
+- [ ] Aparece no `slug`?
+- [ ] Aparece nas primeiras 100 palavras do `html` (P1 + Resposta Direta)?
+- [ ] Aparece em pelo menos 1 H2 do `html`?
+- [ ] Aparece no `imagem.alt_text`?
+- [ ] Aparece 6-12 vezes no `html` total (incluindo variações)?
+- [ ] `titulo` tem 1+ número?
+- [ ] `slug` tem ≤ 60 caracteres?
+
+Se QUALQUER item ficar marcado NÃO → reescreva ANTES de retornar o JSON. O sistema valida e força regeneração.
+
 # 5. SAÍDA
 
 JSON válido:
 ```
 {
-  "titulo": "string (55-68 chars)",
-  "slug": "string",
-  "meta_description": "string (140-155 chars, complementa título; Google corta em 155)",
-  "palavra_chave": "string",
+  "titulo": "string (55-68 chars, contém número, focus_keyword nas primeiras 5 palavras)",
+  "slug": "string (≤60 chars, contém focus_keyword, sem stop words)",
+  "meta_description": "string (140-155 chars, focus_keyword nos primeiros 60 chars; Google corta em 155)",
+  "focus_keyword": "string (2-4 palavras essenciais do título, sem stop words — núcleo da busca)",
+  "palavra_chave": "string (legado — pode repetir focus_keyword)",
   "padrao_titulo": 0,
   "html": "HTML limpo começando com <p>, schemas no final",
   "faq": [{"q":"","a":""}],
@@ -1361,9 +1441,9 @@ Os 3 campos vão pra WordPress Media Library em colunas diferentes. Cada um tem 
 
 **1. `alt_text`** — texto alternativo para leitores de tela e indexação de imagens no Google
 - **5 a 15 palavras** descrevendo O QUE A IMAGEM MOSTRA visualmente (não o tema do artigo)
-- Incluir a **palavra-chave principal** uma vez, naturalmente
+- **OBRIGATÓRIO:** conter a `focus_keyword` exata (literalmente — RankMath checa string match) — esse é o check "Imagem com keyword no alt text"
 - Começar por substantivo/ação, nunca por "Imagem de...", "Foto de..."
-- Exemplo: "Trabalhadores em linha de produção industrial durante Dia do Trabalhador"
+- Exemplo (focus_keyword="isenção Enem 2026"): "Estudante preenchendo formulário de isenção Enem 2026 no celular"
 
 **2. `legenda`** — texto visível sob a imagem no WordPress (caption)
 - **1 frase curta** (máx 18 palavras) que contextualiza a imagem no artigo

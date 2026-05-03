@@ -48,6 +48,24 @@ class DebateBuilder
         $prompt = str_replace('{{ISO_DATE}}', $isoDate, $prompt);
         $prompt = str_replace('{{EXPRESSAO_TEMPORAL}}', $diaSemana === $dias[(int)date('w')] ? 'neste ' . $diaSemana : 'recentemente', $prompt);
 
+        /* {{ENTIDADES_REAIS}} — extração de entidades concretas do scraper pra prevenir vague_promise NA geração */
+        if (!class_exists('EntityExtractor')) {
+            $entityPath = __DIR__ . '/EntityExtractor.php';
+            if (file_exists($entityPath)) require_once $entityPath;
+        }
+        $entitySection = '';
+        if (class_exists('EntityExtractor')) {
+            try {
+                $entities = EntityExtractor::extract($conteudo, $titulo);
+                $entitySection = EntityExtractor::formatForPrompt($entities);
+                $countTotal = array_sum(array_map('count', $entities));
+                $this->log[] = "EntityExtractor: {$countTotal} entidades extraídas (orgaos=" . count($entities['orgaos_instituicoes']) . ", cidades=" . count($entities['cidades_estados']) . ", numeros=" . count($entities['numeros_chave']) . ")";
+            } catch (Throwable $e) {
+                $this->log[] = 'EntityExtractor: falhou — ' . $e->getMessage();
+            }
+        }
+        $prompt = str_replace('{{ENTIDADES_REAIS}}', $entitySection, $prompt);
+
         // Seção de backlinks: 3 embutidos em frase contextual + 3 separados pra caixa Leia Também
         $backlinkSection = '';
         if (!empty($backlinks)) {
@@ -349,11 +367,89 @@ class DebateBuilder
             }
         }
 
+        /* RankMathSeoValidator — espelha os 11 checks do painel RankMath, regen 1x se score < 80 */
+        if (!class_exists('RankMathSeoValidator')) {
+            $rmPath = __DIR__ . '/RankMathSeoValidator.php';
+            if (file_exists($rmPath)) require_once $rmPath;
+        }
+        if (class_exists('RankMathSeoValidator')) {
+            try {
+                $kwFinal = trim((string)($json['focus_keyword'] ?? $json['palavra_chave'] ?? ''));
+                if ($kwFinal === '' || str_word_count($kwFinal) > 5) {
+                    /* Sonnet devolveu vazio ou frase longa demais (provável título inteiro) → deriva do H1 */
+                    $kwFinal = RankMathSeoValidator::derivarKeywordDoTitulo((string)($json['titulo'] ?? $titulo));
+                }
+                $json['focus_keyword'] = $kwFinal;
+
+                $rmOpts = [
+                    'titulo'        => (string)($json['titulo'] ?? $titulo),
+                    'meta_title'    => (string)($json['titulo'] ?? $titulo),
+                    'meta_desc'     => (string)($json['meta_description'] ?? ''),
+                    'slug'          => (string)($json['slug'] ?? ''),
+                    'focus_keyword' => $kwFinal,
+                    'featured_alt'  => (string)($json['imagem']['alt_text'] ?? ''),
+                ];
+                $rmReport = RankMathSeoValidator::validar((string)$json['html'], $rmOpts);
+                $this->log[] = "RankMath: score={$rmReport['score']}/100 ({$rmReport['passes']}/{$rmReport['total']}) kw=\"{$kwFinal}\" dens={$rmReport['densidade']}%";
+                foreach (array_slice($rmReport['fails'], 0, 4) as $f) {
+                    $det = !empty($f['detalhe']) ? " ({$f['detalhe']})" : '';
+                    $this->log[] = "  ✗ rm: {$f['titulo']}{$det}";
+                }
+
+                if ($rmReport['score'] < 80) {
+                    $regenJson = $this->regenerateForRankMath($prompt, $rmReport, $kwFinal, $maxTokens);
+                    if ($regenJson !== null && !empty($regenJson['html'])) {
+                        $kwR = trim((string)($regenJson['focus_keyword'] ?? $regenJson['palavra_chave'] ?? $kwFinal));
+                        if ($kwR === '' || str_word_count($kwR) > 5) {
+                            $kwR = RankMathSeoValidator::derivarKeywordDoTitulo((string)($regenJson['titulo'] ?? $titulo));
+                        }
+                        $regenJson['focus_keyword'] = $kwR;
+                        $rmOptsR = [
+                            'titulo'        => (string)($regenJson['titulo'] ?? $titulo),
+                            'meta_title'    => (string)($regenJson['titulo'] ?? $titulo),
+                            'meta_desc'     => (string)($regenJson['meta_description'] ?? ''),
+                            'slug'          => (string)($regenJson['slug'] ?? ''),
+                            'focus_keyword' => $kwR,
+                            'featured_alt'  => (string)($regenJson['imagem']['alt_text'] ?? ''),
+                        ];
+                        $rmReportR = RankMathSeoValidator::validar((string)$regenJson['html'], $rmOptsR);
+                        $this->log[] = "RankMath[regen]: score={$rmReportR['score']}/100 ({$rmReportR['passes']}/{$rmReportR['total']}) kw=\"{$kwR}\"";
+                        if ($rmReportR['score'] > $rmReport['score']) {
+                            $this->log[] = "RankMath[regen]: ACEITO ({$rmReport['score']} → {$rmReportR['score']})";
+                            if ($leiaTambem !== '') {
+                                $regenJson['html'] = str_replace('<%leiamais%>', $leiaTambem, $regenJson['html']);
+                            }
+                            $json = $regenJson;
+                            $json['focus_keyword'] = $kwR;
+                            $rmReport = $rmReportR;
+                            $rmReport['__regenerated'] = true;
+                        } else {
+                            $this->log[] = "RankMath[regen]: REJEITADO — score não subiu, mantendo original";
+                        }
+                    } else {
+                        $this->log[] = 'RankMath[regen]: regeneração falhou — mantendo original';
+                    }
+                }
+
+                $json['__rankmath_validation'] = $rmReport;
+            } catch (Throwable $e) {
+                $this->log[] = 'RankMath: validador falhou — ' . $e->getMessage();
+            }
+        }
+
         // Extrai FAQ se veio no JSON
         $faqArr = [];
         if (!empty($json['faq']) && is_array($json['faq'])) {
             $faqArr = $json['faq'];
         }
+
+        /* focus_keyword final: prioriza o que validador RankMath calculou (string única, 2-4 palavras) */
+        $focusKw = trim((string)($json['focus_keyword'] ?? ''));
+        if ($focusKw === '') $focusKw = trim((string)($json['palavra_chave'] ?? ''));
+        if ($focusKw === '' && class_exists('RankMathSeoValidator')) {
+            $focusKw = RankMathSeoValidator::derivarKeywordDoTitulo((string)($json['titulo'] ?? $titulo));
+        }
+        if ($focusKw === '') $focusKw = (string)$titulo;
 
         return [
             'title'            => $json['titulo'] ?? $titulo,
@@ -361,16 +457,17 @@ class DebateBuilder
             'excerpt'          => $json['meta_description'] ?? '',
             'meta_title'       => $json['titulo'] ?? $titulo,
             'meta_description' => $json['meta_description'] ?? '',
-            'focus_keyword'    => $json['palavra_chave'] ?? $titulo,
+            'focus_keyword'    => $focusKw,
             'padrao_titulo'    => isset($json['padrao_titulo']) ? (int)$json['padrao_titulo'] : 0,
             'content_html'     => $json['html'],
             'faq'              => $faqArr,
-            'tags'             => [$json['palavra_chave'] ?? $titulo],
+            'tags'             => [$focusKw],
             'categories'       => ['Educação e Qualificação'],
             'hero_alt'         => $json['imagem']['alt_text'] ?? $json['titulo'] ?? $titulo,
             'imagem'           => is_array($json['imagem'] ?? null) ? $json['imagem'] : [],
             'schema_type'      => 'NewsArticle',
             'products'         => [],
+            '__rankmath_validation' => $json['__rankmath_validation'] ?? null,
             '_debate_log'      => $this->log,
         ];
     }
@@ -548,6 +645,60 @@ class DebateBuilder
             return is_array($json) && !empty($json['html']) ? $json : null;
         } catch (Throwable $e) {
             $this->log[] = 'AntiAI[regen]: exception ' . $e->getMessage();
+            return null;
+        }
+    }
+
+    /**
+     * Regen pra cobrir os checks RankMath que reprovaram. Cap 1x — chamado APENAS se score < 80.
+     * Diferente do regen anti-AI: aqui pedimos pra MANTER conteúdo factual e ajustar APENAS
+     * (a) onde a focus_keyword aparece no body, (b) o alt_text, (c) meta_description, (d) slug.
+     */
+    private function regenerateForRankMath(string $originalPrompt, array $rmReport, string $focusKw, int $maxTokens): ?array
+    {
+        $feedback = "## CORREÇÃO OBRIGATÓRIA — RANKMATH SEO SCORE BAIXO ({$rmReport['score']}/100)\n\n";
+        $feedback .= "A versão anterior reprovou nos seguintes checks RankMath:\n\n";
+        foreach ($rmReport['fails'] as $f) {
+            $det = !empty($f['detalhe']) ? " — {$f['detalhe']}" : '';
+            $feedback .= "- ✗ {$f['titulo']}{$det}\n";
+        }
+        $feedback .= "\n## INSTRUÇÕES DE CORREÇÃO\n\n";
+        $feedback .= "**FOCUS KEYWORD A USAR (sem alterar):** `{$focusKw}`\n\n";
+        $feedback .= "Reescreva o MESMO artigo (mesmos fatos, mesmo ângulo do DNA, mesma estrutura H2 prometida) garantindo que:\n\n";
+        $feedback .= "1. **titulo** — começa com `{$focusKw}` (front-load nas primeiras 5 palavras) E contém pelo menos 1 número.\n";
+        $feedback .= "2. **slug** — `slugify({$focusKw})` + 1 modificador opcional, ≤ 60 chars, sem stop words.\n";
+        $feedback .= "3. **meta_description** — 140-155 chars, com `{$focusKw}` nos primeiros 60 chars.\n";
+        $feedback .= "4. **focus_keyword** — retorne EXATAMENTE `{$focusKw}` (não invente outra).\n";
+        $feedback .= "5. **html → P1** — primeira ocorrência de `{$focusKw}` nas primeiras 100 palavras (de preferência na 1ª frase).\n";
+        $feedback .= "6. **html → pelo menos 1 H2** — texto do H2 contém `{$focusKw}` (ou variação muito próxima).\n";
+        $feedback .= "7. **html → corpo** — densidade 0.8% a 1.5% (artigo ~800 palavras → 6 a 12 ocorrências de `{$focusKw}` ou variações exatas).\n";
+        $feedback .= "8. **imagem.alt_text** — contém `{$focusKw}` literalmente + descrição visual da cena.\n\n";
+        $feedback .= "REGRA DURA: NÃO mudar fatos, datas, números, ângulo, abertura proibida do DNA. Apenas redistribuir a `focus_keyword` nos lugares listados acima. Manter todos os backlinks internos, schemas FAQ/HowTo, leia também, rodapé fonte. Retorne APENAS JSON válido com o mesmo schema do prompt original.";
+
+        $regenPrompt = $originalPrompt . "\n\n" . $feedback;
+
+        try {
+            $resp = $this->claude->callPublic(
+                [['role' => 'user', 'content' => $regenPrompt]],
+                "Você é o Editor-Chefe descrito no prompt. DATA: {$this->dataHoje}. Esta é uma REGERAÇÃO PARA RANKMATH — redistribuir a focus_keyword sem mexer em fatos. Retorne APENAS JSON válido.",
+                $maxTokens
+            );
+            $texto = trim($resp['content'][0]['text'] ?? '');
+            $json = null;
+            if (preg_match('/\{[\s\S]*\}/s', $texto, $m)) {
+                $json = json_decode($m[0], true);
+            }
+            if (!is_array($json)) {
+                $fixed = $this->fixJson($texto);
+                $json = json_decode($fixed, true);
+            }
+            if (!is_array($json) || empty($json['html'])) {
+                $manual = $this->extractFieldsManually($texto);
+                if ($manual && !empty($manual['html'])) $json = $manual;
+            }
+            return is_array($json) && !empty($json['html']) ? $json : null;
+        } catch (Throwable $e) {
+            $this->log[] = 'RankMath[regen]: exception ' . $e->getMessage();
             return null;
         }
     }

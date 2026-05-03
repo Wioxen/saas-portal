@@ -93,11 +93,27 @@ class RankMathSeoValidator
         return implode(' ', array_slice($palavras, 0, $n));
     }
 
-    /** Gera slug pra comparar (lowercase, sem acento, hífen). */
+    /** Gera slug pra comparar (lowercase, sem acento, hífen). Fallback manual se ext-intl ausente. */
     private static function slugify(string $s): string
     {
         $s = mb_strtolower($s, 'UTF-8');
-        $s = transliterator_transliterate('Any-Latin; Latin-ASCII', $s) ?: $s;
+        if (function_exists('transliterator_transliterate')) {
+            $s = transliterator_transliterate('Any-Latin; Latin-ASCII', $s) ?: $s;
+        } else {
+            /* Fallback manual: tabela PT-BR + remoção de acentos genérica via iconv */
+            $s = strtr($s, [
+                'á'=>'a','à'=>'a','ã'=>'a','â'=>'a','ä'=>'a',
+                'é'=>'e','è'=>'e','ê'=>'e','ë'=>'e',
+                'í'=>'i','ì'=>'i','î'=>'i','ï'=>'i',
+                'ó'=>'o','ò'=>'o','õ'=>'o','ô'=>'o','ö'=>'o',
+                'ú'=>'u','ù'=>'u','û'=>'u','ü'=>'u',
+                'ç'=>'c','ñ'=>'n',
+            ]);
+            if (function_exists('iconv')) {
+                $sIconv = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+                if ($sIconv !== false) $s = $sIconv;
+            }
+        }
         $s = preg_replace('/[^a-z0-9]+/', '-', $s) ?? '';
         return trim($s, '-');
     }
@@ -106,9 +122,12 @@ class RankMathSeoValidator
     public static function derivarKeywordDoTitulo(string $titulo): string
     {
         $stopWords = ['a','o','e','de','do','da','dos','das','para','por','com','sem','em','no','na','nos','nas','um','uma','que','se','ou','mas','já','é','foi','será','ao','aos'];
-        $palavras = preg_split('/\s+/u', mb_strtolower(strip_tags($titulo), 'UTF-8')) ?: [];
-        $palavras = array_filter($palavras, fn($p) => mb_strlen($p) >= 3 && !in_array($p, $stopWords, true));
-        // Pega as primeiras 2-4 palavras (mais relevantes vêm primeiro)
-        return implode(' ', array_slice($palavras, 0, 4));
+        $limpo = mb_strtolower(strip_tags($titulo), 'UTF-8');
+        /* Remove pontuação aderida (vírgula, dois-pontos, ponto, etc) — preserva letras/números/hífen/espaço */
+        $limpo = preg_replace('/[^\p{L}\p{N}\s\-]/u', ' ', $limpo) ?? $limpo;
+        $palavras = preg_split('/\s+/u', $limpo) ?: [];
+        $palavras = array_values(array_filter($palavras, fn($p) => mb_strlen($p) >= 3 && !in_array($p, $stopWords, true)));
+        /* Default 3 palavras (RankMath gosta de focus keywords curtas — núcleo da busca real). */
+        return implode(' ', array_slice($palavras, 0, 3));
     }
 }

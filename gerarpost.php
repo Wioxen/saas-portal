@@ -33,6 +33,7 @@ require_once __DIR__ . '/lib/DebateBuilder.php';
 require_once __DIR__ . '/lib/PadroesTitulo.php';
 require_once __DIR__ . '/lib/ClusterAngleAllocator.php';
 require_once __DIR__ . '/lib/DataCoerenciaValidator.php';
+require_once __DIR__ . '/lib/RankMathSeoValidator.php';
 
 /** Extrai slides do content_html a partir de H2s + primeiro parágrafo de cada seção. */
 function extrairSlidesDeHtml(string $html, int $max = 4): array
@@ -657,6 +658,70 @@ function slugifyPt(string $s): string
     return trim($s, '-');
 }
 
+/**
+ * Auto-fix mecânico RankMath antes de mandar pro WP — última linha de defesa.
+ *
+ * O DebateBuilder já tenta acertar via prompt + regen, mas se um campo escapou
+ * (ex: meta_description sem keyword, alt sem keyword, focus_keyword vazio),
+ * essa função corrige sem tocar no body. Foca nos checks que o RankMath
+ * valida em campos editáveis fora do HTML do post.
+ *
+ * Modifica $artigo IN-PLACE e retorna a focus_keyword final (string única, 2-4 palavras)
+ * pra ser usada em rank_math_focus_keyword.
+ */
+function aplicarRankMathSeoFix(array &$artigo, string $titulo, string $kwFallback = ''): string
+{
+    /* 1. focus_keyword string única (não array, não título inteiro) */
+    $kw = trim((string)($artigo['focus_keyword'] ?? ''));
+    if ($kw === '' && $kwFallback !== '') $kw = trim($kwFallback);
+    if ($kw === '' || str_word_count($kw) > 5 || str_word_count($kw) < 1) {
+        $kw = RankMathSeoValidator::derivarKeywordDoTitulo($titulo);
+    }
+    /* Se ainda assim ficou vazio (título sem palavras válidas), usa as 3 primeiras palavras do título cruas */
+    if ($kw === '') {
+        $palavras = preg_split('/\s+/u', mb_strtolower(strip_tags($titulo), 'UTF-8')) ?: [];
+        $kw = trim(implode(' ', array_slice($palavras, 0, 3)));
+    }
+    $artigo['focus_keyword'] = $kw;
+
+    /* 2. meta_description: se não contém a keyword, prefixa com ela (mantendo ≤155c) */
+    $metaDesc = trim((string)($artigo['meta_description'] ?? $artigo['excerpt'] ?? ''));
+    if ($kw !== '' && $metaDesc !== '' && mb_stripos($metaDesc, $kw) === false) {
+        /* Capitaliza primeira letra da keyword pra prefixo */
+        $kwCap = mb_strtoupper(mb_substr($kw, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($kw, 1, null, 'UTF-8');
+        $candidato = $kwCap . ': ' . $metaDesc;
+        if (mb_strlen($candidato, 'UTF-8') > 155) {
+            $candidato = mb_substr($candidato, 0, 152, 'UTF-8') . '...';
+        }
+        $artigo['meta_description'] = $candidato;
+        $artigo['excerpt'] = $candidato;
+    } elseif ($metaDesc === '' && $kw !== '') {
+        /* Sem meta — gera uma básica (fallback raro, mas evita check failed) */
+        $artigo['meta_description'] = "Veja tudo sobre {$kw}: detalhes, prazos e como aproveitar.";
+        $artigo['excerpt'] = $artigo['meta_description'];
+    }
+
+    /* 3. imagem.alt_text: garante keyword literal */
+    if (!isset($artigo['imagem']) || !is_array($artigo['imagem'])) $artigo['imagem'] = [];
+    $alt = trim((string)($artigo['imagem']['alt_text'] ?? ''));
+    if ($kw !== '' && ($alt === '' || mb_stripos($alt, $kw) === false)) {
+        if ($alt === '') {
+            $artigo['imagem']['alt_text'] = "Imagem ilustrativa sobre {$kw}";
+        } else {
+            /* Anexa a keyword ao final, mantendo ≤120c */
+            $candidato = rtrim($alt, " .,;:") . " — {$kw}";
+            if (mb_strlen($candidato, 'UTF-8') > 120) {
+                $candidato = mb_substr($candidato, 0, 117, 'UTF-8') . '...';
+            }
+            $artigo['imagem']['alt_text'] = $candidato;
+        }
+    }
+    /* hero_alt acompanha alt_text (usado em featured upload) */
+    $artigo['hero_alt'] = $artigo['imagem']['alt_text'] ?? ($artigo['hero_alt'] ?? $titulo);
+
+    return $kw;
+}
+
 /** Normaliza um termo em hashtag válida (PascalCase sem espaços). Opção de manter ou remover acentos. */
 function _normalizarHashtag(string $termo, bool $manterAcento): string
 {
@@ -1005,6 +1070,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         'intencao'          => $dna['intencao']          ?? '',
                         'estrutura'         => $dna['estrutura']         ?? '',
                         'title_pattern'     => $dna['title_pattern']     ?? '',
+                        'intro_format'      => $dna['intro_format']      ?? '',
+                        'num_h2'            => isset($dna['num_h2']) ? (int)$dna['num_h2'] : 0,
                         'diferenciador'     => $dna['diferenciador']     ?? '',
                         'abertura_proibida' => $dna['abertura_proibida'] ?? '',
                         'promessa'          => $dna['promessa']          ?? '',
@@ -1576,10 +1643,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                             (string)($artigo['imagem']['overlay_chamativo'] ?? '')
                         );
 
-                        $payload = ['title'=>$titulo,'slug'=>$slugFinal,'content'=>$html,'excerpt'=>$artigo['meta_description']??'','status'=>'draft',
-                            'meta'=>['rank_math_title'=>$titulo,'rank_math_description'=>$artigo['meta_description']??'','rank_math_focus_keyword'=>$keyword,
-                                     'rank_math_facebook_title'=>$titulo,'rank_math_facebook_description'=>$artigo['meta_description']??'',
-                                     'rank_math_twitter_title'=>$titulo,'rank_math_twitter_description'=>$artigo['meta_description']??'',
+                        /* Auto-fix RankMath: focus_keyword única + meta_desc com kw + alt com kw (corrige o que o builder pode ter deixado escapar) */
+                        $rmKw = aplicarRankMathSeoFix($artigo, $titulo, (string)$keyword);
+                        $metaDescFinal = (string)($artigo['meta_description'] ?? '');
+                        $tituloLog .= " [rmKw:{$rmKw}]";
+
+                        $payload = ['title'=>$titulo,'slug'=>$slugFinal,'content'=>$html,'excerpt'=>$metaDescFinal,'status'=>'draft',
+                            'meta'=>['rank_math_title'=>$titulo,'rank_math_description'=>$metaDescFinal,'rank_math_focus_keyword'=>$rmKw,
+                                     'rank_math_facebook_title'=>$titulo,'rank_math_facebook_description'=>$metaDescFinal,
+                                     'rank_math_twitter_title'=>$titulo,'rank_math_twitter_description'=>$metaDescFinal,
                                      'rank_math_rich_snippet'=>'off',
                                      '_clonais_image_overlay'=>$overlayChamativo]];
                         if (!empty($artigo['tags'])) { try { $payload['tags']=$wp->resolverTags($artigo['tags']); } catch(Throwable $e){} }
@@ -2038,20 +2110,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         // Limite 60 chars para SEO
                         if (mb_strlen($slugFinal) > 60) $slugFinal = rtrim(mb_substr($slugFinal, 0, 60), '-');
 
+                        /* Auto-fix RankMath: focus_keyword única + meta_desc com kw + alt com kw */
+                        $rmKw = aplicarRankMathSeoFix($artigo, $titulo, (string)$keyword);
+                        $metaDescFinal = (string)($artigo['meta_description'] ?? '');
+
                         $payload = [
                             'title'   => $titulo,
                             'slug'    => $slugFinal,
                             'content' => $html,
-                            'excerpt' => $artigo['excerpt'] ?? '',
+                            'excerpt' => $metaDescFinal,
                             'status'  => 'draft',
                             'meta'    => [
                                 'rank_math_title'                => $artigo['meta_title'] ?? $titulo,
-                                'rank_math_description'          => $artigo['meta_description'] ?? '',
-                                'rank_math_focus_keyword'        => $artigo['focus_keyword'] ?? $keyword,
+                                'rank_math_description'          => $metaDescFinal,
+                                'rank_math_focus_keyword'        => $rmKw,
                                 'rank_math_facebook_title'       => $artigo['meta_title'] ?? $titulo,
-                                'rank_math_facebook_description' => $artigo['meta_description'] ?? '',
+                                'rank_math_facebook_description' => $metaDescFinal,
                                 'rank_math_twitter_title'        => $artigo['meta_title'] ?? $titulo,
-                                'rank_math_twitter_description'  => $artigo['meta_description'] ?? '',
+                                'rank_math_twitter_description'  => $metaDescFinal,
                                 'rank_math_rich_snippet'         => 'off',
                             ],
                         ];
