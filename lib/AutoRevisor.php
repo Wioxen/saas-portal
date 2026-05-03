@@ -162,16 +162,49 @@ USR;
         }
     }
 
-    /** Formata violations + structural issues numa lista textual pro prompt do Haiku. */
+    /** Formata violations + structural issues numa lista textual pro prompt do Haiku.
+     *  Instruções LITERAIS por tipo (travessão → vírgula; teaser → fato; etc). */
     private function formatarProblemas(array $report): string
     {
         $linhas = [];
         foreach (($report['violations'] ?? []) as $v) {
-            $linhas[] = "- [{$v['category']}] '{$v['phrase']}' aparece {$v['count']}x — REMOVER ou substituir por fato concreto";
+            $linhas[] = "- [{$v['category']}] '{$v['phrase']}' aparece {$v['count']}x — REMOVER ou substituir por fato concreto da fonte";
         }
         foreach (($report['structural'] ?? []) as $s) {
-            $linhas[] = "- [estrutural] {$s} — corrigir reformulando o parágrafo/lista afetado";
+            $instrucao = $this->instrucaoPorTipo($s);
+            $linhas[] = "- [estrutural] {$s}\n    → AÇÃO: {$instrucao}";
         }
         return implode("\n", $linhas) ?: '(nenhum problema específico — apenas validar consistência)';
+    }
+
+    /** Mapa de instruções literais por tipo de problema estrutural. */
+    private function instrucaoPorTipo(string $issue): string
+    {
+        $issueLower = mb_strtolower($issue);
+        if (str_contains($issueLower, 'travessões')) {
+            return "TROCAR TODOS os travessões '—' e en-dashes '–' por vírgula ', ' (ou ponto-e-vírgula '; ' ou dois-pontos ': ' conforme contexto). NENHUM travessão pode permanecer no corpo do artigo.";
+        }
+        if (str_contains($issueLower, 'reticências')) {
+            return "TROCAR todas as reticências '...' e '…' por ponto final '.' ou continuar a frase. Máximo 1 ocorrência permitida.";
+        }
+        if (str_contains($issueLower, 'teaser-paragrafo-isolado')) {
+            return "REMOVER o parágrafo isolado de suspense (ex: 'Mas tem um detalhe.'). Embuti-lo dentro do parágrafo seguinte usando um FATO CONCRETO da fonte (ex: 'A regra tem uma exceção: famílias com renda acima de R\$ 1.518').";
+        }
+        if (str_contains($issueLower, 'listas-trio-perfeito')) {
+            return "QUEBRAR a lista de exatos 3 itens — expandir pra 4-5 itens com dados adicionais da fonte OU fundir 2 itens em uma frase corrida no parágrafo.";
+        }
+        if (str_contains($issueLower, 'densidade-conector')) {
+            return "VARIAR o conector repetido — usar conectores naturais BR ('Aí', 'E', 'Só que', 'Acontece que', 'Na prática', 'Por enquanto') OU pausa em ponto final.";
+        }
+        if (str_contains($issueLower, 'parágrafos uniformes')) {
+            return "VARIAR comprimento dos parágrafos — alguns curtos (1-2 linhas com fato direto), alguns médios (3-4 linhas com contexto). Quebra ritmo robótico.";
+        }
+        if (str_contains($issueLower, "'além disso'") || str_contains($issueLower, "'no entanto'")) {
+            return "TROCAR todas as ocorrências extras pelo equivalente natural ('E', 'Plus', 'Outro ponto:', 'Acontece que'). Máximo 1x cada.";
+        }
+        if (str_contains($issueLower, 'h2s repetem palavra')) {
+            return "REESCREVER os H2s pra começarem com palavras diferentes. Cada H2 deve refletir um aspecto único da fonte.";
+        }
+        return "Reformular o trecho/parágrafo/lista afetado conforme orientação do manifesto editorial.";
     }
 }
