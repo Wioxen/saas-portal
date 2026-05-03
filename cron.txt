@@ -9,8 +9,8 @@ SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Field order: minute hour day-of-month month day-of-week user command
-# Horários assumem container em UTC (default Docker). Se container=BR, ajustar:
-#   - "0 11 * * *" UTC ≅ "0 8 * * *" BR  (subtrair 3h)
+# CONFIRMADO 2026-05-03: servidor EasyPanel está em -03:00 (BR). Todos os
+# horários abaixo são BR (não UTC).
 
 # ─── Pipelines existentes ──────────────────────────────────────────────────
 
@@ -26,8 +26,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # ─── Calendário do Vitória (Camada 1 pós-jogo) ─────────────────────────────
 
-# Sweep diário 08:00 BR (11:00 UTC) — atualiza próximos jogos via ge.globo
-0 11 * * * root php /app/scripts/atualizar_jogos.php >> /var/log/jogos.log 2>&1
+# Sweep diário 08:00 BR — atualiza próximos jogos via ge.globo
+0 8 * * * root php /app/scripts/atualizar_jogos.php >> /var/log/jogos.log 2>&1
 
 # Aceleração D-1 (cada 1h, só se próximo jogo <24h) — pega mudanças de horário
 17 * * * * root php /app/scripts/atualizar_jogos.php --so-se-perto >> /var/log/jogos.log 2>&1
@@ -42,21 +42,21 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # ─── Auditoria pós-jogo (alerta automático) ────────────────────────────────
 
-# Roda 1x/dia 09:00 BR (12:00 UTC). Se algum jogo finalizado nas últimas 24h
+# Roda 1x/dia 09:00 BR. Se algum jogo finalizado nas últimas 24h
 # NÃO tem pos_jogo gerado → cria WP draft "🚨 AUDIT pós-jogo {data}" no
 # leaodabarra (você vê no admin sem precisar lembrar) + grava
 # data/audit_posjogo_status.json + loga em /var/log/audit_posjogo.log
-0 12 * * * root php /app/scripts/audit_pos_jogo.php --site=leaodabarra >> /var/log/audit_posjogo.log 2>&1
+0 9 * * * root php /app/scripts/audit_pos_jogo.php --site=leaodabarra >> /var/log/audit_posjogo.log 2>&1
 
 # ─── QA automático de posts publicados (anti-IA + schemas + h1 dup) ────────
 
 # Roda 1x/dia 09:15 BR pra leaodabarra (15min após audit pós-jogo, sem colisão)
 # Pega posts publicados últimas 24h, roda AntiAIValidator + check schema duplo
 # + check H1 no content. Se issues → cria WP draft "🚨 QA posts {data}".
-15 12 * * * root php /app/scripts/validar_posts_publicados.php --site=leaodabarra --horas=24 >> /var/log/qa_posts.log 2>&1
+15 9 * * * root php /app/scripts/validar_posts_publicados.php --site=leaodabarra --horas=24 >> /var/log/qa_posts.log 2>&1
 
 # Idem cursosenacgratuito (20min após — escalonado)
-20 12 * * * root php /app/scripts/validar_posts_publicados.php --site=cursosenac --horas=24 >> /var/log/qa_posts.log 2>&1
+20 9 * * * root php /app/scripts/validar_posts_publicados.php --site=cursosenac --horas=24 >> /var/log/qa_posts.log 2>&1
 
 # ─── (Opcional/futuro) ─────────────────────────────────────────────────────
 
