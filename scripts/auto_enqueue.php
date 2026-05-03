@@ -108,9 +108,28 @@ foreach ($sitesAlvo as $slug) {
 
     // Busca aprovados sem post
     $todos = $db->all(['site' => $slug]);
-    $candidatos = array_filter($todos, function ($r) {
+
+    // Filtro de FRESHNESS — só trends recentes viram post.
+    // Site config 'trend_max_idade_horas' (default 168h = 7d). Cursosenac=24h,
+    // leaodabarra=96h. Idade pelo created_at do trend (ou pingo_pub_ts se houver).
+    $cfgSiteAtual = $sites[$slug] ?? [];
+    $maxIdadeHoras = (int)($cfgSiteAtual['trend_max_idade_horas'] ?? 168);
+    $tsLimite = time() - ($maxIdadeHoras * 3600);
+
+    $candidatos = array_filter($todos, function ($r) use ($tsLimite, &$logLine, $slug) {
         $temPost = !empty($r['post_id']) && (int)$r['post_id'] > 0;
-        return ($r['status'] ?? '') === 'aprovado' && !$temPost;
+        if (($r['status'] ?? '') !== 'aprovado' || $temPost) return false;
+
+        // Determina idade — preferência pingo_pub_ts (real do RSS), fallback created_at
+        $tsTrend = (int)($r['pingo_pub_ts'] ?? 0);
+        if ($tsTrend === 0) {
+            $createdStr = (string)($r['created_at'] ?? '');
+            $tsTrend = $createdStr !== '' ? strtotime($createdStr) : 0;
+        }
+        if ($tsTrend > 0 && $tsTrend < $tsLimite) {
+            return false;  // trend velho — bloqueado
+        }
+        return true;
     });
 
     // Override de threshold (opcional)

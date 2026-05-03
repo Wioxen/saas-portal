@@ -354,6 +354,25 @@ class Maquina
                     $tagIds = $this->wp->resolverTags($artigo['tags']);
                 }
 
+                // Cluster backlinks via InternalLinkGlossary (termo→URL canônica do site)
+                // Aplicar ANTES de relacionados pra não competir com mesmas anchors.
+                if (!empty($this->cfg['internal_link_glossary'])) {
+                    try {
+                        require_once __DIR__ . '/InternalLinkGlossary.php';
+                        $gloss = InternalLinkGlossary::aplicar($contentFinal, [
+                            'wp_url'    => (string)($this->cfg['wp_url'] ?? ''),
+                            'glossario' => $this->cfg['internal_link_glossary'],
+                        ]);
+                        if (!empty($gloss['html']) && $gloss['html'] !== $contentFinal) {
+                            $contentFinal = $gloss['html'];
+                            $aplicados = is_array($gloss['aplicados'] ?? null) ? count($gloss['aplicados']) : 0;
+                            $this->log("🔗 Cluster glossary: {$aplicados} backlinks injetados");
+                        }
+                    } catch (Throwable $e) {
+                        $this->log('  ✗ Glossary: ' . $e->getMessage());
+                    }
+                }
+
                 // Posts relacionados — entre conteúdo e FAQ
                 $searchTerm = $artigo['focus_keyword'] ?? $keyword;
                 if ($searchTerm !== '') {
@@ -363,6 +382,8 @@ class Maquina
                         if (!empty($relacionados)) {
                             $this->log('  ✓ ' . count($relacionados) . ' posts encontrados');
                             $contentFinal .= $this->montarRelacionados($relacionados);
+                        } else {
+                            $this->log('  ⚠️ 0 posts relacionados pra "' . $searchTerm . '"');
                         }
                     } catch (Throwable $e) {
                         $this->log('  ✗ Relacionados: ' . $e->getMessage());
