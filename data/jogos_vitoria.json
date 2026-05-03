@@ -30,7 +30,12 @@
       "destaque_editorial": "Goleada com olé — Vitória dominou e provocou nos passes finais",
       "fonte": "manual",
       "fonte_url": null,
-      "scraped_at": "2026-05-02T20:35:00-03:00"
+      "scraped_at": "2026-05-02T20:35:00-03:00",
+      "posts_gerados": {
+        "pre_jogo": null,
+        "pos_jogo": 810,
+        "repercussao": null
+      }
     },
     {
       "id": "2026-05-06-vit-cea",
@@ -55,7 +60,12 @@
       },
       "fonte": "ge.globo",
       "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
-      "scraped_at": "2026-05-02T20:05:00-03:00"
+      "scraped_at": "2026-05-02T20:05:00-03:00",
+      "posts_gerados": {
+        "pre_jogo": 817,
+        "pos_jogo": null,
+        "repercussao": null
+      }
     }
   ]
 }
