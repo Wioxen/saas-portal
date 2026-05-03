@@ -32,6 +32,7 @@ require_once __DIR__ . '/../lib/SourceFidelityValidator.php';
 require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/JogosCalendario.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
+require_once __DIR__ . '/../lib/AutoRevisor.php';
 
 $opts = getopt('', ['site::', 'jogo-id::', 'urls::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
@@ -170,7 +171,7 @@ if ($dryRun) {
 // Chama Claude
 echo "\n[claude] gerando...\n";
 $claude = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model'] ?? 'claude-sonnet-4-6');
-$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 8000);
+$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 16000);
 $texto = $resp['content'][0]['text'] ?? '';
 $json = Claude::parseJsonResponse($texto);
 if (!$json || empty($json['html'])) {
@@ -193,11 +194,33 @@ if ($h1Removidos > 0) {
     echo "  ⚠️ guard: removido(s) {$h1Removidos} H1 do html\n";
 }
 
-// Validators
+// Validators (1ª passada)
 echo "[validators]\n";
 $ai = (new AntiAIValidator())->validate($html);
-if (!empty($ai['violations'])) {
-    foreach (array_slice($ai['violations'], 0, 5) as $v) echo "  · anti-ai: {$v['phrase']} x{$v['count']}\n";
+echo "  · anti-ai (1ª passada): severity={$ai['severity']}\n";
+foreach (array_slice($ai['violations'] ?? [], 0, 3) as $v) echo "    [{$v['category']}] '{$v['phrase']}' x{$v['count']}\n";
+foreach (array_slice($ai['structural'] ?? [], 0, 3) as $s) echo "    [estrutural] {$s}\n";
+
+// AUTO-REVISÃO Haiku se severity != ok
+if ($ai['severity'] !== 'ok') {
+    $persona = $cfg['persona'] ?? [];
+    echo "  ⚙️ disparando auto-revisão Haiku (~\$0.02)...\n";
+    $rev = (new AutoRevisor($cfg['anthropic_api_key']))->revisar($html, [
+        'site_name'      => $cfg['site_name'] ?? 'Leão da Barra',
+        'persona_autor'  => $persona['autor'] ?? 'Equipe Leão da Barra',
+        'persona_voz'    => $persona['voz'] ?? 'apurada e direta',
+        'persona_tom'    => $persona['tom'] ?? 'esportivo factual',
+        'subtipo_nicho'  => 'Esporte Clube Vitória — futebol profissional',
+    ]);
+    if ($rev['reescreveu'] && $rev['ok']) {
+        $html = $rev['html'];
+        echo "  ✓ revisão ok: " . $rev['antes']['severity'] . " → " . $rev['depois']['severity'] . "\n";
+    } elseif ($rev['reescreveu']) {
+        $html = $rev['html'];
+        echo "  ⚠️ revisão melhorou parcial: " . $rev['antes']['severity'] . " → " . $rev['depois']['severity'] . "\n";
+    } else {
+        echo "  ✗ revisão falhou — mantendo original\n";
+    }
 }
 
 $textosFontes = array_map(fn($f) => implode("\n", $f['fonte']['content']['paragraphs'] ?? []), $fontesOk);

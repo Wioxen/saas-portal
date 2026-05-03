@@ -76,6 +76,19 @@ class AntiAIValidator
                 'um dado importante que passa despercebido', 'um critério oculto', 'um fator decisivo',
                 'pouca gente imagina', 'quase ninguém repara', 'muita gente desconhece',
                 'a verdade é que', /* só quando inicia parágrafo, mas detectamos qualquer ocorrência */
+                /* Audit 2026-05-03: padrões que estavam hardcoded como OBRIGATÓRIOS no
+                 * manifesto antigo (BLOCO 5, BLOCO 7) e viraram fingerprint LLM clássico */
+                'o que ninguém te conta', 'o que quase ninguém percebe', 'o que ninguém imagina',
+                'vale a pena agora', 'a resposta surpreende', 'só que isso muda tudo',
+                'mas tem um detalhe que quase ninguém', 'mas tem um detalhe que muita gente',
+                'mas tem um detalhe que ninguém',
+                'e é aqui que muita gente erra', 'é aqui que a maioria erra',
+                'a maioria descobre tarde demais', 'a maioria perde por isso',
+                'mas quase ninguém', 'a maioria vai ficar de fora',
+                'a vaga não espera', 'vagas não esperam',
+                'quem chega depois, não entra', 'quem chega depois não entra',
+                'parece simples. não é', 'parece simples, não é',
+                'fica a dica', 'simples assim',
             ],
             'adjetivos_vazios' => [
                 'imperdível', 'incrível', 'revolucionário', 'surpreendente', 'espantoso',

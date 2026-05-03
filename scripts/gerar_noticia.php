@@ -25,6 +25,7 @@ require_once __DIR__ . '/../lib/AntiAIValidator.php';
 require_once __DIR__ . '/../lib/SourceFidelityValidator.php';
 require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
+require_once __DIR__ . '/../lib/AutoRevisor.php';
 
 $opts = getopt('', ['site::', 'urls::', 'titulo-hint::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
@@ -88,9 +89,27 @@ $diaSemana = ['Sun'=>'domingo','Mon'=>'segunda','Tue'=>'terça','Wed'=>'quarta',
 $system = <<<SYS
 {$manifesto}
 
+═══ VOCÊ É O AUTOR — NÃO A IA ═══
+Você é {$personaAutor}, redator(a) deste site. Sua voz é {$personaVoz}. Seu tom
+é {$personaTom}. Você está escrevendo COM SUA VOZ HUMANA — o leitor NÃO PODE
+suspeitar que tem IA por trás. Cada frase deve soar como sua, não como
+template/catálogo.
+
+ANTES DE ESCREVER CADA PARÁGRAFO, PERGUNTE A SI MESMO:
+1. "Esse parágrafo tem padrão de IA?" (frase-catálogo, conector óbvio,
+   adjetivo vazio, teaser-isolado, lista de exatos 3 itens, self-reference)
+   → Se SIM, REFAÇA com fato concreto da fonte.
+2. "Esse parágrafo tem AUTORIDADE pro Google?" (traz dado único da fonte,
+   nome próprio, número, data concreta, cita entidade oficial?)
+   → Se NÃO, REFAÇA trazendo o dado mais forte da fonte ainda não usado.
+3. "Parece que {$personaAutor} escreveu, ou parece IA?"
+   → Se IA, REFAÇA até soar humano e específico.
+
 ═══ CONTEXTO TEMPORAL ═══
-HOJE é {$dataHoje} ({$diaSemana}). Toda referência a "hoje", "amanhã", "ontem"
-deve usar essa data como ancora. NUNCA usar datas inferidas do training data.
+HOJE é {$dataHoje} ({$diaSemana}). Toda referência a "hoje", "amanhã", "ontem",
+"semana passada", etc. usa essa data como ancora. NUNCA usar datas inferidas do
+training data. Datas mencionadas no artigo DEVEM aparecer literalmente em ao
+menos 1 fonte — proibido inferir, proibido arredondar.
 
 ═══ SITE / NICHO ═══
 Site: {$siteName}
@@ -101,8 +120,9 @@ Especialidade: {$personaEspec}
 Tom: {$personaTom}
 
 ═══ MISSÃO: NOTÍCIA EDITORIAL ═══
-Você é redator-chefe deste site escrevendo NOTÍCIA factual a partir das fontes
-fornecidas. NÃO é matéria opinativa enciclopédica, é jornalismo direto.
+Você é redator(a) deste site escrevendo NOTÍCIA factual a partir das fontes
+fornecidas. Você é a REDAÇÃO que apura — NÃO copia, NÃO atribui pro veículo
+concorrente. Apresenta os fatos como apuração própria.
 
 Estrutura:
 1. LEAD (2-3 linhas): O QUE + QUEM + QUANDO + ONDE + POR QUE/IMPACTO
@@ -134,9 +154,9 @@ $user = "═══ FONTES ═══\n{$textoFontes}\n═══ INSTRUÇÃO ═�
 
 if ($dryRun) { echo "\n[dry-run] sem chamar Claude\n"; exit(0); }
 
-echo "\n[claude] gerando...\n";
+echo "\n[claude] gerando (sonnet 4.6, 16k tokens)...\n";
 $claude = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model'] ?? 'claude-sonnet-4-6');
-$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 10000);
+$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 16000);
 $texto = $resp['content'][0]['text'] ?? '';
 $json = Claude::parseJsonResponse($texto);
 
@@ -162,9 +182,33 @@ if ($h1Removidos > 0) {
     echo "  ⚠️ guard: removido(s) {$h1Removidos} H1 do html (Sonnet ignorou instrução)\n";
 }
 
-// Validators
+// Validators (1ª passada — só pra log)
 $ai = (new AntiAIValidator())->validate($html);
-foreach (array_slice($ai['violations'] ?? [], 0, 3) as $v) echo "  · anti-ai: {$v['phrase']} x{$v['count']}\n";
+$totalAi = $ai['total_phrase_violations'] + count($ai['structural'] ?? []);
+echo "  · anti-ai (1ª passada): severity={$ai['severity']} | violations={$totalAi}\n";
+foreach (array_slice($ai['violations'] ?? [], 0, 3) as $v) echo "    [{$v['category']}] '{$v['phrase']}' x{$v['count']}\n";
+foreach (array_slice($ai['structural'] ?? [], 0, 3) as $s) echo "    [estrutural] {$s}\n";
+
+// AUTO-REVISÃO via Haiku 4.5 se severity != ok
+if ($ai['severity'] !== 'ok') {
+    echo "  ⚙️ disparando auto-revisão Haiku (custo extra ~\$0.02)...\n";
+    $rev = (new AutoRevisor($cfg['anthropic_api_key']))->revisar($html, [
+        'site_name'      => $siteName,
+        'persona_autor'  => $personaAutor,
+        'persona_voz'    => $personaVoz,
+        'persona_tom'    => $personaTom,
+        'subtipo_nicho'  => $subtipoNicho,
+    ]);
+    if ($rev['reescreveu'] && $rev['ok']) {
+        $html = $rev['html'];
+        echo "  ✓ revisão ok: severity " . $rev['antes']['severity'] . " → " . $rev['depois']['severity'] . "\n";
+    } elseif ($rev['reescreveu']) {
+        $html = $rev['html'];
+        echo "  ⚠️ revisão melhorou mas ainda warn — severity " . $rev['antes']['severity'] . " → " . $rev['depois']['severity'] . "\n";
+    } else {
+        echo "  ✗ revisão falhou: " . ($rev['erro'] ?? 'desconhecido') . " — mantendo original\n";
+    }
+}
 
 $textosFontes = array_map(fn($f) => implode("\n", $f['fonte']['content']['paragraphs'] ?? []), $fontesOk);
 $fid = SourceFidelityValidator::validar($html, $textosFontes, ['own_domain' => $cfg['wp_url'] ?? '']);

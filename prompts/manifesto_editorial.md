@@ -294,13 +294,16 @@ Nasce do dado mais forte da fonte cruzado com o título:
 3 parágrafos:
 1. **Confirmação:** Valida promessa do título com dados da fonte
 2. **Profundidade:** Detalhe específico da fonte (fortalece E-E-A-T)
-3. **Open loop:** Gatilho que puxa próximo bloco
+3. **Continuidade natural:** Apresenta o próximo aspecto sem usar fórmula-teaser
 
-Frases obrigatórias (usar pelo menos 1):
-- "Mas tem um detalhe"
-- "E é aqui que muita gente erra"
+❌ **PROIBIDO:** terminar parágrafo com frase-catálogo tipo "Mas tem um detalhe", "E é aqui que muita gente erra", "Só que isso muda tudo", "A resposta surpreende". Essas frases viraram fingerprint LLM detectável.
 
-**Teste do H2:** Entende relevância em 2s? Funcionaria em qualquer outro artigo (= genérico)? Cumpre promessa do título? Todos os dados existem na fonte?
+✅ **PRINCÍPIO DE CONTINUIDADE NATURAL:**
+- Se há um detalhe importante: introduzi-lo PELO NOME (ex: "A regra de isenção tem uma exceção pra famílias com renda acima de R$ 1.518")
+- Se há um erro comum: nomeá-lo (ex: "Quem se inscreve antes de pedir isenção precisa pagar mesmo aprovado")
+- Se há contraste: apresentá-lo com fato real (ex: "Em 2025 foram 280 mil pedidos. Em 2026, já são 410 mil")
+
+**Teste do H2:** Entende relevância em 2s? Funcionaria em qualquer outro artigo (= genérico)? Cumpre promessa do título? Todos os dados existem na fonte? Cada parágrafo termina com FATO ou FRASE NATURAL — nunca com teaser-clichê?
 
 ### LEIA TAMBÉM (APÓS 3º parágrafo do H2, NUNCA na introdução)
 ```html
@@ -416,52 +419,35 @@ NUNCA frase isolada-teaser. Sempre embutida ou em contraste com fato concreto da
 
 ---
 
-## BLOCO 5 — BLOCOS MAGNÉTICOS
+## BLOCO 5 — DENSIDADE INFORMACIONAL (substitui "Blocos Magnéticos" obsoletos)
 
-Escolher **2** dos 3 modelos abaixo e inserir no corpo do artigo:
+❌ **PROIBIDO** usar como H2/H3 ou abertura de parágrafo:
+- "O que ninguém te conta" / "O que quase ninguém percebe"
+- "Vale a pena agora?" / "O que ninguém imagina"
+- "Realidade Crua" / "Verdade Nua e Crua"
+- Qualquer fórmula de "revelação" repetível entre artigos
 
-### ⚠️ "O que ninguém te conta"
-→ Revela um erro invisível que a maioria comete
-- 3-5 linhas
-- 1 `<strong>` obrigatório
-- Baseado na fonte (não inventar)
+Esses títulos viraram **fingerprint LLM clássico** — Google identifica como conteúdo gerado em massa e penaliza autoridade.
 
-### 💡 "O que quase ninguém percebe"
-→ Oportunidade escondida dentro da notícia
-- 3-5 linhas
-- 1 `<strong>` obrigatório
-- Baseado na fonte (não inventar)
+### ✅ PRINCÍPIO: cada bloco do corpo deve trazer 1 INFORMAÇÃO CONCRETA não-óbvia das fontes
 
-### 🔥 "Vale a pena agora?"
-→ Força decisão imediata no leitor
-- 3-5 linhas
-- 1 `<strong>` obrigatório
-- Baseado na fonte (não inventar)
+Em vez de bloco-templete "O que ninguém te conta", construir o H2/H3 ao redor do **dado específico** que aparece nas fontes:
 
-### REALIDADE CRUA (PRINCÍPIO, não fórmula)
-Inserir **1 frase isolada** em `<p>` próprio, em ponto estratégico. A frase deve:
-- Ter 3-7 palavras
-- Ser DERIVADA do conteúdo específico deste artigo (não uma fórmula genérica reutilizável)
-- Conectar-se com o ângulo único da fonte
+**Para nicho EDUCAÇÃO** (cursosenacgratuito):
+- ❌ "O que ninguém te conta sobre a isenção" → ✅ "Renda familiar até R$ 1.518 garante isenção automática"
+- ❌ "O que quase ninguém percebe no edital" → ✅ "Quem perdeu o NIS pode reabrir cadastro até dia X"
+- ❌ "Vale a pena agora?" → ✅ "Inscrição vale mesmo pra quem não tem certeza do curso"
 
-**PROIBIDO VERBATIM** (viraram templates detectáveis entre artigos):
-- "A vaga não espera."
-- "A maioria perde por isso."
-- "Quem chega depois, não entra."
-- "Parece simples. Não é."
-- "É aqui que a maioria erra."
-- "Fica a dica."
-- "Simples assim."
+**Para nicho ESPORTE** (leaodabarra):
+- ❌ "O que ninguém te conta sobre o Ba-Vi" → ✅ "Vitória soma 7 vitórias seguidas em casa contra o Bahia"
+- ❌ "Vale a pena assistir?" → ✅ "Premiere transmite ao vivo às 21:30, único canal na BA"
 
-Ex contextual (certo): "O cadastro só aceita edições até sexta." / "A regra já vale para março." / "O benefício não retroage."
+### REGRA: H2 e H3 nascem dos FATOS ÚNICOS da fonte, não de um catálogo
 
-### MICRO GATILHOS (a cada 2-3 parágrafos, variar tipo — nunca repetir mesmo tipo 2x seguidas)
-1. **Urgência leve** — reformular com dado específico da fonte (ex: "O prazo termina em 3 dias úteis, não 7")
-2. **Janela de oportunidade** — idem, contextual ao tema
-3. **Perda leve** — "Quem não fizer X perde Y" mas com X e Y concretos da fonte
-4. **Ação prática** — citar canal/site/app específico, nunca genérico como "processo leva poucos minutos"
+Cada subtítulo deve responder uma pergunta específica que o leitor REAL faria sobre ESSE conteúdo. Se o subtítulo funcionaria em outro artigo do mesmo nicho → genérico demais, refazer.
 
-Sempre baseados na fonte. Gancho DEVE anteceder informação real e ser DERIVADO do conteúdo — frases-modelo repetidas entre artigos são detectáveis e derrubam o score.
+### REFORÇO DE ESCASSEZ (1x no desenvolvimento, OPCIONAL)
+Se a fonte traz prazo/limite real, mencionar UMA vez no corpo. Sem prazo na fonte → não inventar. Sem teaser-formula tipo "última chance", "corra" — usar dado direto: "Inscrições até dia 4 de maio. Sem renovação prevista."
 
 ---
 
@@ -477,25 +463,41 @@ Se uma frase não serve a nenhuma das 3 → cortar.
 
 ---
 
-## BLOCO 7 — LOOPS DE CURIOSIDADE
+## BLOCO 7 — DENSIDADE PROGRESSIVA (substitui "Loops de Curiosidade" obsoleto)
 
-**Mínimo: 6 loops** distribuídos ao longo do artigo.
+❌ **A REGRA "6 LOOPS OBRIGATÓRIOS" FOI REMOVIDA.** Inserir loops-formula a cada 2 parágrafos virou fingerprint LLM brutal — Google identifica e penaliza.
 
-**Distribuição obrigatória:**
-- P1 → 1 loop
-- H2 → 1 loop
-- Meio do artigo → 2 loops
-- Blocos magnéticos → 2 loops
-
-**O que é um loop:**
-Frase que abre uma pergunta na mente do leitor sem responder imediatamente. Faz ele continuar lendo.
-
-**Exemplos:**
+❌ **PROIBIDO VERBATIM** (eram exemplos de loops, agora são banidos):
 - "O problema? A maioria descobre tarde demais."
 - "Mas tem um detalhe que quase ninguém percebe."
 - "E é aqui que muita gente erra."
 - "Só que isso muda tudo."
 - "A resposta surpreende."
+- Qualquer pergunta retórica isolada de 1-2 palavras ("O problema?", "A solução?", "O detalhe?")
+
+### ✅ PRINCÍPIO NOVO: DENSIDADE PROGRESSIVA
+
+Cada parágrafo do corpo deve **entregar 1 informação NOVA** das fontes. O "gancho" pra continuar lendo NÃO vem de teaser-frase, vem de:
+
+1. **Dados que se desdobram**: cada parágrafo amplia o anterior com fato concreto (ex: P1 diz "abriu 500 vagas" → P2 diz "vagas são pra 47 cidades" → P3 diz "12 cidades têm vagas exclusivas pra rural")
+2. **Perguntas naturais respondidas**: leitor pergunta "quanto custa?" e o parágrafo responde NO MEIO da prosa, sem anunciar "agora vou te contar quanto custa"
+3. **Contraste factual real**: "Em 2025 eram 280 mil. Em 2026, 410 mil. Crescimento de 46%."
+
+### TESTE DE CADA PARÁGRAFO (rodar mental antes de escrever próximo)
+
+Antes de escrever cada parágrafo, perguntar:
+1. **"Esse parágrafo tem padrão de IA?"** → frase-template, conector forçado, adjetivo vazio, teaser-isolado, lista-de-3-perfeita?
+   - SIM → REFAZER usando dado específico da fonte
+2. **"Esse parágrafo tem autoridade pro Google?"** → traz dado único, nome próprio, número, prazo concreto da fonte? Cita entidade oficial? Texto que poderia ser republicado por jornal sério?
+   - NÃO → REFAZER trazendo o dado mais forte da fonte que ainda não foi usado
+
+### EXEMPLO de parágrafo SEM teaser-formula (correto)
+
+❌ Errado (loop-templete):
+> O programa abre 500 vagas. Mas tem um detalhe. A maioria descobre tarde demais.
+
+✅ Certo (densidade progressiva):
+> O programa abre 500 vagas pra estudantes da rede pública estadual do Espírito Santo. A inscrição vai até 4 de maio pelo site selecaoaluno.es.gov.br — e exige NIS atualizado, comprovante de matrícula 2026 e renda familiar mensal de até R$ 1.518 por pessoa.
 
 ---
 

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../lib/AntiAIValidator.php';
 
 $samples = [
+    'manifesto_antigo_template' => '<h2>O que ninguém te conta sobre a isenção</h2><p>O Enem abre inscrições.</p><p>Mas tem um detalhe que quase ninguém percebe.</p><p>Vale a pena agora? A resposta surpreende. Só que isso muda tudo.</p>',
     'teaser_mas_tem_um_detalhe' => '<p>O Enem abre inscrições no dia 28.</p><p>Mas tem um detalhe.</p><p>Quem perde o prazo não consegue isenção.</p>',
     'teaser_spoiler' => '<p>O programa parece simples.</p><p>Spoiler: tem 3 critérios eliminatórios.</p>',
     'listas_3_perfeitas' => '<ul><li>A</li><li>B</li><li>C</li></ul><ul><li>X</li><li>Y</li><li>Z</li></ul><ul><li>1</li><li>2</li><li>3</li></ul>',
