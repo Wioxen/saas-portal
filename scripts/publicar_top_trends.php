@@ -22,13 +22,17 @@ require_once __DIR__ . '/../lib/DbConnection.php';
 require_once __DIR__ . '/../lib/Serper.php';
 require_once __DIR__ . '/../lib/SourceTrustScore.php';
 
-$opts = getopt('', ['site::', 'limit::', 'dry-run', 'confirm', 'publicar', 'min-score::']);
+$opts = getopt('', ['site::', 'limit::', 'dry-run', 'confirm', 'publicar', 'min-score::', 'status::']);
 $siteSlug = (string)($opts['site'] ?? 'cursosenac');
 $limit    = (int)($opts['limit'] ?? 3);
 $dryRun   = isset($opts['dry-run']);
 $confirm  = isset($opts['confirm']);
 $publicar = isset($opts['publicar']);
 $minScore = (float)($opts['min-score'] ?? 5.0);
+// Status aceitos — default inclui 'novo' e 'aprovado' pra cobrir casos onde
+// auto_aprovar_score_min da fonte é maior que o score real do trend.
+$statusList = (string)($opts['status'] ?? 'novo,aprovado');
+$statusArr = array_filter(array_map('trim', explode(',', $statusList)));
 
 if (!$dryRun && !$confirm) {
     fwrite(STDERR, "Modo padrão é --dry-run. Pra publicar use --confirm.\n");
@@ -41,11 +45,20 @@ aplicarSite($cfg, $sites, $siteSlug);
 
 $pdo = DbConnection::pdo();
 
-// Lista top N trends APROVADOS sem post_id ainda
+// Lista top N trends sem post_id, status na lista permitida
+$placeholders = [];
+$bindStatus = [];
+foreach ($statusArr as $i => $s) {
+    $ph = ":st{$i}";
+    $placeholders[] = $ph;
+    $bindStatus[$ph] = $s;
+}
+$inClause = implode(',', $placeholders);
+
 $sql = "SELECT id, termo, pingo_link, score_discover, status, payload
         FROM trends
         WHERE site = :site
-          AND status = 'aprovado'
+          AND status IN ({$inClause})
           AND score_discover >= :ms
           AND (post_id IS NULL OR post_id = 0)
         ORDER BY score_discover DESC
@@ -54,15 +67,17 @@ $stmt = $pdo->prepare($sql);
 $stmt->bindValue(':site', $siteSlug);
 $stmt->bindValue(':ms', $minScore);
 $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+foreach ($bindStatus as $k => $v) $stmt->bindValue($k, $v);
 $stmt->execute();
 $trends = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($trends)) {
-    echo "Nenhum trend aprovado encontrado pra '{$siteSlug}' (score>={$minScore}, sem post_id).\n";
+    echo "Nenhum trend encontrado pra '{$siteSlug}' (status IN [" . implode(',', $statusArr) . "], score>={$minScore}, sem post_id).\n";
+    echo "Tente: --status=novo,aprovado,gerando ou baixar --min-score=4.5\n";
     exit(0);
 }
 
-echo "═══ Top {$limit} trends · {$siteSlug} · " . ($dryRun ? 'DRY-RUN' : 'PRODUÇÃO') . " ═══\n\n";
+echo "═══ Top {$limit} trends · {$siteSlug} · status=[" . implode(',', $statusArr) . "] · " . ($dryRun ? 'DRY-RUN' : 'PRODUÇÃO') . " ═══\n\n";
 
 $serper = new Serper($cfg['serper_api_key']);
 $scriptsDir = __DIR__;
