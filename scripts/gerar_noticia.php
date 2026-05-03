@@ -27,6 +27,7 @@ require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
 require_once __DIR__ . '/../lib/AutoRevisor.php';
 require_once __DIR__ . '/../lib/PostFinishPipeline.php';
+require_once __DIR__ . '/../lib/RankMathSeoValidator.php';
 
 $opts = getopt('', ['site::', 'urls::', 'titulo-hint::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
@@ -184,7 +185,14 @@ $html = (string)$json['html'];
 $titulo = (string)($json['titulo_h1'] ?? $tituloHint ?: 'Notícia');
 $metaTitle = (string)($json['meta_title'] ?? $titulo);
 $metaDesc  = (string)($json['meta_description'] ?? '');
-$focusKw   = (string)($json['focus_keyword'] ?? '');
+
+// FOCUS KEYWORD — auto-derivado do título (mais confiável que Sonnet decidir).
+// Sonnet costumava devolver keyword sintética que NÃO aparecia no body literal,
+// resultando em RankMath score baixo (5+ erros básicos).
+$focusKwSonnet = (string)($json['focus_keyword'] ?? '');
+$focusKwAuto = RankMathSeoValidator::derivarKeywordDoTitulo($titulo);
+$focusKw = $focusKwAuto ?: $focusKwSonnet;
+echo "  · focus_keyword: '{$focusKw}' (Sonnet sugeriu: '{$focusKwSonnet}')\n";
 
 // Guard anti-H1: WordPress renderiza H1 do título do post. Se Sonnet incluiu <h1>
 // no html (mesmo após instrução explícita), strip pra evitar duplicação no DOM.

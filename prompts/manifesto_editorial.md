@@ -340,21 +340,106 @@ SOMENTE se a fonte sustenta. Se não há limite real → não forçar.
 
 ---
 
-## BLOCO 3 — SEO
+## BLOCO 3 — SEO + RANKMATH SCORE 100/100
 
-- **Palavra-chave principal:** densidade de **1% a 1.5%** do total de palavras (para 650 palavras → 6-10 aparições contando variações)
-- **Variações:** exata, sinônimo, expandida (NUNCA mesma forma em frases consecutivas)
-- **Se densidade > 1.5%** → remover aparições até normalizar (excesso = keyword stuffing = penalização)
-- **Campo semântico:** termos do universo do tema (edital, banca, nomeação para concurso; cadastro, NIS, parcela para benefício)
-- **Distribuição NATURAL (não forçada):**
-  - P1 (obrigatório)
-  - H2 principal (obrigatório)
-  - 1º parágrafo após o H2
-  - Pelo menos 1 H3
-  - Dentro de lista ou tabela
-  - Bloco de ação
-- Nunca empilhar a keyword em frases consecutivas
-- Se parecer forçado → reduzir
+### FOCUS KEYWORD — distribuição obrigatória (RankMath checa cada um)
+
+✅ **Title (H1)** — focus keyword nas **primeiras 5 palavras**
+✅ **Meta title** (RankMath snippet) — começar com a keyword
+✅ **Meta description** — keyword presente, 140-160 chars
+✅ **URL/slug** — 3-5 palavras, keyword presente, sem stop words ("de", "para", "como")
+✅ **P1 (primeiro parágrafo)** — keyword nas **primeiras 100 palavras**
+✅ **Pelo menos 1 H2** com keyword (ou variação semântica)
+✅ **Pelo menos 1 H3** com keyword variação
+✅ **Alt text da featured image** — keyword + descrição contextual
+✅ **Dentro de lista ou tabela** (1 ocorrência)
+
+### DENSIDADE
+- **Ideal: 0.8% – 1.5%** do total de palavras
+- Pra artigo 800 palavras → **7-12 aparições** contando variações
+- Excesso (>2%) = keyword stuffing → RankMath penaliza + Google rebaixa
+- Insuficiente (<0.5%) = artigo "não é sobre isso" → score baixo
+
+### VARIAÇÕES SEMÂNTICAS (não repetir mesma forma)
+Pra cada keyword principal, ter 3 versões:
+- **Exata**: "isenção Enem 2026"
+- **Sinônimo**: "gratuidade taxa Enem"
+- **Expandida**: "pedido de isenção da inscrição do Enem 2026"
+
+NUNCA usar mesma forma em frases consecutivas. Alternar.
+
+### CAMPO SEMÂNTICO (LSI Keywords)
+Termos do universo do tema que reforçam contexto:
+- Educação: edital, banca, MEC, Inep, cadastro, NIS, comprovante
+- Esporte: clube, técnico, escalação, Brasileirão, transmissão, estádio
+- Benefício: cadastro, parcela, Caixa, calendário, valor, requisito
+
+LSI distribuídos NATURALMENTE no texto. Nunca lista-bullet de "palavras-chave".
+
+### ESTRUTURA HTML — RankMath checa hierarquia
+- **H1** = só 1 (renderizado pelo WP do título — não incluir no content)
+- **H2** = 3-5 seções principais
+- **H3** = 1-3 sub-seções por H2 (não obrigatório)
+- **NUNCA** pular hierarquia (H2 → H4 sem H3 = penalização)
+- **Listas** (`<ul>` ou `<ol>`) — pelo menos 1 no body
+- **Tabela** (`<table>`) — recomendada quando há dados comparáveis
+
+### LINKS — RankMath conta
+- **Interno**: pelo menos **2** links pra outros posts do site (cluster authority)
+  → InternalLinkGlossary já injeta automaticamente
+- **Externo**: pelo menos **1** link pra fonte oficial (gov.br, .edu, federações)
+  → Use anchor descritiva (NUNCA "clique aqui", "veja mais")
+- **Anchor**: sempre descritiva ("inscrições no Enem 2026") nunca genérica
+
+### COMPRIMENTO MÍNIMO
+- **Notícia rápida**: 600-800 palavras
+- **Guia/explicativo**: 800-1200 palavras
+- **Hub/pillar**: 1500+ palavras
+
+Abaixo de 600 palavras = RankMath alerta "Content too short".
+
+### LEGIBILIDADE (Flesch >= 60)
+- Frases curtas (média 15-20 palavras)
+- Parágrafos curtos (2-4 frases, máx 60 palavras)
+- Voz ativa > voz passiva
+- Vocabulário comum, evitar jargão sem explicar
+- 1 ideia por parágrafo (não empilhar 3 conceitos)
+
+### SCHEMA.ORG (RankMath gera, mas conteúdo precisa "merecer")
+- **NewsArticle / Article**: padrão (RankMath injeta automático no `<head>`)
+- **HowTo**: SE artigo tem passo-a-passo — usar `<ol>` numerado claro
+- **FAQPage**: SE tem H2 "Perguntas frequentes" + 3-5 `<details><summary>`
+- **VideoObject**: SE tem `<iframe>` YouTube
+- ❌ NÃO incluir `<script type="application/ld+json">` no content (RankMath duplica — cfg `rankmath_handles_schemas=true`)
+
+### IMAGENS — checklist
+- Featured image **obrigatória** (sem ela RankMath dá 0 pra "Hero image")
+- Alt text descritivo com keyword (ex: "estudante preenchendo formulário de isenção Enem 2026")
+- WebP comprimido < 200KB ideal
+- Dimensão mínima 1200×630 (Open Graph + Twitter card)
+
+### TÍTULO — Fórmula RankMath gosta
+```
+[Keyword] + [Modificador] + [Ano] + [Benefício/Gancho]
+```
+Exemplos:
+- "Isenção Enem 2026: como pedir taxa zero até dia 30 de abril"
+- "Vitória x Ceará: onde assistir ao jogo das quartas no Barradão"
+- "Senac EAD 2026: 800 vagas gratuitas com inscrições abertas"
+
+Modificadores que aumentam CTR (RankMath bonifica):
+- Números: "5 erros", "10 cursos", "200 vagas"
+- Ano atual: "2026"
+- Power words: "guia completo", "passo a passo", "definitivo"
+- Brackets: "(atualizado)", "[oficial]", "(grátis)"
+
+### URL/SLUG — Otimização
+- Tamanho: **3-5 palavras**
+- Focus keyword presente
+- Sem stop words: "de", "para", "como", "com" (cortar)
+- Hífens (não underline): `isencao-enem-2026-prazo`
+- ❌ Errado: `como-pedir-isencao-da-taxa-do-enem-2026-em-quatro-passos`
+- ✅ Certo: `isencao-enem-2026-prazo` (tudo essencial, nada redundante)
 
 ---
 
