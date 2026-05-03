@@ -186,6 +186,13 @@ $metaTitle = (string)($json['meta_title'] ?? "Vitória {$placarStr} {$advNome}")
 $metaDesc  = (string)($json['meta_description'] ?? '');
 $focusKw   = (string)($json['focus_keyword'] ?? "Vitória {$advNome}");
 
+// Guard anti-H1: WP renderiza h1 do título do post — duplicação no DOM se Sonnet incluir
+$h1Removidos = preg_match_all('#<h1\b[^>]*>.*?</h1>#is', $html);
+if ($h1Removidos > 0) {
+    $html = preg_replace('#<h1\b[^>]*>.*?</h1>\s*#is', '', $html) ?? $html;
+    echo "  ⚠️ guard: removido(s) {$h1Removidos} H1 do html\n";
+}
+
 // Validators
 echo "[validators]\n";
 $ai = (new AntiAIValidator())->validate($html);

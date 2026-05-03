@@ -74,25 +74,56 @@ foreach ($fontesOk as $i => $f) {
 
 $hintBloc = $tituloHint !== '' ? "\nPISTA EDITORIAL: {$tituloHint}\n" : '';
 
+// Persona + contexto editorial (vem do sites.php — não hardcode!)
+$persona = $cfg['persona'] ?? [];
+$siteName = $cfg['site_name'] ?? $cfg['_site_name'] ?? $siteSlug;
+$personaAutor = (string)($persona['autor'] ?? "Equipe {$siteName}");
+$personaVoz = (string)($persona['voz'] ?? 'jornalística direta');
+$personaEspec = (string)($persona['especialidade'] ?? '');
+$personaTom = (string)($persona['tom'] ?? 'direto e factual');
+$subtipoNicho = (string)($cfg['subtipo_nicho'] ?? '');
+$dataHoje = date('d/m/Y');  // PHP TZ deve estar America/Sao_Paulo via config.php
+$diaSemana = ['Sun'=>'domingo','Mon'=>'segunda','Tue'=>'terça','Wed'=>'quarta','Thu'=>'quinta','Fri'=>'sexta','Sat'=>'sábado'][date('D')];
+
 $system = <<<SYS
 {$manifesto}
 
-═══ MISSÃO: NOTÍCIA DO VITÓRIA ═══
-Você é redator-chefe escrevendo NOTÍCIA editorial sobre o Esporte Clube Vitória.
-Tipo: notícia comum (mercado, lesão, escalação, suspensão, declaração) — NÃO é
-pós-jogo, NÃO é matéria opinativa enciclopédica, é jornalismo factual.
+═══ CONTEXTO TEMPORAL ═══
+HOJE é {$dataHoje} ({$diaSemana}). Toda referência a "hoje", "amanhã", "ontem"
+deve usar essa data como ancora. NUNCA usar datas inferidas do training data.
+
+═══ SITE / NICHO ═══
+Site: {$siteName}
+Nicho: {$subtipoNicho}
+Autor (assinatura): {$personaAutor}
+Voz: {$personaVoz}
+Especialidade: {$personaEspec}
+Tom: {$personaTom}
+
+═══ MISSÃO: NOTÍCIA EDITORIAL ═══
+Você é redator-chefe deste site escrevendo NOTÍCIA factual a partir das fontes
+fornecidas. NÃO é matéria opinativa enciclopédica, é jornalismo direto.
 
 Estrutura:
-1. LEAD (2-3 linhas): O QUE aconteceu + QUEM + QUANDO + IMPACTO
-2. DETALHES (2-3 parágrafos): contexto, declarações se houver, números relevantes
-3. O QUE SIGNIFICA: impacto pro time / próximo jogo / temporada
-4. PRÓXIMO PASSO: data do próximo jogo, decisão técnica esperada
+1. LEAD (2-3 linhas): O QUE + QUEM + QUANDO + ONDE + POR QUE/IMPACTO
+2. DETALHES (2-3 parágrafos): contexto, declarações se houver, números/datas relevantes
+3. O QUE SIGNIFICA: impacto pro leitor (esse site é {$subtipoNicho})
+4. PRÓXIMO PASSO: prazo/data/ação esperada se aplicável
 
-REGRAS:
-- Cada nome, número, data, declaração: deve estar nas fontes (sem inferir)
-- Tom direto, factual, sem opinião pessoal
-- 400-700 palavras (notícia rápida pra Discover, não enciclopédia)
+REGRAS DURAS:
+- Cada nome, número, data, declaração: DEVE estar nas fontes (sem inferir nada)
+- Datas: SEMPRE confirmar com a data de hoje ({$dataHoje}) antes de escrever ano
+- Tom: {$personaTom}
+- 400-700 palavras
 - H2 com pergunta-resposta funciona bem pra Discover
+
+═══ FORMATAÇÃO HTML — REGRAS DURAS ═══
+- COMECE direto com <p> ou <h2>. NUNCA inclua <h1> no html — WordPress renderiza
+  o h1 automaticamente do título do post. Se você escrever <h1>, vai DUPLICAR.
+- Usar <h2> pra seções, <h3> pra subseções, <p> pra parágrafos
+- Listas <ul><li> ok pra enumerar prazos, requisitos, etc.
+- <strong> pra destacar palavras-chave críticas (datas, valores, prazos)
+- <a href> apenas pra fontes oficiais (gov.br, sites institucionais) com target="_blank"
 
 ═══ SAÍDA OBRIGATÓRIA ═══
 JSON: { html, meta_title (50-60c), meta_description (140-160c), focus_keyword, titulo_h1 }
@@ -118,10 +149,18 @@ if (!$json || empty($json['html'])) {
 }
 
 $html = (string)$json['html'];
-$titulo = (string)($json['titulo_h1'] ?? $tituloHint ?: 'Notícia do Vitória');
+$titulo = (string)($json['titulo_h1'] ?? $tituloHint ?: 'Notícia');
 $metaTitle = (string)($json['meta_title'] ?? $titulo);
 $metaDesc  = (string)($json['meta_description'] ?? '');
 $focusKw   = (string)($json['focus_keyword'] ?? '');
+
+// Guard anti-H1: WordPress renderiza H1 do título do post. Se Sonnet incluiu <h1>
+// no html (mesmo após instrução explícita), strip pra evitar duplicação no DOM.
+$h1Removidos = preg_match_all('#<h1\b[^>]*>.*?</h1>#is', $html);
+if ($h1Removidos > 0) {
+    $html = preg_replace('#<h1\b[^>]*>.*?</h1>\s*#is', '', $html) ?? $html;
+    echo "  ⚠️ guard: removido(s) {$h1Removidos} H1 do html (Sonnet ignorou instrução)\n";
+}
 
 // Validators
 $ai = (new AntiAIValidator())->validate($html);
