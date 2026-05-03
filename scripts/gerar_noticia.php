@@ -105,7 +105,7 @@ if ($dryRun) { echo "\n[dry-run] sem chamar Claude\n"; exit(0); }
 
 echo "\n[claude] gerando...\n";
 $claude = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model'] ?? 'claude-sonnet-4-6');
-$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 6000);
+$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 10000);
 $texto = $resp['content'][0]['text'] ?? '';
 $json = Claude::parseJsonResponse($texto);
 
