@@ -160,6 +160,9 @@ return [
             'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola'],
             'cta_estilo'       => 'pedir isenção · consultar edital · baixar apostila oficial · inscrever até [data]',
         ],
+        // RankMath gera NewsArticle/BreadcrumbList/Person/Organization/WebPage no <head>.
+        // Se gerarmos os mesmos no content, duplica. Ativar pra evitar.
+        'rankmath_handles_schemas' => true,
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,

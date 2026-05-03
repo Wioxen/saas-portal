@@ -54,8 +54,12 @@ $descricao = trim(strip_tags(mb_substr(strip_tags($content), 0, 200)));
 echo "[post] #{$postId} '{$titulo}'\n";
 echo "[image] {$imageUrl}\n";
 
-// 2. NewsArticle (sempre)
-$newsArticle = [
+// 2. NewsArticle — SÓ se RankMath não está handling (evita duplicação no <head>)
+$rankmathHandles = !empty($cfg['rankmath_handles_schemas']);
+$schemas = [];
+
+if (!$rankmathHandles) {
+    $newsArticle = [
     '@context' => 'https://schema.org',
     '@type'    => 'NewsArticle',
     'headline' => mb_substr($titulo, 0, 110),
@@ -78,9 +82,11 @@ $newsArticle = [
             'url'   => rtrim($cfg['wp_url'], '/') . '/wp-content/uploads/logo.png',
         ],
     ],
-];
-
-$schemas = [$newsArticle];
+    ];
+    $schemas[] = $newsArticle;
+} else {
+    echo "[skip] NewsArticle pulado (rankmath_handles_schemas=true — RankMath gera no <head>)\n";
+}
 
 // 3. SportsEvent COMPLETO se --jogo-id
 if ($jogoId !== '') {
