@@ -358,26 +358,59 @@ SOMENTE se a fonte sustenta. Se não há limite real → não forçar.
 ## BLOCO 4 — ANTI-IA
 
 ### EXPRESSÕES PROIBIDAS (nunca usar):
-- "vale destacar"
-- "é importante"
-- "é importante mencionar"
-- "diante disso"
-- "em suma"
-- "nesse contexto"
-- "cabe ressaltar"
-- "é fundamental"
-- "é essencial"
-- "por fim"
-- "sendo assim"
-- "no entanto" mais de 1x
-- "além disso" mais de 1x
+- "vale destacar" / "vale ressaltar" / "vale lembrar" / "vale mencionar"
+- "cabe destacar" / "cabe ressaltar" / "cabe pontuar"
+- "é importante" / "é importante destacar/ressaltar/notar"
+- "é fundamental" / "é essencial" / "é primordial"
+- "diante disso" / "diante desse cenário" / "diante do exposto"
+- "em suma" / "em síntese" / "em conclusão" / "em resumo"
+- "nesse contexto" / "neste contexto" / "nesse sentido" / "neste sentido"
+- "dessa forma" / "dessa maneira" / "desse modo"
+- "por fim" / "sendo assim" / "isso posto" / "dito isso"
+- "ademais" / "outrossim" / "doravante"
+- "no entanto" mais de 1x no mesmo artigo
+- "além disso" mais de 1x no mesmo artigo
 
-### OBRIGATÓRIO:
-Inserir 1 quebra de padrão no texto:
-```html
-<p>Mas tem um detalhe.</p>
+### TEASERS-PARÁGRAFO PROIBIDOS (fingerprint LLM crítica)
+**NUNCA** insira frase-teaser isolada como parágrafo único curto. Padrão LLM detectável:
 ```
-Frase curta, isolada, que quebra o ritmo e prende atenção.
+❌ <p>Mas tem um detalhe.</p>
+❌ <p>Tem um porém.</p>
+❌ <p>Mas atenção.</p>
+❌ <p>Spoiler:</p>
+❌ <p>Aí entra o problema.</p>
+❌ <p>E não para por aí.</p>
+```
+Humano NÃO escreve assim. Embute a quebra no parágrafo ou usa contraste real:
+```
+✓ "O prazo termina dia 4. Mas o edital traz uma cláusula que muda tudo: ..."
+✓ "Tudo parece simples até a página 12 do edital, onde aparece o detalhe que..."
+```
+
+### ADJETIVOS VAZIOS PROIBIDOS quando isolados:
+- "incrível como" / "simplesmente fascinante" / "verdadeiramente único"
+- "algo realmente especial" / "verdadeiramente notável"
+- "extremamente relevante" / "altamente significativo"
+- Adjetivos OK SE QUALIFICADOS: "fundamental para X PORQUE Y" (com explicação concreta)
+
+### SELF-REFERENCE PROIBIDO:
+- "veja a seguir" / "confira abaixo" / "leia adiante" / "descubra neste guia"
+- "aprenda abaixo" / "clique aqui" / "continue lendo"
+- "ao longo deste artigo" / "neste texto você vai" / "vamos te mostrar"
+
+### LISTAS — variar tamanho:
+LLM tende a fazer listas com EXATAMENTE 3 itens (trio perfeito). Se usar lista, varie: 2, 4, 5, 6 itens. Listas de 3 só quando os fatos da fonte forem exatamente 3.
+
+### CONECTORES — densidade máxima:
+Mesmo conector mais de 2x no artigo = robotic. Variar com conectores naturais BR ("Aí", "E", "Só que", "Acontece que", "Por enquanto", pausa em ponto final).
+
+### QUEBRA DE PADRÃO HUMANA (substitui o "Mas tem um detalhe" obsoleto):
+Pra criar ritmo, use UMA dessas técnicas (não obrigatório, só se couber):
+- **Frase curta no MEIO** de parágrafo longo: "...e o sistema funcionou. Por uma semana. Depois travou."
+- **Pergunta retórica embutida** (não isolada): "Quem tem direito? A regra surpreende: estudante de família com até..."
+- **Contraste factual real**: "Em 2025 eram 350 vagas. Em 2026, são 500. O salto vem com..."
+
+NUNCA frase isolada-teaser. Sempre embutida ou em contraste com fato concreto da fonte.
 
 **TESTE:** Se parecer texto de IA ao reler → reescrever mais simples e direto.
 

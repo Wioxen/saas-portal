@@ -81,6 +81,38 @@ class AntiAIValidator
                 'imperdível', 'incrível', 'revolucionário', 'surpreendente', 'espantoso',
                 'simplesmente incrível', 'absolutamente imperdível', 'transformador',
                 'magnífico', 'extraordinário', 'memorável',
+                /* Adjetivos genéricos LLM (gap #2 audit 2026-05-03) — banidos quando
+                 * isolados; aceitar SOMENTE quando qualificados ("interessante PORQUE..."). */
+                'incrível como', 'simplesmente fascinante', 'verdadeiramente único',
+                'algo realmente especial', 'algo realmente único', 'algo verdadeiramente',
+                'simplesmente fundamental', 'absolutamente essencial', 'altamente significativo',
+                'extremamente relevante', 'verdadeiramente notável', 'realmente impressionante',
+            ],
+            'self_reference' => [
+                /* Gap #4 audit: meta-narrative expandido — variantes "veja a seguir" etc.
+                 * Frases que LLM usa pra "se localizar" no texto e o leitor odeia. */
+                'veja a seguir', 'veja abaixo', 'veja agora',
+                'confira a seguir', 'confira abaixo', 'confira agora',
+                'leia a seguir', 'leia abaixo', 'leia adiante',
+                'descubra abaixo', 'descubra a seguir', 'descubra agora',
+                'aprenda abaixo', 'aprenda a seguir', 'aprenda neste',
+                'clique aqui', 'clique abaixo', 'clique no link',
+                'continue lendo abaixo', 'continue a leitura',
+                'acompanhe nos próximos parágrafos', 'siga lendo',
+                'antes de mais nada vamos', 'vamos por partes',
+            ],
+            'teaser_isolado' => [
+                /* Gap #1 audit (apontado pelo user 2026-05-03): frase-suspense LLM
+                 * usada como parágrafo único curto pra criar cadência artificial.
+                 * Detectada estruturalmente em detectStructuralPatterns() —
+                 * lista aqui é defesa em profundidade pra match em texto inteiro. */
+                'mas tem um detalhe', 'tem um porém', 'tem um detalhe importante',
+                'mas atenção', 'mas calma', 'mas espera',
+                'spoiler:', 'spoiler alert:', 'mas tem mais',
+                'aí entra o problema', 'aí está o ponto', 'aí está o detalhe',
+                'e não para por aí', 'e não acaba aí', 'e tem mais',
+                'mas a história não termina', 'a história não para',
+                'eis o ponto', 'eis a questão', 'eis o detalhe',
             ],
             'gerundismo' => [
                 'estar fazendo', 'estar pensando', 'estar buscando', 'estar verificando',
@@ -110,6 +142,30 @@ class AntiAIValidator
                 'esse segredo', 'esse truque',
                 'jamais vista', 'nunca vista',
                 'método secreto', 'fórmula mágica',
+            ],
+            'narrativa_template_llm' => [
+                /* Templates clássicos de IA narrativa — Sonnet/GPT convergem aqui quando
+                   estrutura=narrativa. Caso real: 3 posts do cluster Senac (cursosenac, 2026-05-02)
+                   abriram com "Tem gente que..." / "Tem gente em X que..." / "Quem tenta...".
+                   Qualquer ocorrência destes é red flag. */
+                'tem gente que', 'tem gente em',
+                'quem tenta', 'quem busca', 'quem espera', 'quem precisa', 'quem chega',
+                'descobre rapidamente', 'descobre que', 'descobre logo',
+                'ficou de fora', 'fica de fora', 'fiquem de fora',
+                'antes mesmo de completar', 'antes mesmo de terminar',
+                'esperou meses', 'esperaram meses', 'depois de meses', 'passou meses',
+                'há tempos', 'há um tempo', 'faz tempos',
+                /* "tentou X, separou Y, e Z" — fórmula enumerativa clássica IA */
+                'animada com a vaga', 'empolgado com a vaga', 'esperançoso com',
+            ],
+            'fillers_narrativa' => [
+                /* Muletas que LLM enfia no flow narrativo. Comuns em PT-BR mas
+                   uso REPETIDO denuncia template. Validator marca warn pra 1-2x, fail pra 3+. */
+                'rapidamente', 'mesmo assim',
+                'na prática', 'na real', 'no fim das contas',
+                'sem perceber', 'sem nem perceber',
+                'logo de cara', 'já de cara',
+                'acaba descobrindo', 'acabam descobrindo',
             ],
             'vague_promise' => [
                 /* "O X que" / "Um X que" sem qualificação concreta — clickbait sutil que limita anúncios.
@@ -312,6 +368,71 @@ class AntiAIValidator
         $travessoes = substr_count($body, '—') + substr_count($body, '–');
         if ($travessoes > 0) {
             $issues[] = "travessões (—) no corpo {$travessoes}x — banidos pelo prompt";
+        }
+
+        /* GAP #1 user 2026-05-03: parágrafo ÚNICO CURTO (1 frase, <40 palavras)
+         * com teaser-style ("Mas tem um detalhe", "Spoiler:", "Mas atenção"...).
+         * Padrão LLM clássico pra criar suspense artificial — humano embute em
+         * frase maior. Detecção estrutural: <p> isolado curto + verbos/marcadores
+         * de transição abrupta. */
+        if (preg_match_all('/<p[^>]*>(.*?)<\/p>/is', $html, $psAll)) {
+            $teaserPatterns = [
+                '/^\s*mas\s+(tem|atenção|calma|espera|tem\s+um|aqui|aí|nem|olha)\b/iu',
+                '/^\s*spoiler\b/iu',
+                '/^\s*tem\s+um\s+(porém|detalhe|problema|ponto|porm)\b/iu',
+                '/^\s*aí\s+(entra|está)\s+(o|a)\b/iu',
+                '/^\s*e\s+não\s+(para|acaba)\s+por\s+aí/iu',
+                '/^\s*eis\s+(o|a)\s+(ponto|questão|detalhe|problema)/iu',
+            ];
+            $teasersAchados = [];
+            foreach ($psAll[1] as $pHtml) {
+                $pTexto = trim(strip_tags($pHtml));
+                $pPalavras = str_word_count($pTexto);
+                // Parágrafo curto: 3-40 palavras + 1 frase só (não tem . interno antes do final)
+                $pTextoSemFinal = rtrim($pTexto, '.!?');
+                $pontosInternos = substr_count($pTextoSemFinal, '. ');
+                if ($pPalavras < 3 || $pPalavras > 40 || $pontosInternos > 0) continue;
+                foreach ($teaserPatterns as $pat) {
+                    if (preg_match($pat, $pTexto)) {
+                        $teasersAchados[] = mb_substr($pTexto, 0, 60);
+                        break;
+                    }
+                }
+            }
+            if (!empty($teasersAchados)) {
+                $issues[] = "teaser-paragrafo-isolado " . count($teasersAchados) . "x — padrão LLM (suspense artificial): " . implode(' | ', array_slice($teasersAchados, 0, 3));
+            }
+        }
+
+        /* GAP #3 audit: listas com EXATAMENTE 3 itens — padrão LLM clássico
+         * (LLM tende ao "trio perfeito"). Avisa se >40% das listas do post
+         * tem exatamente 3 li (não falha post com 1-2 listas, só com pattern). */
+        if (preg_match_all('/<(ul|ol)[^>]*>(.*?)<\/\1>/is', $html, $listasMatches)) {
+            $totalListas = count($listasMatches[2]);
+            $listas3 = 0;
+            foreach ($listasMatches[2] as $listaInner) {
+                $liCount = preg_match_all('/<li\b/i', $listaInner);
+                if ($liCount === 3) $listas3++;
+            }
+            if ($totalListas >= 3 && $listas3 / $totalListas >= 0.6) {
+                $issues[] = "listas-trio-perfeito {$listas3}/{$totalListas} listas têm exatos 3 itens — fingerprint LLM";
+            }
+        }
+
+        /* GAP #5 audit: densidade de conector — mesmo conector aparecendo >2x
+         * no mesmo post sinaliza dependência mecânica. Lista de conectores
+         * suspeitos quando repetidos. */
+        $conectoresParaContagem = [
+            'nesse contexto', 'neste contexto', 'dessa forma', 'desse modo',
+            'por outro lado', 'além disso', 'no entanto', 'sendo assim',
+            'diante disso', 'dito isso', 'isso significa que',
+        ];
+        $textPlain = mb_strtolower(strip_tags($body));
+        foreach ($conectoresParaContagem as $conn) {
+            $n = mb_substr_count($textPlain, $conn);
+            if ($n >= 3) {
+                $issues[] = "densidade-conector '{$conn}' {$n}x — máximo aceitável: 2";
+            }
         }
 
         /* Headings com vague promise (H1/H2/H3 com "O filtro/erro/detalhe que" sem qualificação) */
