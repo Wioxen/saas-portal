@@ -33,6 +33,7 @@ require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/JogosCalendario.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
 require_once __DIR__ . '/../lib/AutoRevisor.php';
+require_once __DIR__ . '/../lib/SportsHighlightsExtractor.php';
 
 $opts = getopt('', ['site::', 'jogo-id::', 'urls::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
@@ -260,6 +261,36 @@ try {
             'rank_math_focus_keyword' => $focusKw,
         ],
     ];
+
+    // SPORTS HIGHLIGHTS — busca melhores momentos / gols via Serper + injeta iframe YouTube
+    $vitTime  = $jogo['mando'] === 'casa' ? 'Vitória' : $advNome;
+    $advTime  = $jogo['mando'] === 'casa' ? $advNome : 'Vitória';
+    $placarMa = $jogo['mando'] === 'casa' ? (int)$jogo['placar']['vitoria']    : (int)$jogo['placar']['adversario'];
+    $placarVi = $jogo['mando'] === 'casa' ? (int)$jogo['placar']['adversario'] : (int)$jogo['placar']['vitoria'];
+    try {
+        $hl = SportsHighlightsExtractor::buscar(
+            $vitTime, $placarMa, $advTime, $placarVi,
+            $jogo['competicao'] ?? '', null,
+            (string)($cfg['serper_api_key'] ?? '')
+        );
+        if ($hl && !empty($hl['embed_html'])) {
+            echo "  ▶ highlights: {$hl['fonte']} score={$hl['score']} · " . substr((string)$hl['titulo'], 0, 60) . "\n";
+            // Injeta antes do bloco "Próximo jogo" OU no fim do conteúdo
+            $marker = '<h2>Próximo jogo';
+            $blocoHl = "\n<h2>Assista aos melhores momentos</h2>\n" . $hl['embed_html'] . "\n";
+            if (stripos($html, $marker) !== false) {
+                $html = str_ireplace($marker, $blocoHl . $marker, $html);
+            } else {
+                $html .= $blocoHl;
+            }
+            $payload['content'] = $html;
+        } else {
+            echo "  ▶ highlights: nenhum vídeo encontrado via Serper\n";
+        }
+    } catch (Throwable $e) {
+        echo "  ▶ highlights: erro — " . $e->getMessage() . "\n";
+    }
+
     $post = $wp->criarPost($payload);
     $pid = (int)($post['id'] ?? 0);
     echo "\n✓ POST CRIADO id={$pid} status={$status}\n";
