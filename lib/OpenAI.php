@@ -105,9 +105,12 @@ SYS;
     /** Versão pública — usada pelo DebateBuilder */
     public function chat(string $system, string $user, int $maxTokens = 1000): string
     {
+        // gpt-5+ e o-series renomearam max_tokens → max_completion_tokens.
+        // Manter max_tokens pra modelos legados (gpt-4o, gpt-4o-mini, gpt-3.5).
+        $tokenParam = self::tokenParamFor($this->model);
         $payload = [
             'model'      => $this->model,
-            'max_tokens' => $maxTokens,
+            $tokenParam  => $maxTokens,
             'messages'   => [
                 ['role' => 'system', 'content' => $system],
                 ['role' => 'user',   'content' => $user],
@@ -143,6 +146,18 @@ SYS;
     private static function ehFalhaTransitoria(int $code): bool
     {
         return $code === 0 || $code === 408 || $code === 429 || ($code >= 500 && $code <= 599);
+    }
+
+    /**
+     * Decide qual parametro de limite de tokens usar para o modelo.
+     * gpt-5+ / gpt-6 / o-series usam max_completion_tokens.
+     * gpt-4o*, gpt-4*, gpt-3.5*, etc. continuam com max_tokens.
+     */
+    private static function tokenParamFor(string $model): string
+    {
+        return preg_match('/^(gpt-[5-9]|o\d)/', $model) === 1
+            ? 'max_completion_tokens'
+            : 'max_tokens';
     }
 
     public function extractJsonPublic(string $text): array { return $this->extractJson($text); }
