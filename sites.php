@@ -76,6 +76,11 @@ return [
             'termos_proibidos' => ['absurdo', 'imperdível', 'jamais visto', 'preço de banana'],
             'cta_estilo'       => 'ver preço hoje · comparar ofertas · garantir cashback',
         ],
+        // Tema do site já renderiza author box + breadcrumb + schemas via RankMath.
+        // Inline desses elementos no content = duplicação visual. Manter false.
+        'author_box_inline'        => false,
+        'breadcrumb_inline'        => false,
+        'rankmath_handles_schemas' => true,
     ],
 	'vagasebeneficios' => [
         'name'              => 'Vagas e Beneficios',
@@ -119,6 +124,9 @@ return [
             'termos_proibidos' => ['milagre', 'receba sem burocracia', 'golpe do governo', 'vai perder se não correr'],
             'cta_estilo'       => 'consultar calendário · pedir no Meu INSS · simular benefício · ver edital',
         ],
+        'author_box_inline'        => false,
+        'breadcrumb_inline'        => false,
+        'rankmath_handles_schemas' => true,
      ],
 	 'cursosenac' => [
         'name'              => 'Curso SENAC',
@@ -160,8 +168,11 @@ return [
             'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola'],
             'cta_estilo'       => 'pedir isenção · consultar edital · baixar apostila oficial · inscrever até [data]',
         ],
-        // RankMath gera NewsArticle/BreadcrumbList/Person/Organization/WebPage no <head>.
-        // Se gerarmos os mesmos no content, duplica. Ativar pra evitar.
+        // RankMath gera NewsArticle/BreadcrumbList/Person/Organization/WebPage no <head>
+        // E o tema renderiza author box + breadcrumb na sidebar/topo do post.
+        // Se gerarmos esses elementos inline no content = duplicação visual + DOM bagunçado.
+        'author_box_inline'        => false,
+        'breadcrumb_inline'        => false,
         'rankmath_handles_schemas' => true,
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
@@ -233,6 +244,9 @@ return [
             'termos_proibidos' => ['basta ter o diploma', 'faculdade fácil', 'salário garantido', 'sucesso certo'],
             'cta_estilo'       => 'comparar faculdades · simular financiamento · pedir desconto · ver nota MEC',
         ],
+        'author_box_inline'        => false,
+        'breadcrumb_inline'        => false,
+        'rankmath_handles_schemas' => true,
      ],
      'leaodabarra' => [
          'name'              => 'Leão da Barra',
@@ -466,6 +480,9 @@ return [
              'termos_proibidos' => ['nunca mais vai ter', 'última unidade' , 'só hoje' ],
              'cta_estilo'       => 'ver oferta · garantir enquanto tem · comparar preços · ativar cashback',
          ],
+         'author_box_inline'        => false,
+         'breadcrumb_inline'        => false,
+         'rankmath_handles_schemas' => true,
      ],
      'vafast' => [
          'name'              => 'VaFast',
