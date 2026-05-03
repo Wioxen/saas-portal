@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# /etc/crontab — Clonais SaaS Portal (EasyPanel)
+# Aplicar no servidor: sudo tee /etc/crontab < /app/cron.txt > /dev/null
+# Pré-requisitos: chmod +x /app/scripts/pingo_sequencial.sh
+#                 sudo touch /var/log/{tick,fila,pingo,jogos,posjogo}.log
+# ═══════════════════════════════════════════════════════════════════════════
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Field order: minute hour day-of-month month day-of-week user command
+# Horários assumem container em UTC (default Docker). Se container=BR, ajustar:
+#   - "0 11 * * *" UTC ≅ "0 8 * * *" BR  (subtrair 3h)
+
+# ─── Pipelines existentes ──────────────────────────────────────────────────
+
+# Tick filas (cada 2 min) — orquestrador de geração + publicação
+*/2 * * * * root php /app/scripts/tick_filas.php --quiet >> /var/log/tick.log 2>&1
+
+# Auto-enqueue (cada 15 min) — promove trends aprovados → fila de geração
+*/15 * * * * root php /app/scripts/auto_enqueue.php --quiet >> /var/log/fila.log 2>&1
+
+# Pingo sequencial (cada 10 min) — captura trends pra vagas+leao+cursosenac
+# Editar /app/scripts/pingo_sequencial.sh pra adicionar mais sites no array SITES
+*/10 * * * * root /app/scripts/pingo_sequencial.sh >> /var/log/pingo.log 2>&1
+
+# ─── Calendário do Vitória (Camada 1 pós-jogo) ─────────────────────────────
+
+# Sweep diário 08:00 BR (11:00 UTC) — atualiza próximos jogos via ge.globo
+0 11 * * * root php /app/scripts/atualizar_jogos.php >> /var/log/jogos.log 2>&1
+
+# Aceleração D-1 (cada 1h, só se próximo jogo <24h) — pega mudanças de horário
+17 * * * * root php /app/scripts/atualizar_jogos.php --so-se-perto >> /var/log/jogos.log 2>&1
+
+# ─── Pós-jogo automático (Camada 2) ────────────────────────────────────────
+
+# Orquestrador (cada 5 min) — idle 99% do tempo. Quando entra em janela:
+#   - pré-jogo (T-3h): gera "onde assistir + escalação"
+#   - pós-jogo (T+2h até T+4h): gera matéria com placar
+# Idempotência via posts_gerados[tipo] em data/jogos_vitoria.json
+*/5 * * * * root php /app/scripts/pos_jogo_auto.php --site=leaodabarra >> /var/log/posjogo.log 2>&1
+
+# ─── (Opcional/futuro) ─────────────────────────────────────────────────────
+
+# Re-aplicar filtro de nicho nos trends (após editar nicho_required_terms):
+#   php /app/scripts/reaplicar_filtro_nicho.php --site=<slug>
+
+# Indexação Search Console pra URLs específicas:
+#   php /app/scripts/indexar_urls_adhoc.php --site=<slug> --urls=u1,u2
+
+# Inspeção de scores por site:
+#   php /app/scripts/inspect_scores.php --site=<slug>
+
+# Status da operação (recomendado adicionar 1x/dia 09:00 BR = 12:00 UTC):
+# 0 12 * * * root php /app/scripts/status_trends.php >> /var/log/status.log 2>&1
