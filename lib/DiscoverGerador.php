@@ -232,35 +232,19 @@ class DiscoverGerador
      */
     public function gerar(array $trend, string $formato = 'discover'): array
     {
-        // ─── TREND-SCORING GATE ───
-        // Pré-roteamento: se score_discover do trend < threshold, usa GPT-mini (barato).
-        // Sonnet só pra trends de alto valor (score ≥ threshold).
-        // Reduz custo médio em ~70% sem perder qualidade nos trends que importam.
-        // Config: $cfg['trend_scoring_enabled'] (default true), $cfg['trend_scoring_threshold'] (default 7.0).
-        $scoringEnabled = !isset($this->cfg['trend_scoring_enabled']) || !empty($this->cfg['trend_scoring_enabled']);
-        $threshold = (float)($this->cfg['trend_scoring_threshold'] ?? 7.0);
-        $scoreTrend = (float)($trend['score_discover'] ?? 0);
-        $forcedLlm = null;
-        if ($scoringEnabled
-            && ($this->cfg['default_llm'] ?? 'claude') === 'claude'
-            && $scoreTrend > 0
-            && $scoreTrend < $threshold) {
-            // Score baixo → desvia pra GPT-mini (barato)
-            $forcedLlm = 'openai';
-        }
-
-        // Delega pro GPT quando LLM ativo for 'openai' OU quando gate forçou.
-        // Se GPT falhar por erro transitório, tenta Claude como fallback simétrico.
-        if ($forcedLlm === 'openai' || ($this->cfg['default_llm'] ?? 'claude') === 'openai') {
+        // Roteamento LLM: por padrão Claude (Sonnet) primeiro, com fallback pra GPT
+        // em erro transitório (lógica no caminho Claude abaixo, ~linha 695).
+        // Se default_llm='openai' explícito (raro, debug/testes), GPT primeiro com
+        // fallback simétrico pra Claude. NÃO há mais gate por score — qualidade do
+        // post vale mais que economia marginal de GPT-mini, e bugs em GPT (ex:
+        // max_tokens em modelos novos) não devem derrubar o pipeline inteiro.
+        if (($this->cfg['default_llm'] ?? 'claude') === 'openai') {
             require_once __DIR__ . '/OpenAI.php';
             require_once __DIR__ . '/DiscoverGeradorGPT.php';
             $modelo = $this->cfg['openai_model'] ?? 'gpt-4o-mini';
             $gpt = new DiscoverGeradorGPT($this->cfg, $this->db, $modelo);
             $respGpt = $gpt->gerar($trend, $formato);
             if (!empty($respGpt['ok'])) {
-                if ($forcedLlm === 'openai') {
-                    $respGpt['llm_routed_by_score'] = ['score' => $scoreTrend, 'threshold' => $threshold];
-                }
                 return $respGpt;
             }
             // GPT falhou — vale a pena tentar Claude?
