@@ -160,6 +160,35 @@ return [
             'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola'],
             'cta_estilo'       => 'pedir isenção · consultar edital · baixar apostila oficial · inscrever até [data]',
         ],
+        // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
+        // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
+        'trend_scoring_threshold' => 5.0,
+        'trend_scoring_enabled'   => true,
+        // Filtro de nicho — trend só é aprovado se contém 1+ termo desta lista (educação/cursos).
+        // Bloqueia vazamentos como "F1 GP Miami" pontuando alto.
+        'nicho_required_terms' => [
+            // Cursos e qualificação
+            'curso', 'cursos', 'capacitação', 'qualificação', 'formação', 'especialização',
+            'técnico', 'técnica', 'profissionalizante', 'ead', 'a distância', 'tutorial',
+            'senac', 'senai', 'sebrae', 'sesc', 'sesi', 'if ', 'instituto federal',
+            'instituição', 'escola técnica', 'escola profissionalizante',
+            // Vestibulares e bolsas
+            'enem', 'sisu', 'prouni', 'fies', 'fuvest', 'unicamp', 'vestibular',
+            'bolsa', 'bolsas', 'isenção', 'inscrição', 'edital', 'inscrições',
+            'pé-de-meia', 'pe-de-meia', 'pé de meia',
+            // MEC e contexto educacional
+            'mec', 'inep', 'cnpq', 'capes',
+            'estudante', 'estudantes', 'aluno', 'alunos', 'universitário', 'universitária',
+            'graduando', 'graduandos', 'vestibulando', 'vestibulandos',
+            'professor', 'professores', 'docente', 'pedagogo',
+            'escola', 'escolas', 'colégio', 'colégios', 'universidade', 'faculdade',
+            'ensino médio', 'ensino fundamental', 'ensino superior', 'ensino básico',
+            'olimpíada', 'olimpíadas', 'concurso', 'concursos',
+            // Educação geral
+            'educação', 'educacional', 'pedagógico', 'pedagogia', 'didática',
+            'aprendizagem', 'leitura', 'alfabetização', 'letramento',
+            'pesquisa científica', 'iniciação científica',
+        ],
      ],
 	 'guiadoscursos' => [
         'name'              => 'Guia dos Cursos',
@@ -360,11 +389,10 @@ return [
          // IMPORTANTE: cada URL DEVE existir no WP — link 404 fere autoridade. Antes de
          // ativar um termo aqui, criar a página correspondente como hub editorial.
          'internal_link_glossary' => [
-             // Identidade do clube → página de história/sobre
+             // Identidade do clube → página história
              'Esporte Clube Vitória' => '/historia-do-esporte-clube-vitoria/',
              'EC Vitória'            => '/historia-do-esporte-clube-vitoria/',
-             // 'Vitória' (sozinho) é ambíguo (= conquista) — ativar quando tiver URL específica
-             // Competições — categorias WP
+             // Competições (categorias WP — não são hubs)
              'Copa do Nordeste'      => '/category/copa-do-nordeste/',
              'Copa do Brasil'        => '/category/copa-do-brasil/',
              'Brasileirão Série A'   => '/category/brasileirao-2026/',
@@ -372,14 +400,30 @@ return [
              'Campeonato Baiano'     => '/category/campeonato-baiano/',
              'Baianão'               => '/category/campeonato-baiano/',
              // Estádio
-             'Barradão'              => '/barradao/',
+             'Barradão'                => '/barradao/',
              'Estádio Manoel Barradas' => '/barradao/',
-             // Pessoas-chave (criar páginas /tecnico/X e /presidente/X depois)
-             // 'Jair Ventura'        => '/tecnico/jair-ventura/',
-             // 'Fábio Mota'          => '/presidente/fabio-mota/',
-             // Clássico
-             'Ba-Vi'                 => '/classico/ba-vi/',
-             'Clássico Ba-Vi'        => '/classico/ba-vi/',
+             // Clássico — slug alinhado com data/hubs_vitoria.php
+             'Ba-Vi'                 => '/classico-ba-vi/',
+             'Clássico Ba-Vi'        => '/classico-ba-vi/',
+             // Comissão técnica e diretoria
+             'Jair Ventura'          => '/tecnico-jair-ventura/',
+             'Fábio Mota'            => '/presidente-fabio-mota/',
+             // Elenco
+             'Elenco 2026'           => '/elenco-2026/',
+             // Títulos históricos
+             'Série B 2023'          => '/historia-serie-b-2023/',
+             // Identidade
+             'Lelê Leão'             => '/mascote-lele-leao/',
+             // Jogadores (anchors completas pra evitar match em palavras genéricas)
+             'Lucas Arcanjo'         => '/jogador-lucas-arcanjo/',
+             'Camutanga'             => '/jogador-camutanga/',
+             'Riccieli'              => '/jogador-riccieli/',
+             'Renato Kayzer'         => '/jogador-renato-kayzer/',
+             'Matheuzinho'           => '/jogador-matheuzinho/',
+             'Emmanuel Martínez'     => '/jogador-emmanuel-martinez/',
+             'Aitor Cantalapiedra'   => '/jogador-aitor-cantalapiedra/',
+             'Ronald'                => '/jogador-ronald/',
+             // (jogadores menos icônicos não no glossary pra evitar spam de links)
          ],
      ],
 	 'ondecompraragora' => [
