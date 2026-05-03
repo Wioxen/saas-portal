@@ -26,6 +26,7 @@ require_once __DIR__ . '/../lib/SourceFidelityValidator.php';
 require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
 require_once __DIR__ . '/../lib/AutoRevisor.php';
+require_once __DIR__ . '/../lib/PostFinishPipeline.php';
 
 $opts = getopt('', ['site::', 'urls::', 'titulo-hint::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
@@ -254,6 +255,25 @@ try {
     echo "\n✓ POST CRIADO id={$pid} status={$status}\n";
     echo "  Edit: {$cfg['wp_url']}/wp-admin/post.php?post={$pid}&action=edit\n";
     if ($status === 'publish') echo "  URL : {$post['link']}\n";
+
+    // PostFinishPipeline: substitui <%leiamais%> + extrai og:image das fontes
+    $finishOpts = [
+        'keyword'     => $focusKw !== '' ? $focusKw : $titulo,
+        'fontes_urls' => array_column($fontesOk, 'url'),
+        'wp_url'      => (string)($cfg['wp_url'] ?? ''),
+        'titulo'      => $titulo,
+        'post_id'     => $pid,
+    ];
+    $finish = PostFinishPipeline::aplicar($wp, $html, $finishOpts);
+    foreach (($finish['debug'] ?? []) as $d) echo "  · finish: {$d}\n";
+
+    $updates = [];
+    if ($finish['html'] !== $html) $updates['content'] = $finish['html'];
+    if (!empty($finish['featured_id'])) $updates['featured_media'] = $finish['featured_id'];
+    if (!empty($updates)) {
+        $wp->atualizarPost($pid, $updates);
+        echo "  ✓ post #{$pid} atualizado: " . implode(', ', array_keys($updates)) . "\n";
+    }
 } catch (Throwable $e) {
     fwrite(STDERR, "[erro] WP: " . $e->getMessage() . "\n");
     exit(6);
