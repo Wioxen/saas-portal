@@ -43,6 +43,20 @@ class AntiAIPostProcessor
         $html = $resDedup['html'];
         $log['faq_perguntas_removidas'] = $resDedup['removidas'];
 
+        // Dedup FAQ h3+p vs <details>: caso real #4747 — Sonnet gerou DUAS versões do FAQ
+        // (uma h3+p e outra h2+details/summary com mesmas perguntas). Remove a versão h3+p
+        // mantendo a <details> (mais semântica + Google FAQPage schema).
+        $resH3 = self::dedupFaqH3VsDetails($html);
+        $html = $resH3['html'];
+        $log['faq_h3_removidos'] = $resH3['removidos'];
+
+        // Reposicionar "Leia também" pra logo após introdução (após snippet+1ºH2).
+        // Caso real #4747: leia-tambem ficava perto do FAQ no fim. Posição correta é
+        // depois da intro pra reforçar engagement+linkagem cedo.
+        $resReposicionar = self::repositionarLeiaTambem($html);
+        $html = $resReposicionar['html'];
+        $log['leia_tambem_reposicionado'] = $resReposicionar['movido'];
+
         // Detector msg-card indevido — só permitido se título contém trigger keyword.
         // Caso real 04/05: posts #4680/#4688 (curso de IA p/ professores) ganharam msg-card
         // num número de WhatsApp/contato indevido. Sonnet ignorou regra do prompt.
@@ -193,6 +207,96 @@ class AntiAIPostProcessor
         ) ?? $html;
 
         return ['html' => $html, 'removidas' => $removidas];
+    }
+
+    /**
+     * Quando há FAQ formal (<details><summary>Pergunta?</summary>...</details>) no artigo,
+     * remove h3-perguntas + p anteriores que duplicam essas perguntas.
+     * Caso real #4747: Sonnet gerou h3+p E details/summary com mesmo conteúdo.
+     * Critério: Jaccard ≥ 0.6 entre h3 e summary.
+     */
+    private static function dedupFaqH3VsDetails(string $html): array
+    {
+        $removidos = 0;
+        // Coleta perguntas dos <details><summary>
+        $perguntas = [];
+        if (preg_match_all('#<details\b[^>]*>\s*<summary[^>]*>(.+?)</summary>#is', $html, $m)) {
+            foreach ($m[1] as $s) {
+                $perguntas[] = self::tokenizar(mb_strtolower(trim(strip_tags(html_entity_decode($s, ENT_QUOTES, 'UTF-8')))));
+            }
+        }
+        if (empty($perguntas)) return ['html' => $html, 'removidos' => 0];
+
+        // Para cada h3, verificar se duplica alguma pergunta dos details. Se sim, remove h3 + <p> seguinte.
+        $html = preg_replace_callback(
+            '#<h3\b[^>]*>(.*?)</h3>(\s*<p\b[^>]*>(?:(?!</p>).)*?</p>)?#is',
+            function ($match) use ($perguntas, &$removidos) {
+                $h3Text = mb_strtolower(trim(strip_tags(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'))));
+                if (mb_strlen($h3Text) < 6) return $match[0];
+                $tokensH3 = self::tokenizar($h3Text);
+                if (count($tokensH3) < 2) return $match[0];
+
+                foreach ($perguntas as $tokensP) {
+                    if (count($tokensP) < 2) continue;
+                    $jacc = self::jaccard($tokensH3, $tokensP);
+                    if ($jacc >= 0.6) {
+                        $removidos++;
+                        return ''; // remove h3 + p resposta
+                    }
+                }
+                return $match[0];
+            },
+            $html
+        ) ?? $html;
+
+        return ['html' => $html, 'removidos' => $removidos];
+    }
+
+    /**
+     * Move bloco <!-- leia-tambem --> pra logo após o 1º <h2> do artigo (= depois da introdução).
+     * Caso real #4747: leia-tambem ficava perto do FAQ. Posição correta é cedo no artigo
+     * (engagement + linkagem antes do leitor abandonar).
+     */
+    private static function repositionarLeiaTambem(string $html): array
+    {
+        $movido = false;
+        // Detecta bloco com markers HTML comment (preferido) ou div sem marker
+        if (preg_match('/<!-- leia-tambem -->[\s\S]*?<!-- \/leia-tambem -->/', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $bloco = $m[0][0];
+            $posBloco = $m[0][1];
+        } elseif (preg_match('/<div\s+class=[\'"][^\'"]*\bleia-tambem\b[^\'"]*[\'"][^>]*>(?:(?!<\/div>).)*?<\/div>/is', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $bloco = $m[0][0];
+            $posBloco = $m[0][1];
+        } else {
+            return ['html' => $html, 'movido' => false];
+        }
+
+        // Posição alvo: APÓS o fechamento do 1º <h2> + seu 1º parágrafo (deixa intro respirar antes do leia-também)
+        // Ou seja: encontrar o 1º </h2>, então o próximo </p> depois dele
+        if (!preg_match('/<h2[^>]*>.*?<\/h2>/is', $html, $h2m, PREG_OFFSET_CAPTURE)) {
+            return ['html' => $html, 'movido' => false];
+        }
+        $posAposH2 = $h2m[0][1] + strlen($h2m[0][0]);
+        // Pega 1º </p> APÓS o 1º h2
+        if (!preg_match('/<\/p>/i', $html, $pm, PREG_OFFSET_CAPTURE, $posAposH2)) {
+            // Se não tem p depois, insere logo após h2
+            $posInsercao = $posAposH2;
+        } else {
+            $posInsercao = $pm[0][1] + strlen($pm[0][0]);
+        }
+
+        // Já está no lugar certo? (tolerância 200 chars)
+        if (abs($posBloco - $posInsercao) < 200) {
+            return ['html' => $html, 'movido' => false];
+        }
+
+        // Remove bloco da posição atual
+        $htmlSemBloco = substr($html, 0, $posBloco) . substr($html, $posBloco + strlen($bloco));
+        // Recalcula posInsercao se ele estava DEPOIS do bloco removido
+        if ($posInsercao > $posBloco) $posInsercao -= strlen($bloco);
+        // Insere
+        $resultado = substr($htmlSemBloco, 0, $posInsercao) . "\n" . $bloco . "\n" . substr($htmlSemBloco, $posInsercao);
+        return ['html' => $resultado, 'movido' => true];
     }
 
     private static function tokenizar(string $s): array
