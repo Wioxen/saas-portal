@@ -678,6 +678,58 @@ class DebateBuilder
             foreach ($report['structural'] as $issue) {
                 $feedback .= "- {$issue}\n";
             }
+            $feedback .= "\n**INSTRUÇÕES LITERAIS POR TIPO DE ISSUE** (siga ESTRITAMENTE):\n\n";
+
+            $typesPresentes = [];
+            foreach ($report['structural'] as $issue) {
+                if (!is_string($issue)) continue;
+                $low = mb_strtolower($issue);
+                if (str_contains($low, 'intro-inflada')) $typesPresentes['intro-inflada'] = true;
+                if (str_contains($low, 'rd-na-intro')) $typesPresentes['rd-na-intro'] = true;
+                if (str_contains($low, 'redundancia-p1-resposta-direta')) $typesPresentes['rd-recap-p1'] = true;
+                if (str_contains($low, 'redundancia-p2-resposta-direta')) $typesPresentes['rd-recap-p2'] = true;
+                if (str_contains($low, 'redundancia-p3-resposta-direta')) $typesPresentes['rd-recap-p3'] = true;
+                if (str_contains($low, 'redundancia-p4-resposta-direta')) $typesPresentes['rd-recap-p4'] = true;
+                if (str_contains($low, 'redundancia-p1-p3')) $typesPresentes['p1-p3-recap'] = true;
+                if (str_contains($low, 'paragrafo-paredao')) $typesPresentes['paredao'] = true;
+                if (str_contains($low, 'frase-composta-pesada')) $typesPresentes['frase-composta'] = true;
+                if (str_contains($low, 'tom-edital')) $typesPresentes['tom-edital'] = true;
+                if (str_contains($low, 'gatilho-batido-discover')) $typesPresentes['gatilho-batido'] = true;
+                if (str_contains($low, 'prompt-leak')) $typesPresentes['prompt-leak'] = true;
+                if (str_contains($low, 'listas-trio-perfeito')) $typesPresentes['listas-trio'] = true;
+            }
+
+            if (isset($typesPresentes['intro-inflada'])) {
+                $feedback .= "▸ **intro-inflada**: REDUZIR pra EXATOS 3 parágrafos `<p>` SEM atributo `class` antes do 1º `<h2>` (ORDEM FIXA: P1+P2+P3). NÃO excluir info — mover os parágrafos extras pra DEPOIS do 1º H2 (viram primeiros parágrafos do desenvolvimento). Preservar `<ul class='snippet-resumo'>` no lugar.\n";
+            }
+            if (isset($typesPresentes['rd-na-intro'])) {
+                $feedback .= "▸ **rd-na-intro**: MOVER `<p class='resposta-direta'>` da intro pro FECHAMENTO. Posição correta: DEPOIS do último parágrafo do CTA psicológico de fechamento, ANTES do `<p>Fonte: ...</p>`. Estrutura nova da intro: P1 + P2 + P3 + snippet + 1º H2 (RD não fica mais aqui).\n";
+            }
+            if (isset($typesPresentes['rd-recap-p1']) || isset($typesPresentes['rd-recap-p2']) || isset($typesPresentes['rd-recap-p3']) || isset($typesPresentes['rd-recap-p4'])) {
+                $feedback .= "▸ **redundancia-pN-resposta-direta**: o P_n (do índice indicado) está REPETINDO entidades+canal+dados que já estão na RD do fechamento. REESCREVER esse parágrafo SEM repetir nome da entidade, datas, valores e canal. Trazer SALTO factual NOVO: consequência prática, contraste histórico, detalhe restritivo OU contexto local específico.\n";
+            }
+            if (isset($typesPresentes['p1-p3-recap'])) {
+                $feedback .= "▸ **redundancia-p1-p3**: P3 está parafraseando P1 (mesma entidade+prazo+canal). REESCREVER P3 com UMA das opções: consequência prática / contraste histórico / detalhe restritivo / contexto local específico. NUNCA repetir entidade+prazo+canal de P1.\n";
+            }
+            if (isset($typesPresentes['paredao'])) {
+                $feedback .= "▸ **paragrafo-paredao**: QUEBRAR a frase ≥30 palavras em 2 frases curtas, máx 20 palavras cada. Cada frase termina em ponto. Distribuir ideias: a 1ª carrega o FATO/dado, a 2ª abre LOOP ou contextualiza.\n";
+            }
+            if (isset($typesPresentes['frase-composta'])) {
+                $feedback .= "▸ **frase-composta-pesada**: QUEBRAR frase com 2 ideias coordenadas (' e como ', ' e quando ', ' e o que ', ' mas ', ' porém ') em 2 frases curtas. Regra '2 IDEIAS FORTES = 2 PARTES' — cada frase carrega UMA ideia, máx 18 palavras.\n";
+            }
+            if (isset($typesPresentes['tom-edital'])) {
+                $feedback .= "▸ **tom-edital**: SUBSTITUIR tom institucional/edital por tom de guia amigo. Trocas obrigatórias: 'Segundo o edital divulgado' → 'Pela divulgação oficial'; 'conforme o anexo' → 'segundo o documento da seleção'; 'interessados deverão' → 'quem quiser concorrer precisa'; 'recomenda-se que' → 'a recomendação é'; 'será divulgado posteriormente' → 'a próxima atualização sai'.\n";
+            }
+            if (isset($typesPresentes['gatilho-batido'])) {
+                $feedback .= "▸ **gatilho-batido-discover**: REESCREVER o P1 removendo clichê de urgência ('perde quem deixa pra última hora', 'vagas voam', 'última chamada'). SUBSTITUIR por ângulo ESPECÍFICO da fonte: ocupação rara citada / mecânica única / contraste numérico forte / restrição geográfica que só leitor local entende.\n";
+            }
+            if (isset($typesPresentes['prompt-leak'])) {
+                $feedback .= "▸ **prompt-leak-erro-fatal**: REESCREVER H2 nomeando o CRITÉRIO REAL (não 'O erro que elimina/derruba/barra' sem qualificador). Se tema NÃO tem critério eliminatório real (curso por ordem de chegada, oferta livre): REMOVER o H2 e fundir em outro factual.\n";
+            }
+            if (isset($typesPresentes['listas-trio'])) {
+                $feedback .= "▸ **listas-trio-perfeito**: QUEBRAR listas com EXATAMENTE 3 itens. Expandir pra 4-5 itens com dados adicionais da fonte OU fundir 2 itens em frase corrida no parágrafo. Lista de 3 = fingerprint LLM.\n";
+            }
+
             $feedback .= "\nVarie o início dos H2s e o comprimento dos parágrafos. Frases curtas (3-10 palavras) intercaladas com médias (11-22) — nunca tudo ~20 palavras.\n\n";
         }
 
