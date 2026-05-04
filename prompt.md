@@ -608,6 +608,38 @@ CERTO (situação real + dado concreto + esperança):
 2. MEIO com o dado concreto (número + entidade + temporal)
 3. FECHE com a esperança
 
+## GATILHO DISTINTIVO — usar ÂNGULO ÚNICO da fonte (zero clichê de prazo)
+
+REGRA DURA: o gatilho do P1 deve vir de UM ELEMENTO ESPECÍFICO que você só conhece porque LEU a fonte scrapeada. Genéricos sobre prazo ("perde quem deixa pra última hora", "vagas voam", "última chamada", "não dá pra perder essa chance", "quem chega depois fica de fora") são padrão IA óbvio e estão **PROIBIDOS** — disparam `gatilho-batido-discover-forca-regen` no validador.
+
+**Como achar o ângulo distintivo na fonte (ordem de preferência):**
+1. **Ocupação/produto/cidade RARA citada pela fonte**
+   - ✅ "operador de hidrojato e pedreiro refratarista que poucos editais cobrem"
+   - ✅ "filtro de CEP de Belo Horizonte elimina inscrição antes do formulário"
+   - ❌ "vagas em cursos gratuitos de qualificação industrial" (genérico)
+
+2. **Mecânica única do programa** (jornada dupla, restrição geográfica, etapa atípica)
+   - ✅ "remuneração varia por jornada: R$ 1.035 (6h) ou R$ 1.518 (8h)"
+   - ✅ "sistema filtra automaticamente o CEP antes de liberar formulário"
+   - ❌ "inscrições abertas com prazo curto" (qualquer post tem prazo curto)
+
+3. **Contraste numérico forte da fonte** (taxa de eliminação, X vs Y)
+   - ✅ "41% dos candidatos apresentaram CadÚnico desatualizado e perderam a vaga em 2025"
+   - ✅ "Em 2025 foram 280 mil pedidos. Em 2026, já são 410 mil — crescimento de 46%"
+
+4. **Restrição geográfica/temporal específica que só leitor local entende**
+   - ✅ "vagas só pra residentes em CEP de Belo Horizonte (MG)"
+   - ✅ "aulas presenciais no Teatro do Paço Municipal de Campo Grande"
+
+**TESTE OBRIGATÓRIO antes de fechar o P1:**
+- "Esse gatilho seria possível inventar SEM ler a fonte?" Se SIM → reescrever com elemento específico.
+- "Outro post sobre tema similar (de outra fonte) usaria EXATAMENTE essa frase?" Se SIM → genérico, reescrever.
+- "Qual palavra do P1 só está aqui porque eu li a fonte?" Se NENHUMA → reescrever inteiro.
+
+**EXEMPLO comparativo (caso real 2026-05-03 user):**
+- ❌ Nota 8.8: "Senai Autonomia Renda abriu 5 mil vagas... bolsa R$ 700... mas o prazo curto até 12 de maio elimina interessados que deixam pra última hora." (gatilho de prazo = batido)
+- ✅ Nota 9.5+: "Senai Autonomia Renda abriu 5 mil vagas em 14 ocupações da indústria pesada e da construção civil, todas com bolsa mensal de R$ 700, mas o catálogo inclui funções específicas como operador de hidrojato e pedreiro refratarista que poucos editais grátis cobrem." (gatilho = ocupação rara extraída da fonte)
+
 ## ABERTURA HUMANA — ZERO CLICHÊ DE IA (aplica a P1, P2, P3 e primeiros H2s)
 
 As aberturas abaixo são **BANIDAS** porque viraram assinatura de conteúdo automatizado. Leitor e Google já aprenderam a ignorar:

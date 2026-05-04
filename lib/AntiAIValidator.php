@@ -478,6 +478,15 @@ class AntiAIValidator
         $redundancia = $this->detectarRedundanciaP1P3($html);
         foreach ($redundancia as $issue) $issues[] = $issue;
 
+        /* Gatilho-batido Discover (caso reportado 2026-05-03 user no post #2126 Senai
+         * Autonomia Renda): P1 abriu com "perde quem deixa pra última hora" — fórmula
+         * vazia que aparece em todo post de prazo curto. User deu nota 8.8 vs 9.2 do
+         * MRS que tinha gatilho ÚNICO da fonte ("filtro de CEP de BH"). Regra: P1 deve
+         * trazer ângulo ESPECÍFICO da fonte (ocupação rara, mecânica única, restrição
+         * geográfica), nunca clichê de prazo. Detector roda nos primeiros 3 <p> sem class. */
+        $gatilhoBatido = $this->detectarGatilhoBatidoDiscover($html);
+        foreach ($gatilhoBatido as $issue) $issues[] = $issue;
+
         /* Intro inflada (caso reportado 2026-05-03 user nos posts 2082, 2091, 2075):
          * 5 <p> SEM class antes do 1º <h2>, mesmo com Jaccard baixo. Não é paráfrase
          * textual (que detectarRedundanciaP1P3 pega) — é dilução estrutural. Conta os
@@ -487,6 +496,53 @@ class AntiAIValidator
         $introInflada = $this->detectarIntroInflada($html);
         foreach ($introInflada as $issue) $issues[] = $issue;
 
+        return $issues;
+    }
+
+    /**
+     * Detecta gatilhos batidos de "urgência clichê" no P1/P2/P3 — fórmulas vazias que
+     * aparecem em qualquer post de prazo curto e não usam diferencial real da fonte.
+     * Caso real: post #2126 Senai Autonomia Renda saiu com "perde quem deixa pra última
+     * hora" → user deu nota 8.8 (vs 9.2 do post irmão MRS que tinha "filtro de CEP de BH").
+     *
+     * Severidade: force-regen — esses gatilhos só fazem sentido quando NÃO existe ângulo
+     * único na fonte; e nessa generalidade NUNCA é o caso (todo post tem ângulo único se
+     * o redator olhar pra fonte com atenção).
+     */
+    private function detectarGatilhoBatidoDiscover(string $html): array
+    {
+        $issues = [];
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+
+        /* Padrões clichê (regex caso-insensitivo, com flexibilidade de plural/conjugação) */
+        $padroes = [
+            'deixa(m) pra ultima hora'            => '/deixa[mn]?\s+(?:pra|para)\s+(?:a\s+)?(?:ultima|última)\s+hora/iu',
+            'vagas se esgotam rapido'             => '/vagas?\s+(?:se\s+)?(?:esgotam|esgota|esgotar(?:ao|ão)?)\s+(?:rapid[oa]|rapidamente|cedo|antes|em\s+horas)/iu',
+            'vagas voam'                          => '/vagas?\s+voam\b/iu',
+            'ultima chamada'                      => '/(?:e\s+a\s+|esta\s+(?:e|é|eh)\s+a\s+|essa\s+(?:e|é|eh)\s+a\s+|na\s+)(?:ultima|última)\s+chamada/iu',
+            'nao da pra perder essa chance'       => '/n[ãa]o\s+d[áa]\s+(?:pra|para)\s+perder\s+(?:essa|esta)\s+(?:chance|oportunidade)/iu',
+            'quem chega depois fica de fora'      => '/quem\s+chega\s+(?:depois|por\s+(?:ultimo|último))\s+(?:fica|nao\s+entra|n[ãa]o\s+entra)/iu',
+            'quem espera fica de fora'            => '/quem\s+esp[eé]ra\s+fica\s+(?:de\s+)?fora/iu',
+            'corre antes que esgote'              => '/corre[r]?\s+antes\s+que\s+(?:esgot[ae]|acabe?m?)/iu',
+            'tem que correr'                      => '/tem\s+que\s+correr\s+(?:agora|antes|porque)/iu',
+            'ultima oportunidade'                 => '/(?:essa|esta)\s+(?:e|é|eh)\s+(?:a\s+)?(?:ultima|última)\s+(?:oportunidade|chance)/iu',
+            'nao deixe pra depois'                => '/n[ãa]o\s+deixe\s+(?:pra|para)\s+(?:depois|amanh[ãa]|a\s+ultima)/iu',
+            'nao perca essa'                      => '/n[ãa]o\s+perca\s+(?:essa|esta)\s+(?:chance|oportunidade|vaga)/iu',
+        ];
+
+        $achados = [];
+        foreach ($padroes as $rotulo => $regex) {
+            if (preg_match($regex, $beforeH2, $mm)) {
+                $achados[] = "\"" . trim($mm[0]) . "\" ({$rotulo})";
+            }
+        }
+        if (!empty($achados)) {
+            $issues[] = 'gatilho-batido-discover P1/P2/P3 contém clichê de urgência: ' . implode(' | ', $achados) . ' — substituir por ângulo ESPECÍFICO da fonte (ocupação rara, mecânica única, restrição geográfica, contraste numérico)';
+            $issues[] = 'gatilho-batido-discover-forca-regen';
+        }
         return $issues;
     }
 

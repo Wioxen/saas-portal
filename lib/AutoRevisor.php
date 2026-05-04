@@ -220,6 +220,9 @@ USR;
         if (str_contains($issueLower, 'prompt-leak-alerta-critico')) {
             return "REESCREVER o `<p class='alerta-critico__titulo'>` nomeando o critério eliminatório específico do edital/fonte. PROIBIDO copiar 'Erro que derruba a inscrição' (é exemplo do prompt). Se não há critério eliminatório real → REMOVER o `<div class='alerta-critico'>` inteiro.";
         }
+        if (str_contains($issueLower, 'gatilho-batido-discover')) {
+            return "REESCREVER o P1 inteiro removendo clichê de urgência ('perde quem deixa pra última hora', 'vagas voam', 'última chamada'). SUBSTITUIR por ângulo ESPECÍFICO extraído da fonte: (a) ocupação/critério/cidade RARA citada no texto; (b) mecânica única do programa (jornada dupla, restrição geográfica, etapa atípica); (c) contraste numérico forte (X% de eliminação, Y vs Z disponíveis); (d) data/restrição geográfica que só leitor local entende. Se a fonte não dá nenhum diferencial: melhor abrir com FATO seco e específico do que com clichê.";
+        }
         if (str_contains($issueLower, 'vague') || str_contains($issueLower, 'vago:')) {
             return "REESCREVER o heading nomeando ESPECIFICAMENTE de que filtro/erro/detalhe/critério se trata, com dado da fonte. Ex: 'O filtro que barra' → 'O filtro de cargo da Polícia-RS que barra candidatos sem CNH-D'.";
         }
