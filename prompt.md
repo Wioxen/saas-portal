@@ -1470,6 +1470,64 @@ Gerar UMA tabela de escaneabilidade mobile-first com os dados vitais do artigo. 
 ```
 
 Posicionar APÓS o primeiro H2 (antes do desenvolvimento). Linhas alternadas `#f9f9f9` e branco.
+
+## TABELAS COMPARATIVAS (extras — aumentam autoridade + featured snippet)
+
+Além da tabela de escaneabilidade obrigatória, **inserir 1-2 tabelas COMPARATIVAS no corpo** quando o conteúdo tem:
+
+| Quando usar | Onde inserir | Exemplo |
+|---|---|---|
+| 📊 Comparação (vagas por área, jornadas, valores) | Após H2 que apresenta as opções | Concurso com 3 áreas → tabela área × vagas × idade máx |
+| 📅 Datas / cronograma de eventos | Após H2 de calendário | Concurso → tabela data × evento (inscrição, prova, resultado) |
+| 💰 Valores financeiros (faixas de salário, taxas) | Após H2 de remuneração | Salário durante curso vs após formatura |
+| 📋 Regras resumidas (idade, renda, requisitos) | Após H2 de elegibilidade | Faixa etária × área × restrição |
+
+**Por que tabelas comparativas elevam o post:**
+- **Escaneabilidade mobile** — leitor pega informação em 2 segundos sem ler parágrafo inteiro
+- **Tempo de permanência** — usuário fica mais comparando dados, sinal positivo pro Google
+- **Featured snippet** — Google pega tabela direto pra exibir na SERP
+- **Citação por IA** — ChatGPT/Perplexity preferem extrair dados estruturados
+
+**Regras:**
+- Máx 2 tabelas comparativas por artigo (além da escaneabilidade obrigatória)
+- Cada tabela tem 2-4 colunas (mais que isso quebra mobile)
+- Cabeçalho com `<thead>` em fundo destacado (`background:#0b57d0;color:#fff`)
+- Linhas alternadas `#f9f9f9` e branco
+- `<strong>` nos valores numéricos da tabela
+- Container `<div style='overflow-x:auto'>` pra scroll horizontal mobile
+
+**Template HTML — tabela comparativa:**
+```html
+<div style='width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;'>
+  <table style='width:100%;border-collapse:collapse;font-size:14px;'>
+    <thead>
+      <tr style='background:#0b57d0;color:#fff;'>
+        <th style='padding:10px 14px;text-align:left;font-weight:700;'>Coluna 1</th>
+        <th style='padding:10px 14px;text-align:left;font-weight:700;'>Coluna 2</th>
+        <th style='padding:10px 14px;text-align:left;font-weight:700;'>Coluna 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style='background:#f9f9f9;'>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'>Linha 1 col 1</td>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'><strong>Valor</strong></td>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'>Detalhe</td>
+      </tr>
+      <tr>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'>Linha 2 col 1</td>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'><strong>Valor</strong></td>
+        <td style='padding:10px 14px;border-bottom:1px solid #e0e0e0;'>Detalhe</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+**Quando NÃO usar tabela:**
+- Conteúdo narrativo simples (sem comparação real)
+- 1-2 itens só (vira ridículo, melhor parágrafo)
+- Dados qualitativos sem padrão comparável
+
 - Aspas simples em TODOS atributos HTML.
 - 600-800 palavras. Keyword 1-1.5%.
 - ZERO travessão (—) em todo o HTML.
