@@ -592,47 +592,56 @@ class AntiAIValidator
             $issues[] = 'intro-inflada-forca-regen';
         }
 
-        /* P1 ↔ resposta-direta — caso real post 2102: resposta-direta começava com a mesma
-         * frase do P1 ("O Senai abriu 10 mil vagas..."). detectarRedundanciaP1P3 IGNORAVA
-         * resposta-direta. Aqui comparamos explicitamente. */
-        $p1Text = '';
+        /* TODOS paragrafos sem class (P1, P2, P3...) ↔ resposta-direta — bug observado
+         * 2026-05-03 post #2126: P3 e RD diziam quase a mesma coisa ("inscrição online
+         * pelo portal autonomiaerenda.com.br"). Detector original só medía P1↔RD —
+         * extendido pra cobrir todos os paragrafos textuais. Threshold mais RIGOROSO
+         * pra P_n↔RD porque eles aparecem sequenciais no preview mobile. */
         $rdText = '';
+        $intros = []; /* lista ordenada de paragrafos textuais */
         foreach ($ps as $row) {
             $atribs = $row[1] ?? '';
             $clean = trim(strip_tags($row[2]));
             if ($clean === '') continue;
             $temClass = preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs);
             $isRD = preg_match('/class\s*=\s*[\'"][^\'"]*resposta-direta[^\'"]*[\'"]/i', $atribs);
-            if (!$temClass && $p1Text === '' && str_word_count($clean) >= 6) {
-                $p1Text = $clean;
+            if (!$temClass && str_word_count($clean) >= 6) {
+                $intros[] = $clean;
             } elseif ($isRD && $rdText === '' && str_word_count($clean) >= 6) {
                 $rdText = $clean;
             }
         }
-        if ($p1Text !== '' && $rdText !== '') {
+        if ($rdText !== '' && !empty($intros)) {
             $stop = $this->ptStopwords();
-            $tA = $this->tokenize($p1Text, $stop);
             $tB = $this->tokenize($rdText, $stop);
-            if (!empty($tA) && !empty($tB)) {
+            $bigB = []; for ($k=0,$kn=count($tB)-1;$k<$kn;$k++) $bigB[]=$tB[$k].' '.$tB[$k+1];
+            $bigBSet = array_unique($bigB);
+            foreach ($intros as $idx => $pText) {
+                $tA = $this->tokenize($pText, $stop);
+                if (empty($tA)) continue;
                 $sA = array_unique($tA);
                 $sB = array_unique($tB);
                 $shared = array_intersect($sA, $sB);
                 $jacc = count($shared) / max(1, count(array_unique(array_merge($sA, $sB))));
                 $cont = count($shared) / max(1, count($sA));
-                /* Bigrams compartilhados */
                 $bigA = []; for ($k=0,$kn=count($tA)-1;$k<$kn;$k++) $bigA[]=$tA[$k].' '.$tA[$k+1];
-                $bigB = []; for ($k=0,$kn=count($tB)-1;$k<$kn;$k++) $bigB[]=$tB[$k].' '.$tB[$k+1];
-                $bigShared = array_values(array_unique(array_intersect(array_unique($bigA), array_unique($bigB))));
+                $bigShared = array_values(array_unique(array_intersect(array_unique($bigA), $bigBSet)));
                 $nBig = count($bigShared);
-                /* P1 e RD podem ter overlap natural (ambos trazem entidade+dado) — threshold
-                 * MAIS RIGOROSO que P1↔P3 porque P1↔RD ficam SEQUENCIAIS no preview mobile e
-                 * usuário vê PARÁFRASE explícita. Critério: 3+ bigrams OU jacc≥0.40 OU
-                 * containment≥0.50 (RD repete metade do P1). */
-                $isFail = ($nBig >= 3) || ($jacc >= 0.40) || ($cont >= 0.50 && $nBig >= 1);
+                /* Sinal adicional: URL/canal específico compartilhado (autonomiaerenda.com.br,
+                 * app.eureca.me, etc.). Caso real post #2126: P3 e RD mencionavam mesmo
+                 * portal — Jaccard só ~0.07 (tokens) mas conceitualmente paráfrase obvia. */
+                $hostsCompartilhados = self::hostsCompartilhados($pText, $rdText);
+                /* Threshold: 3+ bigrams OU jacc≥0.40 OU containment≥0.50 c/ bigrams≥1 OU URL+1 bigram */
+                $isFail = ($nBig >= 3)
+                       || ($jacc >= 0.40)
+                       || ($cont >= 0.50 && $nBig >= 1)
+                       || (!empty($hostsCompartilhados) && $nBig >= 1);
                 if ($isFail) {
-                    $amostra = $nBig > 0 ? ' bigrams=[' . implode(', ', array_slice($bigShared, 0, 3)) . ']' : '';
-                    $issues[] = sprintf('redundancia-p1-resposta-direta jacc=%.2f cont=%.2f bigrams=%d%s — RD copia o lead do P1; reescrever RD com 5W neutros (entidade+ação+quando+onde+canal) sem repetir abertura do P1', $jacc, $cont, $nBig, $amostra);
-                    $issues[] = 'redundancia-p1-resposta-direta-forca-regen';
+                    $detalhes = $nBig > 0 ? ' bigrams=[' . implode(', ', array_slice($bigShared, 0, 3)) . ']' : '';
+                    if (!empty($hostsCompartilhados)) $detalhes .= ' canal=[' . implode(',', $hostsCompartilhados) . ']';
+                    $rotulo = 'P' . ($idx + 1);
+                    $issues[] = sprintf('redundancia-%s-resposta-direta jacc=%.2f cont=%.2f bigrams=%d%s — RD parafraseia %s; reescrever %s com SALTO factual NOVO (consequência, contraste, restrição) sem repetir entidade+canal+dado da RD', strtolower($rotulo), $jacc, $cont, $nBig, $detalhes, $rotulo, $rotulo);
+                    $issues[] = 'redundancia-' . strtolower($rotulo) . '-resposta-direta-forca-regen';
                 }
             }
         }
@@ -759,6 +768,41 @@ class AntiAIValidator
         }
 
         return $issues;
+    }
+
+    /**
+     * Extrai hosts/URLs específicas presentes em AMBOS textos. Sinaliza redundância
+     * conceitual quando 2 paragrafos da intro mencionam o MESMO canal de inscrição
+     * (autonomiaerenda.com.br, app.eureca.me, gov.br/inss, etc).
+     *
+     * Caso real post #2126: P3 e RD ambos diziam "portal autonomiaerenda.com.br" —
+     * Jaccard de tokens baixo (~0.07) mas leitor mobile vê paráfrase explícita.
+     *
+     * Retorna lista de hosts compartilhados (sem duplicatas, lowercased).
+     */
+    private static function hostsCompartilhados(string $a, string $b): array
+    {
+        $rxUrl = '/(?:https?:\/\/)?([a-z0-9][a-z0-9.-]+\.[a-z]{2,}(?:\.[a-z]{2})?)(?:\/[^\s<>"\']*)?/i';
+        $hostsA = []; $hostsB = [];
+        if (preg_match_all($rxUrl, $a, $mA)) {
+            foreach ($mA[1] as $h) {
+                $h = mb_strtolower(rtrim($h, '.,);'));
+                /* Ignora hosts irrelevantes (palavras com pontos tipo "12.500") */
+                if (!preg_match('/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/', $h)) continue;
+                /* Pelo menos 1 segmento de 4+ chars pra evitar "p.s" ou "1.2" como host */
+                if (!preg_match('/[a-z]{4,}/', $h)) continue;
+                $hostsA[$h] = true;
+            }
+        }
+        if (preg_match_all($rxUrl, $b, $mB)) {
+            foreach ($mB[1] as $h) {
+                $h = mb_strtolower(rtrim($h, '.,);'));
+                if (!preg_match('/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/', $h)) continue;
+                if (!preg_match('/[a-z]{4,}/', $h)) continue;
+                $hostsB[$h] = true;
+            }
+        }
+        return array_keys(array_intersect_key($hostsA, $hostsB));
     }
 
     private function ptStopwords(): array
