@@ -487,6 +487,18 @@ class AntiAIValidator
         $gatilhoBatido = $this->detectarGatilhoBatidoDiscover($html);
         foreach ($gatilhoBatido as $issue) $issues[] = $issue;
 
+        /* Parágrafo-paredão (caso 2026-05-03 user pós-feedback #2126 v1): frases longas
+         * (≥30 palavras) viram paredão no mobile e o leitor scrolla fora. Regra do prompt
+         * "frases ≤20 palavras" só vira gate aqui. Conta frases por <p> da intro. */
+        $paredao = $this->detectarParagrafoParedao($html);
+        foreach ($paredao as $issue) $issues[] = $issue;
+
+        /* Tom edital frio (caso 2026-05-03 user pós-feedback): frases típicas de release
+         * institucional ("Segundo o edital divulgado", "interessados deverão", "recomenda-se
+         * que", "será divulgado") matam E-E-A-T de Experiência. Pediu tom de "guia amigo". */
+        $edital = $this->detectarTomEdital($html);
+        foreach ($edital as $issue) $issues[] = $issue;
+
         /* Intro inflada (caso reportado 2026-05-03 user nos posts 2082, 2091, 2075):
          * 5 <p> SEM class antes do 1º <h2>, mesmo com Jaccard baixo. Não é paráfrase
          * textual (que detectarRedundanciaP1P3 pega) — é dilução estrutural. Conta os
@@ -542,6 +554,83 @@ class AntiAIValidator
         if (!empty($achados)) {
             $issues[] = 'gatilho-batido-discover P1/P2/P3 contém clichê de urgência: ' . implode(' | ', $achados) . ' — substituir por ângulo ESPECÍFICO da fonte (ocupação rara, mecânica única, restrição geográfica, contraste numérico)';
             $issues[] = 'gatilho-batido-discover-forca-regen';
+        }
+        return $issues;
+    }
+
+    /**
+     * Detecta parágrafo-paredão na intro: frase com ≥30 palavras dentro de <p> sem class
+     * antes do 1º <h2>. Regra editorial 2026-05-03 user: "frases ≤20 palavras pra mobile,
+     * paredão = scroll fora". Severidade force-regen quando aparece em qualquer P da intro.
+     * Threshold 30 (e não 20) pra dar margem ao prompt — modelo emitir 21-29 palavras é OK.
+     */
+    private function detectarParagrafoParedao(string $html): array
+    {
+        $issues = [];
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+        if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $beforeH2, $ps, PREG_SET_ORDER)) return $issues;
+
+        $paredos = [];
+        foreach ($ps as $idx => $row) {
+            $atribs = $row[1] ?? '';
+            /* Filtra <p> com class semântica — RD pode ser longa por necessidade GEO */
+            if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs)) continue;
+            $clean = trim(strip_tags($row[2]));
+            if (mb_strlen($clean) < 20) continue;
+            /* Quebra em frases por ponto/!/? */
+            $frases = preg_split('/(?<=[.!?])\s+/u', $clean) ?: [];
+            foreach ($frases as $fIdx => $f) {
+                $wc = str_word_count($f);
+                if ($wc >= 30) {
+                    $paredos[] = "P" . ($idx + 1) . " frase " . ($fIdx + 1) . " ({$wc} palavras): \"" . mb_substr($f, 0, 80) . "...\"";
+                }
+            }
+        }
+        if (!empty($paredos)) {
+            $issues[] = 'paragrafo-paredao ' . count($paredos) . 'x na intro (frase ≥30 palavras): ' . implode(' | ', array_slice($paredos, 0, 3))
+                     . ' — quebrar em 2 frases curtas (≤20 palavras cada) pra escaneabilidade mobile';
+            $issues[] = 'paragrafo-paredao-forca-regen';
+        }
+        return $issues;
+    }
+
+    /**
+     * Detecta tom-edital: frases típicas de release institucional que matam E-E-A-T de
+     * Experiência. Lista veio do feedback user 2026-05-03 ("Segundo o edital", "conforme
+     * anexo", "interessados deverão", "candidatos preparem documentação", "recomenda-se").
+     * Severidade force-regen — Sonnet substituir por tom guia amigo (AutoRevisor sabe).
+     */
+    private function detectarTomEdital(string $html): array
+    {
+        $issues = [];
+        $textPlain = strip_tags(html_entity_decode($html, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
+
+        $padroes = [
+            'segundo o edital divulgado'    => '/segundo\s+o\s+edital\s+(?:divulgado|publicado|oficial|n[ºo°]?\s*\d)/iu',
+            'conforme o anexo'              => '/conforme\s+(?:o\s+)?anexo/iu',
+            'interessados devera(o)'        => '/interessad(?:os|as)\s+dever(?:[ãa]o|iam)/iu',
+            'candidatos preparem'           => '/(?:candidatos?|interessad[oa]s?)\s+preparem\s+document/iu',
+            'recomenda-se que'              => '/recomenda-se\s+que/iu',
+            'sera divulgado/divulgada'      => '/ser[áa]\s+divulgad[oa]\s+(?:posteriormente|em\s+breve|no\s+site|pelo)/iu',
+            'os interessados podera(o)'     => '/os\s+interessad(?:os|as)\s+pod(?:er[ãa]o|em)\s+(?:realizar|efetuar)/iu',
+            'fica estabelecido'             => '/fica\s+estabelecido\s+(?:que|o)/iu',
+            'no ambito do programa'         => '/no\s+[âa]mbito\s+(?:do\s+programa|deste\s+(?:programa|edital))/iu',
+            'em conformidade com'           => '/em\s+conformidade\s+com\s+(?:o\s+)?(?:edital|regulamento|portaria)/iu',
+        ];
+
+        $achados = [];
+        foreach ($padroes as $rotulo => $regex) {
+            if (preg_match($regex, $textPlain, $mm)) {
+                $achados[] = "\"" . trim($mm[0]) . "\" ({$rotulo})";
+            }
+        }
+        if (!empty($achados)) {
+            $issues[] = 'tom-edital ' . count($achados) . 'x: ' . implode(' | ', array_slice($achados, 0, 3))
+                     . ' — substituir por tom guia amigo ("pela divulgação oficial", "vale juntar", "costuma travar quem não preparou")';
+            $issues[] = 'tom-edital-forca-regen';
         }
         return $issues;
     }

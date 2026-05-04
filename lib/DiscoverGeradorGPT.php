@@ -132,6 +132,71 @@ class DiscoverGeradorGPT
                 $aiReport = $aiVal->validate($content);
                 $validationReport['anti_ai'] = $aiReport;
                 $progress->reportar('validando_anti_ai', $aiVal->reportToLogLine($aiReport));
+
+                /* AUTO-REVISÃO Haiku 4.5 + GATE pre-publish — paridade com DiscoverGerador.
+                 * Antes só rodava o validador e o post passava direto se tivesse fail.
+                 * Caso real 2026-05-03: Claude falha + fallback GPT publicava lixo sem gate. */
+                $reportFinal = $aiReport;
+                if (($aiReport['severity'] ?? 'ok') !== 'ok') {
+                    if (!class_exists('AutoRevisor')) {
+                        $arPath = __DIR__ . '/AutoRevisor.php';
+                        if (file_exists($arPath)) require_once $arPath;
+                    }
+                    if (class_exists('AutoRevisor') && !empty($this->cfg['anthropic_api_key'])) {
+                        $persona = (array)($this->cfg['persona'] ?? []);
+                        $rev = (new AutoRevisor((string)$this->cfg['anthropic_api_key']))->revisar($content, [
+                            'site_name'      => (string)($this->cfg['site_name'] ?? ''),
+                            'persona_autor'  => (string)($persona['autor'] ?? "Equipe " . ($this->cfg['site_name'] ?? '')),
+                            'persona_voz'    => (string)($persona['voz'] ?? 'jornalística direta'),
+                            'persona_tom'    => (string)($persona['tom'] ?? 'direto e factual'),
+                            'subtipo_nicho'  => (string)($this->cfg['subtipo_nicho'] ?? ''),
+                        ]);
+                        if (!empty($rev['reescreveu']) && !empty($rev['html'])) {
+                            $content = (string)$rev['html'];
+                            $reportFinal = $rev['depois'] ?? $aiReport;
+                            $validationReport['anti_ai_revisado'] = [
+                                'severity_antes'  => $rev['antes']['severity'] ?? '?',
+                                'severity_depois' => $rev['depois']['severity'] ?? '?',
+                                'ok'              => $rev['ok'] ?? false,
+                            ];
+                            $progress->reportar('auto_revisao_haiku', sprintf('GPT path: severity %s → %s',
+                                $rev['antes']['severity'] ?? '?', $rev['depois']['severity'] ?? '?'));
+                        }
+                    }
+                }
+                /* GATE pre-publish — força aviso vermelho + (futuro: status=draft via caller)
+                 * quando sentinel forca-regen persistir. Idempotente. */
+                $structFinal = (array)($reportFinal['structural'] ?? []);
+                $temForcaRegen = false; $issuesCriticos = [];
+                foreach ($structFinal as $iss) {
+                    if (!is_string($iss)) continue;
+                    if (str_contains($iss, '-forca-regen') || str_contains($iss, '-forca-fail')) {
+                        $temForcaRegen = true;
+                    } elseif (preg_match('/^(intro-inflada|intro-redundancia|prompt-leak|redundancia-p[0-9]?-resposta-direta|redundancia-p1-p3|gatilho-batido|paragrafo-paredao|tom-edital)/i', $iss)) {
+                        $issuesCriticos[] = $iss;
+                    }
+                }
+                if ($temForcaRegen && ($reportFinal['severity'] ?? '') === 'fail') {
+                    $marcador = 'RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR';
+                    if (stripos($content, $marcador) === false) {
+                        $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                              . "<strong style='color:#991b1b;font-size:15px'>🚨 {$marcador} (path GPT)</strong>"
+                              . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>Issues críticos detectados no HTML gerado pelo fallback GPT. REVISE MANUALMENTE antes de publicar:</p>"
+                              . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
+                        foreach (array_slice($issuesCriticos, 0, 5) as $iss) {
+                            $aviso .= '<li>' . htmlspecialchars($iss) . '</li>';
+                        }
+                        $aviso .= '</ul></div>';
+                        $content = $aviso . $content;
+                    }
+                    $validationReport['anti_ai_publish_blocked'] = [
+                        'blocked'  => true,
+                        'issues'   => $issuesCriticos,
+                        'severity' => $reportFinal['severity'],
+                        'path'     => 'gpt',
+                    ];
+                    $progress->reportar('publish_bloqueado_gpt', 'GPT path: severity=fail persistente');
+                }
             } catch (Throwable $e) { /* validador não bloqueia geração */ }
         }
 

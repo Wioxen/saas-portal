@@ -220,6 +220,12 @@ USR;
         if (str_contains($issueLower, 'prompt-leak-alerta-critico')) {
             return "REESCREVER o `<p class='alerta-critico__titulo'>` nomeando o critério eliminatório específico do edital/fonte. PROIBIDO copiar 'Erro que derruba a inscrição' (é exemplo do prompt). Se não há critério eliminatório real → REMOVER o `<div class='alerta-critico'>` inteiro.";
         }
+        if (str_contains($issueLower, 'paragrafo-paredao')) {
+            return "QUEBRAR a frase longa (≥30 palavras) em 2 frases curtas, máx 20 palavras cada. Cada frase termina em ponto. Distribuir ideias: a 1ª frase carrega o FATO/dado, a 2ª frase abre LOOP ou contextualiza. Mobile lê em 2 linhas; paredão = scroll fora.";
+        }
+        if (str_contains($issueLower, 'tom-edital')) {
+            return "SUBSTITUIR tom institucional/edital por tom de guia amigo. Trocas obrigatórias: 'Segundo o edital divulgado' → 'Pela divulgação oficial'; 'conforme o anexo' → 'segundo o documento da seleção'; 'interessados deverão' → 'quem quiser concorrer precisa'; 'candidatos preparem documentação' → 'vale juntar documento de identidade, comprovante de residência e histórico escolar antes da etapa'; 'recomenda-se que' → 'a recomendação é'; 'será divulgado posteriormente' → 'a próxima atualização sai'. Tom: jornalista contando pra leigo, não órgão anunciando.";
+        }
         if (str_contains($issueLower, 'gatilho-batido-discover')) {
             return "REESCREVER o P1 inteiro removendo clichê de urgência ('perde quem deixa pra última hora', 'vagas voam', 'última chamada'). SUBSTITUIR por ângulo ESPECÍFICO extraído da fonte: (a) ocupação/critério/cidade RARA citada no texto; (b) mecânica única do programa (jornada dupla, restrição geográfica, etapa atípica); (c) contraste numérico forte (X% de eliminação, Y vs Z disponíveis); (d) data/restrição geográfica que só leitor local entende. Se a fonte não dá nenhum diferencial: melhor abrir com FATO seco e específico do que com clichê.";
         }

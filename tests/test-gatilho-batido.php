@@ -42,19 +42,19 @@ $casos = [
         'esperado_contem'   => 'gatilho-batido-discover',
     ],
     'gatilho_especifico_ocupacao_rara' => [
-        /* Versão melhorada do post #2126 — ocupação rara como gatilho */
-        'html' => '<p>Senai Autonomia Renda abriu 5 mil vagas em 14 ocupações da indústria pesada e da construção civil, todas com bolsa mensal de R$ 700, mas o catálogo inclui funções específicas como operador de hidrojato e pedreiro refratarista que poucos editais grátis cobrem.</p>'
-                . '<p>Segundo o Serviço Nacional de Aprendizagem Industrial, o catálogo cobre eletricista industrial, soldador, caldeireiro e instrumentista, com aulas em diferentes regiões do país.</p>'
-                . '<p>O cadastro é integralmente online, pelo portal autonomiaerenda.com.br, sem etapa presencial até a fase de matrícula.</p>'
+        /* v2 do post #2126 — frases curtas (≤20 palavras), tom guia, ocupação rara como gatilho */
+        'html' => '<p>São R$ 700 por mês no Senai Autonomia Renda pra quem topar aprender uma profissão da indústria pesada.</p>'
+                . '<p>O catálogo de 2026 abre operador de hidrojato e pedreiro refratarista, funções raras em editais grátis brasileiros.</p>'
+                . '<p>Antes de correr pro site, vale conferir qual vaga é a mais acessível pra começar.</p>'
                 . '<h2>H2</h2>',
         'esperado_severity'   => 'ok',
         'esperado_nao_contem' => 'gatilho-batido',
     ],
     'gatilho_especifico_CEP' => [
-        /* Versão MRS (post #2125) — restrição geográfica como gatilho */
-        'html' => '<p>Aprendiz MRS SENAI Horto pode receber até R$ 2.826 por mês durante o curso de eletromecânica em Belo Horizonte, mas o critério de CEP da capital mineira elimina inscrição antes mesmo do formulário ser liberado.</p>'
-                . '<p>Segundo o edital divulgado pela MRS Logística, o curso dura 6 meses, com aulas teóricas no SENAI Horto entre 20 de julho e 1º de dezembro de 2026.</p>'
-                . '<p>O processo seletivo passa por 5 etapas eliminatórias.</p>'
+        /* v5 do post #2125 — frases curtas, tom guia, CEP de BH como gatilho */
+        'html' => '<p>Aprendiz MRS SENAI Horto pode receber até R$ 2.826 por mês na bolsa do programa.</p>'
+                . '<p>O sistema do portal Eureca filtra automaticamente o CEP de Belo Horizonte na pré-inscrição.</p>'
+                . '<p>Quem mora em Contagem ou Betim não passa dessa etapa, segundo a regra do edital.</p>'
                 . '<h2>H2</h2>',
         'esperado_severity'   => 'ok',
         'esperado_nao_contem' => 'gatilho-batido',
