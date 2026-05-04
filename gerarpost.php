@@ -1537,6 +1537,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         $html = quebrarParagrafosLongos($html, 40);
                         // Sanitiza travessões (—/–) no texto — assinatura de IA; vira vírgula
                         $html = sanitizarTravessoes($html);
+
+                        /* GATE PÓS-PROCESSAMENTO — bug observado 2026-05-04 #2176:
+                         * quebrarParagrafosLongos pode transformar 3p (OK no AntiAI dentro do
+                         * DebateBuilder) em 4p+ (intro-inflada). E a RD na intro vinda do Sonnet
+                         * sobrevive se o `melhorou` aceitar regen baseado só em phrase violations.
+                         * Re-validamos AQUI no HTML FINAL e injetamos aviso vermelho se sentinel
+                         * forca-regen ainda presente. */
+                        try {
+                            if (!class_exists('AntiAIValidator')) require_once __DIR__ . '/lib/AntiAIValidator.php';
+                            $valFinal = new AntiAIValidator();
+                            $reportFinal = $valFinal->validate($html);
+                            $temForcaRegenFinal = false;
+                            $issuesCriticosFinal = [];
+                            foreach ((array)($reportFinal['structural'] ?? []) as $iss) {
+                                if (!is_string($iss)) continue;
+                                if (str_contains($iss, '-forca-regen') || str_contains($iss, '-forca-fail')) {
+                                    $temForcaRegenFinal = true;
+                                } elseif (preg_match('/^(intro-inflada|intro-redundancia|prompt-leak|redundancia-p[0-9]?-resposta-direta|redundancia-p1-p3|gatilho-batido|paragrafo-paredao|tom-edital|rd-na-intro|frase-composta-pesada)/i', $iss)) {
+                                    $issuesCriticosFinal[] = $iss;
+                                }
+                            }
+                            if ($temForcaRegenFinal && ($reportFinal['severity'] ?? '') === 'fail') {
+                                $marcador = 'RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR (PÓS-PROCESSAMENTO)';
+                                if (stripos($html, $marcador) === false && stripos($html, 'RASCUNHO BLOQUEADO') === false) {
+                                    $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                          . "<strong style='color:#991b1b;font-size:15px'>🚨 {$marcador}</strong>"
+                                          . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>Issues críticos detectados APÓS quebrar/sanitizar (validador interno do DebateBuilder pode não ter visto). REVISE MANUALMENTE antes de publicar:</p>"
+                                          . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
+                                    foreach (array_slice($issuesCriticosFinal, 0, 5) as $iss) {
+                                        $aviso .= '<li>' . htmlspecialchars($iss) . '</li>';
+                                    }
+                                    $aviso .= '</ul></div>';
+                                    $html = $aviso . $html;
+                                    $tituloLog .= ' [🚨gate-pos-proc]';
+                                }
+                            }
+                        } catch (Throwable $e) { /* gate pós-proc não bloqueia geração */ }
+
                         foreach ($artigo['_debate_log'] ?? [] as $dl) $tituloLog .= " [{$dl}]";
                         $keyword = $artigo['title'] ?? $keyword;
 
