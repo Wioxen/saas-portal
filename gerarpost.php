@@ -1441,6 +1441,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                 if ($isDiscover) {
                     try {
                         $debate = new DebateBuilder($claude);
+                        $debate->setOwnDomain((string)($cfg['wp_url'] ?? ''));
 
                         // Monta conteúdo scrapeado como texto limpo
                         $conteudoScrapeado = '';
@@ -2969,7 +2970,7 @@ a{color:#a78bfa;text-decoration:none}a:hover{text-decoration:underline}
   </script>
 
   <p style="text-align:center;color:#333;font-size:12px;margin-top:24px">
-    <a href="landing.php">Landing</a> · <a href="maquina.php">Máquina</a> · <a href="massa.php">Em massa</a> · <a href="categorias.php">Categorias</a> · <a href="trending.php">Trending</a> · <a href="atualizar.php">Atualizar</a> · <a href="indexar.php">Indexar</a>
+    <a href="landing.php">Landing</a> · <a href="maquina.php">Máquina</a> · <a href="massa.php">Em massa</a> · <a href="categorias.php">Categorias</a> · <a href="trending.php">Trending</a> · <a href="atualizar.php">Atualizar</a> · <a href="gerarimagem.php">Imagem</a> · <a href="indexar.php">Indexar</a>
   </p>
 </div>
 </body>

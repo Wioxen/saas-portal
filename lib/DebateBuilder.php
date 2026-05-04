@@ -12,6 +12,11 @@ class DebateBuilder
     public array $log = [];
     private string $dataHoje;
     private string $promptTemplate;
+    /** Domínio do site (wp_url) — usado por RankMathSeoValidator pra distinguir link interno vs externo */
+    private string $ownDomain = '';
+
+    /** Setter opcional — se setado, RankMath check de "link externo dofollow" fica preciso. */
+    public function setOwnDomain(string $url): void { $this->ownDomain = $url; }
 
     public function __construct(Claude $claude)
     {
@@ -179,7 +184,7 @@ class DebateBuilder
                 'revelacao'       => 'desvelamento de algo escondido (O que ninguém te conta..., A verdade sobre..., Por que...)',
             ];
             $introDescMap = [
-                'classico_3p_resposta_snippet' => 'INTRO: P1 + P2 + P3 + Resposta Direta + snippet <ul> + 1º H2. Padrão SEO/GEO clássico.',
+                'classico_3p_resposta_snippet' => 'INTRO: P1 (gancho) + P2 (autoridade) + P3 (SALTO pra dado novo) + Resposta Direta + snippet <ul> + 1º H2. P3 NÃO PODE repetir entidade/prazo/canal do P1 — traga consequência, contraste, detalhe oculto OU restrição. Ver bloco "P3 - SALTO PRA NOVO DADO" no prompt principal.',
                 'lead_curto_2p_h2_imediato'    => 'INTRO ENXUTA: APENAS P1 (lead denso até 40 palavras) + Resposta Direta + 1º H2 IMEDIATO. NÃO escreva P2 nem P3. Snippet <ul> opcional (só se a fonte sustenta 2 dados fortes).',
                 'narrativa_p_unico_denso'      => 'INTRO NARRATIVA: 1 ÚNICO <p> denso (50-70 palavras) com cenário humano + dado-chave + Resposta Direta + 1º H2. SEM P2/P3, SEM snippet.',
                 'pergunta_lead_resposta'       => 'INTRO PERGUNTA: P1 termina com pergunta direta + Resposta Direta responde + 1 P de contexto curto + 1º H2. Sem P3. Snippet opcional.',
@@ -332,31 +337,63 @@ class DebateBuilder
                     }
                 }
 
-                /* AUTO-REGENERAÇÃO — se severity=fail, pede 1 reescrita ao Sonnet com feedback explícito */
+                /* AUTO-REGENERAÇÃO — se severity=fail, pede ATÉ 2 reescritas ao Sonnet com feedback.
+                 * 2ª tentativa só dispara quando a 1ª falhou em melhorar E o report contém sentinel
+                 * `*-forca-regen` (intro-inflada / intro-redundancia / prompt-leak / redundancia-p1-p3) —
+                 * esses são patterns críticos onde 1 retry frequentemente não basta. */
                 if ($aiReport['severity'] === 'fail') {
-                    $regenJson = $this->regenerateWithFeedback($prompt, $aiReport, $maxTokens);
-                    if ($regenJson !== null && !empty($regenJson['html'])) {
+                    $maxTries = self::countForcaRegen($aiReport) > 0 ? 2 : 1;
+                    $aiReportOriginal = $aiReport;
+
+                    for ($try = 1; $try <= $maxTries; $try++) {
+                        $regenJson = $this->regenerateWithFeedback($prompt, $aiReport, $maxTokens);
+                        if ($regenJson === null || empty($regenJson['html'])) {
+                            $this->log[] = "AntiAI[regen #{$try}]: geração falhou — abortando retries";
+                            break;
+                        }
                         $regenReport = $validator->validate($regenJson['html']);
-                        $this->log[] = 'AntiAI[regen]: ' . $validator->reportToLogLine($regenReport);
-                        /* Aceita regeneração apenas se MELHOROU (severidade caiu OU contagem caiu ≥50%) */
+                        $this->log[] = "AntiAI[regen #{$try}]: " . $validator->reportToLogLine($regenReport);
+
                         $melhorou = (
                             $regenReport['severity'] !== 'fail' ||
                             $regenReport['total_phrase_violations'] <= max(0, (int)floor($aiReport['total_phrase_violations'] / 2))
                         );
                         if ($melhorou) {
-                            $this->log[] = "AntiAI[regen]: ACEITO (de {$aiReport['total_phrase_violations']} → {$regenReport['total_phrase_violations']} violações)";
-                            /* Preserva placeholders ja substituídos */
+                            $this->log[] = "AntiAI[regen #{$try}]: ACEITO (de {$aiReport['total_phrase_violations']} → {$regenReport['total_phrase_violations']} violações)";
                             if ($leiaTambem !== '') {
                                 $regenJson['html'] = str_replace('<%leiamais%>', $leiaTambem, $regenJson['html']);
                             }
                             $json = $regenJson;
                             $aiReport = $regenReport;
-                            $aiReport['__regenerated'] = true;
-                        } else {
-                            $this->log[] = 'AntiAI[regen]: REJEITADO — não melhorou suficientemente, mantendo original';
+                            $aiReport['__regenerated'] = $try;
+                            break;
                         }
-                    } else {
-                        $this->log[] = 'AntiAI[regen]: regeneração falhou — mantendo original';
+                        $this->log[] = "AntiAI[regen #{$try}]: REJEITADO — não melhorou";
+                        if ($try < $maxTries) {
+                            /* Atualiza $aiReport pro próximo retry usar feedback do mais recente */
+                            $aiReport = $regenReport;
+                        }
+                    }
+
+                    /* Se TODAS as regens falharam e severity ainda=fail com sentinel forca-regen → bloqueia publish.
+                     * Caller (DiscoverGerador, gerarpost.php) checa __publish_blocked antes de mudar status='publish'. */
+                    if ($aiReport['severity'] === 'fail' && self::countForcaRegen($aiReport) > 0) {
+                        $aiReport['__publish_blocked'] = true;
+                        $aiReport['__block_reason'] = self::resumirIssuesCriticos($aiReport);
+                        $this->log[] = "AntiAI: 🚨 PUBLISH BLOQUEADO — {$aiReport['__block_reason']}";
+
+                        /* Injeta aviso visual no topo do HTML — fica IMPOSSÍVEL deixar passar sem ver */
+                        $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                              . "<strong style='color:#991b1b;font-size:15px'>🚨 RASCUNHO BLOQUEADO PARA PUBLICAÇÃO</strong>"
+                              . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>O AntiAIValidator detectou problemas críticos que persistiram após {$maxTries} regeneração(ões). REVISE MANUALMENTE antes de publicar:</p>"
+                              . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
+                        foreach (array_slice((array)($aiReport['structural'] ?? []), 0, 5) as $iss) {
+                            if (is_string($iss) && stripos($iss, '-forca-') === false) {
+                                $aviso .= '<li>' . htmlspecialchars($iss) . '</li>';
+                            }
+                        }
+                        $aviso .= '</ul></div>';
+                        $json['html'] = $aviso . $json['html'];
                     }
                 }
 
@@ -388,6 +425,7 @@ class DebateBuilder
                     'slug'          => (string)($json['slug'] ?? ''),
                     'focus_keyword' => $kwFinal,
                     'featured_alt'  => (string)($json['imagem']['alt_text'] ?? ''),
+                    'own_domain'    => $this->ownDomain,
                 ];
                 $rmReport = RankMathSeoValidator::validar((string)$json['html'], $rmOpts);
                 $this->log[] = "RankMath: score={$rmReport['score']}/100 ({$rmReport['passes']}/{$rmReport['total']}) kw=\"{$kwFinal}\" dens={$rmReport['densidade']}%";
@@ -411,6 +449,7 @@ class DebateBuilder
                             'slug'          => (string)($regenJson['slug'] ?? ''),
                             'focus_keyword' => $kwR,
                             'featured_alt'  => (string)($regenJson['imagem']['alt_text'] ?? ''),
+                            'own_domain'    => $this->ownDomain,
                         ];
                         $rmReportR = RankMathSeoValidator::validar((string)$regenJson['html'], $rmOptsR);
                         $this->log[] = "RankMath[regen]: score={$rmReportR['score']}/100 ({$rmReportR['passes']}/{$rmReportR['total']}) kw=\"{$kwR}\"";
@@ -468,8 +507,34 @@ class DebateBuilder
             'schema_type'      => 'NewsArticle',
             'products'         => [],
             '__rankmath_validation' => $json['__rankmath_validation'] ?? null,
+            '__ai_validation'  => $json['__ai_validation'] ?? null,
+            '__publish_blocked' => !empty($json['__ai_validation']['__publish_blocked']),
+            '__block_reason'   => $json['__ai_validation']['__block_reason'] ?? '',
             '_debate_log'      => $this->log,
         ];
+    }
+
+    /** Conta sentinels *-forca-regen / *-forca-fail no array structural do report. */
+    private static function countForcaRegen(array $aiReport): int
+    {
+        $n = 0;
+        foreach ((array)($aiReport['structural'] ?? []) as $s) {
+            if (is_string($s) && (str_contains($s, '-forca-regen') || str_contains($s, '-forca-fail'))) $n++;
+        }
+        return $n;
+    }
+
+    /** Resume issues críticos (sentinels) numa string curta pra log e block_reason. */
+    private static function resumirIssuesCriticos(array $aiReport): string
+    {
+        $tipos = [];
+        foreach ((array)($aiReport['structural'] ?? []) as $s) {
+            if (!is_string($s)) continue;
+            if (preg_match('/(intro-inflada|intro-redundancia|prompt-leak|redundancia-p1-p3)/', $s, $m)) {
+                $tipos[$m[1]] = true;
+            }
+        }
+        return implode(', ', array_keys($tipos)) ?: 'severity=fail persistente';
     }
 
     /** Tenta corrigir JSON com aspas duplas dentro de valores HTML */

@@ -234,7 +234,7 @@ code{background:#0f1115;padding:2px 6px;border-radius:4px;font-size:11px;color:#
   <?php endif; ?>
 
   <p style="text-align:center;color:#333;font-size:12px;margin-top:24px">
-    <a href="atualizar.php">Atualizar posts</a> · <a href="massa.php">Em massa</a> · <a href="categorias.php">Categorias</a> · <a href="trending.php">Trending</a>
+    <a href="atualizar.php">Atualizar posts</a> · <a href="gerarimagem.php">Gerar imagem</a> · <a href="massa.php">Em massa</a> · <a href="categorias.php">Categorias</a> · <a href="trending.php">Trending</a>
   </p>
 </div>
 </body>

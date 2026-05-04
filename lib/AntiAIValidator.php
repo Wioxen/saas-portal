@@ -452,6 +452,15 @@ class AntiAIValidator
         $headingsVagos = $this->detectarVaguenessHeadings($html);
         foreach ($headingsVagos as $issue) $issues[] = $issue;
 
+        /* Prompt-leak da seção "Erro Fatal": o modelo regurgita os exemplos literais do
+         * prompt.md ("o erro que elimina a inscrição", "erro que derruba", "filtro que barra")
+         * em posts cujo tema NÃO tem critério eliminatório real (curso por ordem de chegada,
+         * tutorial, lista). Caso real: post sobre curso grátis Sejuv Campo Grande recebeu
+         * H2 "O erro que elimina a inscrição para os dias noturnos em Campo Grande".
+         * Força regen — esses títulos são marketing-vazio que destrói confiança editorial. */
+        $promptLeak = $this->detectarPromptLeakErroFatal($html);
+        foreach ($promptLeak as $issue) $issues[] = $issue;
+
         /* Truncamento de P1 — frase termina em fragmento curto e desconexo após vírgula.
            Bug observado em #711 leaodabarra: "...saltaram nas últimas horas, já pesquisaram."
            Padrão: vírgula + 2-4 palavras + verbo no passado plural + ponto final. */
@@ -463,7 +472,258 @@ class AntiAIValidator
         $hype = $this->detectarHypeNaoFactual($html);
         foreach ($hype as $issue) $issues[] = $issue;
 
+        /* Redundância P1↔P3 (caso real 2026-05-03 user): em intro_format=classico_3p_resposta_snippet,
+         * Sonnet estava parafraseando P1 no P3 (mesma entidade+prazo+canal). Detector Jaccard de tokens
+         * (sem stopwords PT-BR) entre o 1º e 3º <p> antes do 1º <h2>. ≥0.40 warn, ≥0.55 fail. */
+        $redundancia = $this->detectarRedundanciaP1P3($html);
+        foreach ($redundancia as $issue) $issues[] = $issue;
+
+        /* Intro inflada (caso reportado 2026-05-03 user nos posts 2082, 2091, 2075):
+         * 5 <p> SEM class antes do 1º <h2>, mesmo com Jaccard baixo. Não é paráfrase
+         * textual (que detectarRedundanciaP1P3 pega) — é dilução estrutural. Conta os
+         * <p> que NÃO têm class semântica (resposta-direta, snippet-resumo, alerta-critico,
+         * leia-mais, leia-tambem) antes do 1º <h2>. Regra: exatos 3 = ok; 4 = warn;
+         * 5+ = fail força regen. */
+        $introInflada = $this->detectarIntroInflada($html);
+        foreach ($introInflada as $issue) $issues[] = $issue;
+
         return $issues;
+    }
+
+    /**
+     * Detecta intro inflada (>3 parágrafos textuais antes do 1º H2).
+     *
+     * Conta `<p>` que NÃO têm class semântica `resposta-direta|snippet-resumo|
+     * alerta-critico|leia-mais|leia-tambem`. Esses são os P1+P2+P3 reais.
+     *
+     * Threshold:
+     *   • exatamente 3 → ok (regra do prompt.md item ORDEM FIXA DO TOPO)
+     *   • 4 → warn (sinal pra revisão, mas não regen)
+     *   • 5+ → fail force-regen (caso real reportado pelo user 2026-05-03)
+     */
+    private function detectarIntroInflada(string $html): array
+    {
+        $issues = [];
+
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+
+        if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $beforeH2, $ps, PREG_SET_ORDER)) {
+            return $issues;
+        }
+
+        $intro = 0;
+        foreach ($ps as $row) {
+            $atribs = $row[1] ?? '';
+            /* Filtra <p> com class semântica — esses são parte da ORDEM FIXA mas não
+             * contam como "intro textual". */
+            if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs)) {
+                continue;
+            }
+            $clean = trim(strip_tags($row[2]));
+            /* Ignora parágrafos curtos (<6 palavras) — são separadores, não intro */
+            if (str_word_count($clean) < 6) continue;
+            $intro++;
+        }
+
+        if ($intro >= 5) {
+            $issues[] = "intro-inflada {$intro} paragrafos textuais antes do 1º H2 — ORDEM FIXA exige exatos 3 (P1+P2+P3); 5+ dilui o lead e mata o CTR mobile";
+            $issues[] = 'intro-inflada-forca-regen';
+        } elseif ($intro === 4) {
+            $issues[] = "intro-inflada 4 paragrafos textuais antes do 1º H2 — ORDEM FIXA exige exatos 3 (P1+P2+P3); 4º é peso morto, reescrever";
+            $issues[] = 'intro-inflada-forca-regen';
+        }
+
+        /* P1 ↔ resposta-direta — caso real post 2102: resposta-direta começava com a mesma
+         * frase do P1 ("O Senai abriu 10 mil vagas..."). detectarRedundanciaP1P3 IGNORAVA
+         * resposta-direta. Aqui comparamos explicitamente. */
+        $p1Text = '';
+        $rdText = '';
+        foreach ($ps as $row) {
+            $atribs = $row[1] ?? '';
+            $clean = trim(strip_tags($row[2]));
+            if ($clean === '') continue;
+            $temClass = preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs);
+            $isRD = preg_match('/class\s*=\s*[\'"][^\'"]*resposta-direta[^\'"]*[\'"]/i', $atribs);
+            if (!$temClass && $p1Text === '' && str_word_count($clean) >= 6) {
+                $p1Text = $clean;
+            } elseif ($isRD && $rdText === '' && str_word_count($clean) >= 6) {
+                $rdText = $clean;
+            }
+        }
+        if ($p1Text !== '' && $rdText !== '') {
+            $stop = $this->ptStopwords();
+            $tA = $this->tokenize($p1Text, $stop);
+            $tB = $this->tokenize($rdText, $stop);
+            if (!empty($tA) && !empty($tB)) {
+                $sA = array_unique($tA);
+                $sB = array_unique($tB);
+                $shared = array_intersect($sA, $sB);
+                $jacc = count($shared) / max(1, count(array_unique(array_merge($sA, $sB))));
+                $cont = count($shared) / max(1, count($sA));
+                /* Bigrams compartilhados */
+                $bigA = []; for ($k=0,$kn=count($tA)-1;$k<$kn;$k++) $bigA[]=$tA[$k].' '.$tA[$k+1];
+                $bigB = []; for ($k=0,$kn=count($tB)-1;$k<$kn;$k++) $bigB[]=$tB[$k].' '.$tB[$k+1];
+                $bigShared = array_values(array_unique(array_intersect(array_unique($bigA), array_unique($bigB))));
+                $nBig = count($bigShared);
+                /* P1 e RD podem ter overlap natural (ambos trazem entidade+dado) — threshold
+                 * MAIS RIGOROSO que P1↔P3 porque P1↔RD ficam SEQUENCIAIS no preview mobile e
+                 * usuário vê PARÁFRASE explícita. Critério: 3+ bigrams OU jacc≥0.40 OU
+                 * containment≥0.50 (RD repete metade do P1). */
+                $isFail = ($nBig >= 3) || ($jacc >= 0.40) || ($cont >= 0.50 && $nBig >= 1);
+                if ($isFail) {
+                    $amostra = $nBig > 0 ? ' bigrams=[' . implode(', ', array_slice($bigShared, 0, 3)) . ']' : '';
+                    $issues[] = sprintf('redundancia-p1-resposta-direta jacc=%.2f cont=%.2f bigrams=%d%s — RD copia o lead do P1; reescrever RD com 5W neutros (entidade+ação+quando+onde+canal) sem repetir abertura do P1', $jacc, $cont, $nBig, $amostra);
+                    $issues[] = 'redundancia-p1-resposta-direta-forca-regen';
+                }
+            }
+        }
+
+        /* BÔNUS: redundância conceitual entre TODOS os pares de parágrafos da intro.
+         * detectarRedundanciaP1P3 só mede P1↔P3. Aqui medimos cada par com bigrams >= 3
+         * OU jaccard >= 0.30 = sinal de paráfrase. */
+        $textos = [];
+        foreach ($ps as $row) {
+            $atribs = $row[1] ?? '';
+            if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs)) continue;
+            $clean = trim(strip_tags($row[2]));
+            if (str_word_count($clean) >= 6) $textos[] = $clean;
+        }
+
+        $stop = $this->ptStopwords();
+        $n = count($textos);
+        $forcaFail = false;
+        for ($i = 0; $i < $n - 1; $i++) {
+            for ($j = $i + 1; $j < $n; $j++) {
+                if ($i === 0 && $j === 2) continue; /* P1↔P3 já é coberto por detectarRedundanciaP1P3 */
+                $tA = $this->tokenize($textos[$i], $stop);
+                $tB = $this->tokenize($textos[$j], $stop);
+                if (empty($tA) || empty($tB)) continue;
+                $sA = array_unique($tA);
+                $sB = array_unique($tB);
+                $shared = array_intersect($sA, $sB);
+                $jacc = count($shared) / max(1, count(array_unique(array_merge($sA, $sB))));
+                $bigA = []; for ($k = 0, $kn = count($tA) - 1; $k < $kn; $k++) $bigA[] = $tA[$k] . ' ' . $tA[$k + 1];
+                $bigB = []; for ($k = 0, $kn = count($tB) - 1; $k < $kn; $k++) $bigB[] = $tB[$k] . ' ' . $tB[$k + 1];
+                $bigShared = array_intersect(array_unique($bigA), array_unique($bigB));
+                $nBig = count($bigShared);
+                $isFail = ($nBig >= 3) || ($nBig >= 2 && $jacc >= 0.18) || ($jacc >= 0.30);
+                if ($isFail) {
+                    $issues[] = sprintf('intro-redundancia P%d↔P%d jaccard=%.2f bigrams=%d — paráfrase entre paragrafos da intro, eliminar redundancia', $i + 1, $j + 1, $jacc, $nBig);
+                    $forcaFail = true;
+                }
+            }
+        }
+        if ($forcaFail) $issues[] = 'intro-redundancia-forca-regen';
+
+        return $issues;
+    }
+
+    /**
+     * Detecta redundância entre P1 e P3 — Sonnet em modo classico_3p_resposta_snippet
+     * tendia a duplicar entidade+prazo+canal. Combina 2 sinais:
+     *   • bigrams compartilhados (n-grams de 2 tokens consecutivos pós-filtro): mede
+     *     se P3 RECICLA frases inteiras do P1 ("senac ponta", "técnico enfermagem",
+     *     "maio 2026"). 3+ bigrams compartilhados = paráfrase descarada.
+     *   • Jaccard de tokens único: mede overlap geral.
+     *
+     * Calibrado contra 2 casos reais reportados em 2026-05-03 (Senac PP + Senac RJ)
+     * e 1 contra-exemplo do prompt (feriado SP — P3 traz consequência nova).
+     *
+     * Retorna 2 issues quando crítico pra forçar severity=fail e disparar regen via
+     * DebateBuilder.regenerateWithFeedback().
+     */
+    private function detectarRedundanciaP1P3(string $html): array
+    {
+        $issues = [];
+
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+
+        if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $beforeH2, $ps, PREG_SET_ORDER)) {
+            return $issues;
+        }
+
+        $paragrafos = [];
+        foreach ($ps as $p) {
+            $atribs = $p[1] ?? '';
+            if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs)) {
+                continue;
+            }
+            $clean = trim(strip_tags($p[2]));
+            if (str_word_count($clean) >= 6) $paragrafos[] = $clean;
+        }
+
+        if (count($paragrafos) < 3) return $issues;
+
+        $p1 = $paragrafos[0];
+        $p3 = $paragrafos[2];
+
+        $stop = $this->ptStopwords();
+        $tokA = $this->tokenize($p1, $stop);
+        $tokB = $this->tokenize($p3, $stop);
+        if (empty($tokA) || empty($tokB)) return $issues;
+
+        $setA = array_unique($tokA);
+        $setB = array_unique($tokB);
+        $shared = array_intersect($setA, $setB);
+        $jacc = count($setA) + count($setB) > 0
+            ? count($shared) / count(array_unique(array_merge($setA, $setB)))
+            : 0.0;
+        /* Containment(P1→P3): fração de tokens únicos do P1 que aparecem no P3.
+         * Pega caso onde P3 contém o NÚCLEO do P1 mas adiciona dados novos
+         * (ex: mesma entidade+curso+modelo mas cidades novas) — Jaccard fica baixo
+         * por causa do denominador inflado, containment captura. */
+        $cont = count($setA) > 0 ? count($shared) / count($setA) : 0.0;
+
+        /* Bigrams pós-filtro: pares consecutivos de tokens não-stopword */
+        $bigA = [];
+        for ($i = 0, $n = count($tokA) - 1; $i < $n; $i++) $bigA[] = $tokA[$i] . ' ' . $tokA[$i + 1];
+        $bigB = [];
+        for ($i = 0, $n = count($tokB) - 1; $i < $n; $i++) $bigB[] = $tokB[$i] . ' ' . $tokB[$i + 1];
+        $bigShared = array_values(array_unique(array_intersect(array_unique($bigA), array_unique($bigB))));
+        $nBig = count($bigShared);
+
+        /* Decisão multi-sinal:
+         *   FAIL: 3+ bigrams OU (2+ bigrams + jacc ≥ 0.18) OU (containment ≥ 0.30 + bigrams ≥ 1)
+         *   WARN: 1 bigram + jacc ≥ 0.20  OU  jacc ≥ 0.30 sozinho */
+        $amostra = $nBig > 0 ? ' bigrams=[' . implode(', ', array_slice($bigShared, 0, 3)) . ']' : '';
+        $isFail = ($nBig >= 3) || ($nBig >= 2 && $jacc >= 0.18) || ($cont >= 0.30 && $nBig >= 1);
+        $isWarn = ($nBig >= 1 && $jacc >= 0.20) || ($jacc >= 0.30);
+
+        if ($isFail) {
+            $issues[] = sprintf('redundancia-p1-p3 CRITICA jaccard=%.2f containment=%.2f bigrams=%d%s — P3 parafraseia P1; trazer consequencia, contraste, detalhe novo OU restricao', $jacc, $cont, $nBig, $amostra);
+            $issues[] = 'redundancia-p1-p3-forca-regen';
+        } elseif ($isWarn) {
+            $issues[] = sprintf('redundancia-p1-p3 jaccard=%.2f containment=%.2f bigrams=%d%s — P3 sobrepoe P1; trazer dado/angulo NOVO', $jacc, $cont, $nBig, $amostra);
+        }
+
+        return $issues;
+    }
+
+    private function ptStopwords(): array
+    {
+        return [
+            'a','o','as','os','um','uns','uma','umas','de','do','da','dos','das',
+            'em','no','na','nos','nas','para','pro','pra','por','pelo','pela','pelos','pelas',
+            'com','sem','e','ou','mas','que','se','ao','aos','até','mais','menos',
+            'muito','muita','muitos','muitas','este','esta','estes','estas','esse','essa','esses','essas',
+            'isso','isto','aquilo','seu','sua','seus','suas','meu','minha','nosso','nossa',
+            'ja','já','agora','tambem','também','sao','são','tem','têm','foi','foram','ser','sera','será','serao','serão',
+            'tinha','tinham','quando','onde','como','sobre','entre','nao','não','sim','depois','antes','sera','está','estão',
+        ];
+    }
+
+    private function tokenize(string $text, array $stop): array
+    {
+        $text = mb_strtolower($text);
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text) ?? $text;
+        $tokens = preg_split('/\s+/', trim($text)) ?: [];
+        return array_values(array_filter($tokens, fn($t) => mb_strlen($t) >= 3 && !in_array($t, $stop, true)));
     }
 
     /**
@@ -563,9 +823,71 @@ class AntiAIValidator
     private function computeSeverity(int $totalPhraseViolations, array $structural): string
     {
         $structCount = count($structural);
+        /* Sentinel "*-forca-fail" / "*-forca-regen" escala pra fail mesmo com 1 issue só.
+         * Usado por detectores que sabem que o achado é crítico e merece regen
+         * (redundância P1/P3, prompt-leak da seção "Erro Fatal"). */
+        foreach ($structural as $s) {
+            if (is_string($s) && (str_contains($s, '-forca-fail') || str_contains($s, '-forca-regen'))) {
+                return 'fail';
+            }
+        }
         if ($totalPhraseViolations === 0 && $structCount === 0) return 'ok';
         if ($totalPhraseViolations <= 2 && $structCount <= 1) return 'warn';
         return 'fail';
+    }
+
+    /**
+     * Detecta prompt-leak da seção "Erro Fatal": o modelo copia os exemplos literais
+     * do prompt.md em vez de aplicar o template com conteúdo da fonte. Casos:
+     *
+     *   1. H2 "O (erro|detalhe|filtro|ponto) que (elimina|derruba|barra) a
+     *      (inscrição|vaga|seleção|matrícula)" — sem qualificador concreto entre
+     *      "erro/detalhe" e o verbo. Esse é literalmente o template do prompt.
+     *
+     *   2. <p class="alerta-critico__titulo"> contendo essas mesmas frases vagas
+     *      (verbatim do exemplo no prompt.md ou variação leve com adverbial copiado).
+     *
+     * Severidade: force-fail (marker emitido força regen via DebateBuilder).
+     */
+    private function detectarPromptLeakErroFatal(string $html): array
+    {
+        $issues = [];
+
+        /* Padrão central: "[artigo opcional] <root> que <verbo> a <objeto>" sem qualificador
+         * entre root e "que". Artigo é opcional pra cobrir alerta-critico__titulo que copia
+         * o exemplo "Erro que derruba a inscrição" (sem artigo). Adverbiais APÓS o objeto
+         * (ex: "a inscrição para os dias noturnos") NÃO contam como qualificador real. */
+        $pattern = '/(?:^|>|\s|"|\')\s*(?:(?:o|um|esse|essa|aquele|aquela)\s+)?'
+                 . '(erro|detalhe|filtro|ponto|crit[eé]rio)\s+'
+                 . 'que\s+(elimina|derruba|barra|tira|exclui|rejeita)\s+'
+                 . 'a\s+(inscri[çc][ãa]o|vaga|sele[çc][ãa]o|matr[íi]cula|candidatura)/iu';
+
+        /* H2/H3 com prompt-leak */
+        if (preg_match_all('/<(h[123])[^>]*>(.*?)<\/\1>/is', $html, $hs, PREG_SET_ORDER)) {
+            foreach ($hs as $h) {
+                $tag  = $h[1];
+                $text = trim(strip_tags($h[2]));
+                if ($text === '') continue;
+                if (preg_match($pattern, $text, $m)) {
+                    $issues[] = "prompt-leak-erro-fatal <{$tag}>: \"{$text}\" — regurgita exemplo do prompt sem nomear critério real";
+                    $issues[] = 'prompt-leak-erro-fatal-forca-fail';
+                }
+            }
+        }
+
+        /* alerta-critico__titulo com prompt-leak (regex casa class com aspas simples ou duplas) */
+        if (preg_match_all('/<p\s+class\s*=\s*[\'"][^\'"]*alerta-critico__titulo[^\'"]*[\'"][^>]*>(.*?)<\/p>/is', $html, $ps, PREG_SET_ORDER)) {
+            foreach ($ps as $p) {
+                $text = trim(strip_tags($p[1]));
+                if ($text === '') continue;
+                if (preg_match($pattern, $text)) {
+                    $issues[] = "prompt-leak-alerta-critico: \"{$text}\" — copia frase do exemplo do prompt";
+                    $issues[] = 'prompt-leak-erro-fatal-forca-fail';
+                }
+            }
+        }
+
+        return $issues;
     }
 
     /**

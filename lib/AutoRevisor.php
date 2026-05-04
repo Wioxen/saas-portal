@@ -205,6 +205,24 @@ USR;
         if (str_contains($issueLower, 'h2s repetem palavra')) {
             return "REESCREVER os H2s pra começarem com palavras diferentes. Cada H2 deve refletir um aspecto único da fonte.";
         }
+        if (str_contains($issueLower, 'intro-inflada')) {
+            return "REDUZIR pra EXATOS 3 parágrafos `<p>` SEM atributo class antes do 1º `<h2>` (ORDEM FIXA: P1+P2+P3). NÃO excluir info — mover os parágrafos extras pra DEPOIS do 1º H2 (eles viram primeiros parágrafos do desenvolvimento). Preservar `<p class='resposta-direta'>` e `<ul class='snippet-resumo'>` que já estiverem no lugar (eles NÃO contam como intro). Se houver 2 `<p class='resposta-direta'>`, consolidar num só.";
+        }
+        if (str_contains($issueLower, 'intro-redundancia')) {
+            return "ELIMINAR paráfrase entre parágrafos da intro. Cada parágrafo (P1, P2, P3) deve trazer um ÂNGULO ÚNICO: P1=lead/barreira, P2=autoridade+atribuição, P3=salto factual NOVO (consequência, contraste histórico, detalhe restritivo, ou contexto local). Se 2 parágrafos repetem entidade+prazo+canal, FUNDIR num só e usar o espaço pra trazer dado novo.";
+        }
+        if (str_contains($issueLower, 'redundancia-p1-p3')) {
+            return "REESCREVER o P3 (3º parágrafo antes do 1º H2). PROIBIDO repetir entidade, prazo ou canal de acesso que já saíram em P1. Trazer UMA das 4 opções: (a) consequência prática, (b) contraste histórico/comparativo, (c) detalhe restritivo, (d) contexto local específico — sempre com dado concreto da fonte.";
+        }
+        if (str_contains($issueLower, 'prompt-leak-erro-fatal')) {
+            return "REESCREVER o H2 nomeando o CRITÉRIO REAL no próprio título (não usar fórmula vaga 'O erro que elimina/derruba/barra'). Ex: 'Comprovação de renda no CadÚnico reprova X% das inscrições do Fies'. Se o tema NÃO tem critério eliminatório real (curso por ordem de chegada, oferta livre), REMOVER o H2 inteiro e fundir conteúdo num H2 factual.";
+        }
+        if (str_contains($issueLower, 'prompt-leak-alerta-critico')) {
+            return "REESCREVER o `<p class='alerta-critico__titulo'>` nomeando o critério eliminatório específico do edital/fonte. PROIBIDO copiar 'Erro que derruba a inscrição' (é exemplo do prompt). Se não há critério eliminatório real → REMOVER o `<div class='alerta-critico'>` inteiro.";
+        }
+        if (str_contains($issueLower, 'vague') || str_contains($issueLower, 'vago:')) {
+            return "REESCREVER o heading nomeando ESPECIFICAMENTE de que filtro/erro/detalhe/critério se trata, com dado da fonte. Ex: 'O filtro que barra' → 'O filtro de cargo da Polícia-RS que barra candidatos sem CNH-D'.";
+        }
         return "Reformular o trecho/parágrafo/lista afetado conforme orientação do manifesto editorial.";
     }
 }

@@ -55,7 +55,7 @@ class ClusterAngleAllocator
 
     /** Pool de formatos de introdução (5) — varia o ESQUELETO FÍSICO do topo do artigo (anti-template). */
     const INTRO_FORMATS = [
-        'classico_3p_resposta_snippet' => 'P1 + P2 + P3 + Resposta Direta + snippet <ul> + H2 (formato padrão SEO/GEO)',
+        'classico_3p_resposta_snippet' => 'P1 (gancho) + P2 (autoridade) + P3 (SALTO pra dado novo, NUNCA paráfrase do P1) + Resposta Direta + snippet <ul> + H2',
         'lead_curto_2p_h2_imediato'    => 'apenas P1 (lead denso) + Resposta Direta + H2 imediato (sem P2/P3, snippet opcional)',
         'narrativa_p_unico_denso'      => 'P único de 50-70 palavras com cenário humano + Resposta Direta + H2 (sem snippet, sem P2/P3)',
         'pergunta_lead_resposta'       => 'P1 termina em pergunta + Resposta Direta responde + 1 P de contexto + H2 (snippet opcional)',

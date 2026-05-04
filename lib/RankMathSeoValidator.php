@@ -40,11 +40,14 @@ class RankMathSeoValidator
         $checks[] = self::check('Focus keyword no título SEO', mb_stripos($metaT, $kw) !== false, $kw === '' ? 'sem keyword' : null);
         $checks[] = self::check('Focus keyword na meta description', mb_stripos($metaD, $kw) !== false, $kw === '' ? 'sem keyword' : null);
         $checks[] = self::check('Focus keyword no URL/slug', mb_stripos($slug, self::slugify($kw)) !== false, $slug === '' ? 'sem slug' : null);
-        $checks[] = self::check('Focus keyword no início do conteúdo (primeiras 100 palavras)',
-            $kw !== '' && mb_stripos(self::primeirasPalavras($bodyText, 100), $kw) !== false);
+        /* "Primeiros 10% do conteúdo" — fórmula oficial do RankMath. Pra artigo de 600
+         * palavras = primeiras 60. Mínimo 60 pra evitar janela curta demais em posts curtos. */
+        $janela10pct = max(60, (int)floor($totalPalavras * 0.10));
+        $checks[] = self::check("Focus keyword nos primeiros 10% do conteúdo (janela={$janela10pct}p)",
+            $kw !== '' && mb_stripos(self::primeirasPalavras($bodyText, $janela10pct), $kw) !== false);
         $checks[] = self::check('Focus keyword aparece no conteúdo', $kwOcorrencias > 0);
 
-        // === ADICIONAL (4 checks) ===
+        // === ADICIONAL (5 checks) ===
         $temKwH = false;
         if (preg_match_all('#<h[2-4][^>]*>(.*?)</h[2-4]>#is', $html, $hs)) {
             foreach ($hs[1] as $h) if (mb_stripos(strip_tags($h), $kw) !== false) { $temKwH = true; break; }
@@ -58,6 +61,13 @@ class RankMathSeoValidator
             $densidade < $idealMin ? "muito baixa ({$kwOcorrencias} ocorr.)" : "muito alta (keyword stuffing)"
         );
         $checks[] = self::check("URL ≤ 75 caracteres (atual: " . strlen($slug) . ")", strlen($slug) > 0 && strlen($slug) <= 75);
+        /* Ao menos 1 link externo dofollow (host diferente do próprio site). RankMath
+         * exige isso pra rampa de "Authority" — sem outbound autoritativo, score capa. */
+        $ownDomain = (string)($opts['own_domain'] ?? '');
+        $ownHost = $ownDomain !== '' ? parse_url($ownDomain, PHP_URL_HOST) : '';
+        $temExtDofollow = self::temLinkExternoDofollow($html, (string)$ownHost);
+        $checks[] = self::check('Pelo menos 1 link externo com dofollow', $temExtDofollow,
+            $temExtDofollow ? null : 'nenhum <a href> com host externo + rel="dofollow" detectado');
 
         // === LEGIBILIDADE DO TÍTULO (2 checks) ===
         $kwInicio = $kw !== '' && mb_stripos(mb_substr($metaT, 0, mb_strlen($kw) + 5), $kw) !== false;
@@ -91,6 +101,31 @@ class RankMathSeoValidator
     {
         $palavras = preg_split('/\s+/u', $texto) ?: [];
         return implode(' ', array_slice($palavras, 0, $n));
+    }
+
+    /**
+     * Detecta se há AO MENOS 1 link externo (host ≠ ownHost) com `rel="dofollow"`
+     * (ou ausência de `nofollow`/`sponsored`/`ugc`, que tecnicamente também é dofollow).
+     * RankMath conta como dofollow qualquer `<a>` que NÃO tem rel restritivo.
+     */
+    private static function temLinkExternoDofollow(string $html, string $ownHost): bool
+    {
+        if (!preg_match_all('/<a\s+([^>]+)>/i', $html, $matches)) return false;
+        foreach ($matches[1] as $atribs) {
+            if (!preg_match('/href\s*=\s*[\'"]([^\'"]+)[\'"]/i', $atribs, $hm)) continue;
+            $href = trim($hm[1]);
+            /* Ignora âncoras internas, mailto, tel, etc */
+            if ($href === '' || $href[0] === '#' || stripos($href, 'mailto:') === 0 || stripos($href, 'tel:') === 0 || stripos($href, 'javascript:') === 0) continue;
+            $host = parse_url($href, PHP_URL_HOST);
+            if (!$host) continue;
+            if ($ownHost !== '' && stripos($host, $ownHost) !== false) continue; /* link interno */
+            /* Confere rel — dofollow explícito OU ausência de restritivo */
+            $rel = '';
+            if (preg_match('/rel\s*=\s*[\'"]([^\'"]+)[\'"]/i', $atribs, $rm)) $rel = mb_strtolower($rm[1]);
+            $bloqueia = preg_match('/\b(nofollow|sponsored|ugc)\b/', $rel);
+            if (!$bloqueia) return true; /* dofollow implícito ou explícito */
+        }
+        return false;
     }
 
     /** Gera slug pra comparar (lowercase, sem acento, hífen). Fallback manual se ext-intl ausente. */

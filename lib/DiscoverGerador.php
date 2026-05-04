@@ -841,6 +841,38 @@ class DiscoverGerador
                                             $rev['antes']['severity'] ?? '?',
                                             $rev['depois']['severity'] ?? '?'
                                         ));
+                                        /* GATE PRE-PUBLISH: se DEPOIS da revisão Haiku ainda há sentinel
+                                         * `*-forca-regen` ou `*-forca-fail` no report, BLOQUEIA publicação.
+                                         * Força status='draft' e injeta aviso vermelho no topo. Caso real
+                                         * 2026-05-03: posts com intro-inflada / prompt-leak. */
+                                        $depoisStruct = (array)($rev['depois']['structural'] ?? []);
+                                        $temForcaRegen = false;
+                                        $issuesCriticos = [];
+                                        foreach ($depoisStruct as $iss) {
+                                            if (!is_string($iss)) continue;
+                                            if (str_contains($iss, '-forca-regen') || str_contains($iss, '-forca-fail')) {
+                                                $temForcaRegen = true;
+                                            } elseif (preg_match('/^(intro-inflada|intro-redundancia|prompt-leak|redundancia-p1-p3)/i', $iss)) {
+                                                $issuesCriticos[] = $iss;
+                                            }
+                                        }
+                                        if ($temForcaRegen && ($rev['depois']['severity'] ?? '') === 'fail') {
+                                            $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                                  . "<strong style='color:#991b1b;font-size:15px'>🚨 RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR</strong>"
+                                                  . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>Issues críticos persistiram após auto-revisão Haiku. REVISE MANUALMENTE antes de publicar:</p>"
+                                                  . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
+                                            foreach (array_slice($issuesCriticos, 0, 5) as $iss) {
+                                                $aviso .= '<li>' . htmlspecialchars($iss) . '</li>';
+                                            }
+                                            $aviso .= '</ul></div>';
+                                            $content = $aviso . $content;
+                                            try {
+                                                $this->wp->atualizarPost($postId, ['status' => 'draft']);
+                                                $progress->reportar('publish_bloqueado', 'severity=fail persistente — forçado draft + aviso visual');
+                                            } catch (Throwable $e) {}
+                                            $validationReport['anti_ai_revisado']['__publish_blocked'] = true;
+                                            $validationReport['anti_ai_revisado']['__block_issues']   = $issuesCriticos;
+                                        }
                                     }
                                 }
                             }

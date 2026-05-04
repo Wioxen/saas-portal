@@ -441,7 +441,7 @@ Se você já disse "15 vagas", não repita "quinze oportunidades" no próximo pa
 **REGRAS:**
 - Cada NÚMERO, DATA, VALOR, PRAZO aparece no MÁXIMO 1x no corpo do artigo
 - Cada SUBSTANTIVO forte (instituição, programa, cidade-chave) não se repete em parágrafos consecutivos — use sinônimo ou pronome
-- Exceção: TÍTULO + P1 + Resposta direta podem repetir o dado principal (é o gancho). Depois disso, não mais.
+- Exceção: TÍTULO + P1 + Resposta Direta podem repetir o dado principal (é o gancho). **P3 e desenvolvimento NUNCA**. Repetir em P3 entidade/prazo/canal que já saiu em P1 = artigo reprovado.
 
 **EXEMPLO — ERRADO (3 variações do mesmo dado em 3 parágrafos):**
 > P1: "feriado da sexta sem aulas"
@@ -762,28 +762,59 @@ Se o artigo usa termo técnico/siglas/jargão que nem todo leitor conhece (ex: C
 ## P2 - Autoridade + Dado (máx 40 palavras)
 - Entidade completa + sigla. Base legal se houver. Número concreto.
 
-## P3 - Direcionamento + Dado (máx 40 palavras)
-- O que é + para quem + prazo + como acessar
-- Puxa pro H2
+## P3 - SALTO PRA NOVO DADO (máx 40 palavras)
 
-## LIMITE DE INTRODUÇÃO — MÁXIMO 3 PARÁGRAFOS ANTES DO 1º H2
+**REGRA ABSOLUTA: P3 não pode parafrasear P1.** A entidade, o prazo e o canal de acesso já saíram em P1 (gancho) e na Resposta Direta (factual GEO). P3 que repete esses 3 = redundância automática = artigo reprovado.
 
-Para Discover/mobile, **a introdução inteira (P1 + P2 + P3) vai até 3 parágrafos — nunca 4, nunca 5**. Depois do P3, o próximo elemento é a Resposta Direta (1 parágrafo neutro), depois o snippet `<ul>`, e logo em seguida o **primeiro H2**.
+P3 deve trazer UMA das 4 opções (escolha a mais sustentada pela fonte primária):
 
-**ORDEM FIXA DO TOPO:**
-1. `<p>` P1 (barreira + dado + esperança)
-2. `<p>` P2 (autoridade + dado)
-3. `<p>` P3 (direcionamento + puxa H2)
-4. `<p class='resposta-direta'>` (resposta neutra factual pra GEO)
-5. `<ul class='snippet-resumo'>` (2-3 bullets)
-6. `<h2>` PRIMEIRO H2 do desenvolvimento
+1. **CONSEQUÊNCIA prática** — efeito real do fato em quem ele afeta
+   ✅ "Escolas particulares de São Paulo antecipam provas pra não perder conteúdo de Matemática III."
+2. **CONTRASTE histórico/comparativo** — número de hoje vs antes, ou Brasil vs estado
+   ✅ "Em 2025 foram 280 mil pedidos. Em 2026, já são 410 mil — crescimento de 46%."
+3. **DETALHE ESPECÍFICO ainda não citado** — cláusula, página de edital, exceção, requisito oculto
+   ✅ "A regra de prioridade está só na página 14 do edital, e prioriza quem mora em SP capital ou Grande SP."
+4. **RESTRIÇÃO/CRITÉRIO ELIMINATÓRIO** — o que tira gente de fora
+   ✅ "Quem mora fora de MS, MT ou GO não consegue avançar do segundo passo: o sistema bloqueia o CEP."
 
-**PROIBIDO:**
-- Inserir 4º ou 5º parágrafo antes do primeiro H2
-- Parágrafo extra "de transição" ou "de contexto" entre o P3 e o snippet
-- Reescrever o mesmo fato em 2 parágrafos da introdução (redundância)
+**TESTE OBRIGATÓRIO antes de fechar P3:**
+- Tirei P3 do artigo. Algum FATO essencial sumiu? Se NÃO sumiu → P3 estava redundante, REESCREVA com 1 das 4 opções acima.
+- O P3 funcionaria igual em qualquer outro artigo da mesma fonte? Se SIM → genérico, REESCREVA.
 
-**TESTE:** conte os `<p>` antes do primeiro `<h2>`. Se for > 5 (P1+P2+P3+resposta+ul já são 5 — note que `<ul>` não é `<p>`), está arrastado.
+**PROIBIDO em P3:**
+- Repetir entidade + prazo + canal que já saíram em P1
+- "O programa abre/oferece/disponibiliza" + entidade + curso (= release institucional reembalado)
+- Frase teaser pro H2 ("a seguir, veja...", "no próximo bloco...")
+
+P3 puxa pro 1º H2 sem teaser-fórmula — só com o salto factual já feito.
+
+## LIMITE DE INTRODUÇÃO — MÁXIMO 3 PARÁGRAFOS DE TEXTO ANTES DO 1º H2 (regra dura)
+
+Para Discover/mobile, **a introdução textual é P1 + P2 + P3 — exatos 3 parágrafos. Nunca 4. Nunca 5.** Depois do P3 vem a Resposta Direta (1 `<p class='resposta-direta'>`), depois o snippet `<ul class='snippet-resumo'>` e logo em seguida o **primeiro `<h2>`**.
+
+**ORDEM FIXA E ÚNICA DO TOPO (nenhuma variação):**
+1. `<p>` P1 — barreira + dado + entidade (máx 40 palavras)
+2. `<p>` P2 — autoridade/atribuição + dado novo (máx 40 palavras)
+3. `<p>` P3 — salto factual NOVO que puxa o 1º H2 (máx 40 palavras)
+4. `<p class='resposta-direta'>` — resposta neutra factual GEO (máx 35 palavras)
+5. `<ul class='snippet-resumo'>` — 2 ou 3 `<li>` curtos
+6. `<h2>` primeiro H2 do desenvolvimento
+
+**PROIBIDO ABSOLUTO (= artigo REPROVADO pelo validador, regen forçada):**
+- Inserir 4º, 5º ou qualquer parágrafo `<p>` SEM classe extra entre P3 e o `<h2>`
+- Inserir parágrafo "de transição" / "de contexto" / "de gancho" / "release institucional" / "o que significa isso" entre P3 e o snippet
+- Reescrever o mesmo fato em 2 parágrafos da introdução (mesmo que com palavras diferentes — redundância conceitual também conta)
+- Mover a Resposta Direta ou o snippet pra depois do 1º H2
+
+**TESTE PROGRAMÁTICO (validador roda automático no HTML final):**
+- Conte os `<p>` SEM atributo `class` antes do 1º `<h2>`. **Resultado obrigatório: exatamente 3.**
+- Conte o total de `<p>` (com ou sem class) + `<ul>` antes do 1º `<h2>`. **Resultado obrigatório: máximo 5** (P1, P2, P3, resposta-direta, snippet — onde snippet `<ul>` conta como 1 elemento).
+- Se o validador detectar `<p>` sem class > 3 antes do `<h2>` → severidade=fail → regen automática com feedback.
+
+**RAZÃO EDITORIAL** (pra modelo entender, não só obedecer):
+- Mobile preview do Discover corta em ~150 chars. Quem só lê o P1 precisa ter o LEAD inteiro. Inflar pra 5 parágrafos NÃO ajuda — só dilui.
+- 5 parágrafos antes do H2 = leitor mobile nunca vê o desenvolvimento. Bounce sobe, sinal pro Google despenca.
+- Cada parágrafo extra ANTES do H2 = peso morto que rouba CTR do snippet e do 1º H2 (que é onde o conteúdo "começa" pra Discover).
 
 ### EXEMPLO — ERRADO (4 parágrafos de intro, meta-narrativa, último vira release):
 ```html
@@ -802,7 +833,9 @@ Para Discover/mobile, **a introdução inteira (P1 + P2 + P3) vai até 3 parágr
 <p>O combo de previdência complementar e participação nos lucros muda a conta total — e é justamente o que a divulgação preliminar não destaca.</p>
 ```
 
-## RESPOSTA DIRETA (OBRIGATÓRIO — inserir ENTRE o P1 e o snippet-resumo)
+## RESPOSTA DIRETA (OBRIGATÓRIO — inserir DEPOIS do P3 e ANTES do snippet-resumo)
+
+**POSIÇÃO ÚNICA:** item 4 da ORDEM FIXA DO TOPO — DEPOIS do `<p>` do P3, ANTES do `<ul class='snippet-resumo'>`. Nunca colar imediatamente após o P1, nunca depois do snippet, nunca depois do 1º H2.
 
 O P1 carrega o gancho emocional para o Discover (clique). **A RESPOSTA DIRETA carrega o fato para GEO** (citação por ChatGPT, Perplexity, Gemini, AI Overview). Sem ela, nosso conteúdo NÃO é citado por IA generativa em 2026.
 
@@ -815,23 +848,40 @@ O P1 carrega o gancho emocional para o Discover (clique). **A RESPOSTA DIRETA ca
 - Classe CSS: `<p class='resposta-direta'>` (marcação semântica pra IAs identificarem)
 - ZERO frase emocional, ZERO pergunta retórica, ZERO "descubra/veja/entenda"
 
-**EXEMPLO — Discover (P1) + GEO (Resposta direta):**
+**EXEMPLO — ordem completa do topo (P1, P2, P3, resposta-direta, snippet, H2):**
 ```html
-<!-- P1: gancho emocional -->
-<p>Tem gente que fez toda a inscrição no Senac-ES em Pinheiros, anexou documento certinho e mesmo assim ficou de fora. O motivo está num trecho do edital que poucas pessoas leem antes de enviar, e ele muda quem garante uma das <strong>15 vagas gratuitas</strong> liberadas nesta quinta.</p>
+<!-- P1: gancho emocional (barreira + dado) -->
+<p>Tem gente que fez toda a inscrição no Senac-ES em Pinheiros, anexou documento certinho e mesmo assim ficou de fora — o motivo está num trecho do edital que muda quem garante uma das <strong>15 vagas gratuitas</strong> liberadas nesta quinta.</p>
+
+<!-- P2: autoridade + dado novo -->
+<p>O Senac-ES informa que a triagem privilegia inscritos com renda familiar abaixo de 2 salários mínimos comprovada pelo CadÚnico, segundo o edital nº 12/2026.</p>
+
+<!-- P3: salto factual NOVO que puxa o 1º H2 (não repete entidade+prazo+canal) -->
+<p>O recorte de renda é o ponto que mais elimina inscritos no estado: em 2025, 41% dos candidatos apresentaram CadÚnico desatualizado e perderam a vaga.</p>
 
 <!-- Resposta direta: factual, pra citação por IA -->
 <p class='resposta-direta'>O Senac-ES abriu 15 vagas gratuitas no curso técnico de Administração em Pinheiros nesta quinta-feira, com inscrições até 30 de abril pelo site oficial da instituição.</p>
+
+<!-- Snippet escaneável: 2-3 bullets com dados-chave -->
+<ul class='snippet-resumo' style='background:#fafafa; border-left:4px solid #0b57d0; padding:14px 18px; margin:18px 0; list-style:none;'>
+  <li style='margin:6px 0;'><strong>Vagas:</strong> 15 no Senac-ES de Pinheiros (ES).</li>
+  <li style='margin:6px 0;'><strong>Prazo:</strong> inscrições até 30 de abril.</li>
+  <li style='margin:6px 0;'><strong>Requisito:</strong> CadÚnico ativo + renda até 2 salários mínimos.</li>
+</ul>
+
+<!-- 1º H2 do desenvolvimento -->
+<h2>Como o CadÚnico decide quem fica com cada uma das 15 vagas em Pinheiros</h2>
 ```
 
 **POR QUE ISSO FUNCIONA:**
-- O Discover clica no P1 (emocional)
-- A IA extrai a RESPOSTA DIRETA (factual, curta, com 5W)
-- Os 2 se complementam — você ganha CTR **e** citação
+- O Discover clica no P1 (emocional). P2 e P3 entregam autoridade + ângulo novo SEM parafrasear.
+- A IA extrai a RESPOSTA DIRETA (factual, curta, com 5W).
+- O snippet escaneia em 2 segundos no mobile.
+- Total: exatos 3 `<p>` SEM classe + 1 `<p class='resposta-direta'>` + 1 `<ul>` antes do H2 — gate do validador passa.
 
 ## SNIPPET DE RESUMO (OBRIGATÓRIO — inserir LOGO APÓS A RESPOSTA DIRETA)
 
-O Google Discover e o Search adoram snippets escaneáveis logo no topo. Após o P1 (antes do P2, antes de qualquer backlink), inserir `<ul>` com **2 ou 3 bullets** que resumem as informações VITAIS do artigo.
+O Google Discover e o Search adoram snippets escaneáveis logo no topo. **Posição exata: imediatamente APÓS o `<p class='resposta-direta'>` e ANTES do primeiro `<h2>`** (item 5 da ORDEM FIXA DO TOPO). Inserir `<ul>` com **2 ou 3 bullets** que resumem as informações VITAIS do artigo.
 
 **REGRAS:**
 - 2 ou 3 itens (nunca 1, nunca 4+). Cada `<li>` tem 1 frase curta (máx **14 palavras**).
@@ -849,7 +899,7 @@ O Google Discover e o Search adoram snippets escaneáveis logo no topo. Após o 
 </ul>
 ```
 
-**POSIÇÃO EXATA:** DEPOIS do `<p>` do P1, ANTES do `<p>` do P2. Nunca dentro de um `<p>`. Nunca no fechamento.
+**POSIÇÃO EXATA (item 5 da ORDEM FIXA DO TOPO):** DEPOIS do `<p class='resposta-direta'>`, ANTES do primeiro `<h2>`. Nunca dentro de um `<p>`. Nunca no fechamento. Nunca antes do P2 ou P3.
 
 ## BACKLINKS INTERNOS — SEMPRE EMBUTIDOS EM FRASE CONTEXTUAL (nunca standalone)
 
@@ -1054,14 +1104,25 @@ Um artigo que apenas reescreve a fonte é canibal de SEO e não viraliza. O que 
 **OBRIGATÓRIO:** Todo H2 deve conter ESPECIFICIDADE + CONSEQUÊNCIA REAL (perda, exclusão ou ganho imediato) **E ENTREGAR A RESPOSTA PRINCIPAL do tópico**. H2 genérico ("Requisitos", "Como funciona") = morto para Discover e para featured snippets. Quem ler só os H2s do artigo deve sair com a resposta na cabeça.
 
 **GATILHOS DE TENSÃO para H2 (usar ao menos 1 por H2):**
-- "O detalhe que barra..."
-- "O erro que elimina..."
-- "O prazo fatal..."
-- "O limite que quase ninguém percebe..."
-- "O filtro que está barrando..."
-- "O documento que [X]% esquecem..."
-- "O passo que trava..."
-- "Por que [X] em cada [Y] desistem..."
+
+REGRA DURA: cada gatilho exige o **objeto real nomeado no próprio H2** — `[GATILHO] + [O QUÊ específico] + [DADO/LOCAL]`. Sem o "o quê", o H2 é vago e cai no AntiAIValidator.
+
+- "O detalhe **de [X específico]** que barra..." (ex: "O detalhe da cláusula 4.2 que barra inscrições sem CNH-D")
+- "O erro **na [etapa específica]** que elimina..." (ex: "O erro no preenchimento do CPF que elimina candidatos antes da prova")
+- "O prazo **de [data]** que..." (data real, não "fatal" abstrato)
+- "O limite **de [N]** que..." (número concreto)
+- "O filtro **de [critério]** que está barrando..." (critério nomeado)
+- "O documento **[nome]** que [X]% esquecem..."
+- "O passo **[N do edital]** que trava..."
+- "Por que [X] em cada [Y] desistem **de [etapa nomeada]**..."
+
+**PROIBIDO** (esses são prompt-leak — geram severity=fail no validador):
+- "O erro que elimina a inscrição" (sem qualificador concreto)
+- "O detalhe que derruba a maioria"
+- "O filtro que barra candidatos" (sem dizer qual filtro)
+- Qualquer H2 onde "erro/detalhe/filtro/ponto" aparece sem o critério nomeado
+
+**EXCEÇÃO ÚNICA**: gatilhos com tom de "elimina/derruba/barra a inscrição" só servem em concurso/Fies/Prouni com critério eliminatório real. Em curso por ordem de chegada (Senac/Sejuv/Sesi), em tutorial, em lista de cursos: PROIBIDO usar essa família — escolher gatilho factual ("Como/Quando/Onde + dado").
 
 **LOCALIDADE:** O PRIMEIRO H2 do artigo DEVE conter nome da cidade ou estado (reforça sinal geográfico do Discover).
 
@@ -1135,47 +1196,44 @@ Se o artigo tem instruções de **"Como consultar"**, **"Como sacar"**, **"Como 
 - O link externo dofollow do bloco de ação DEVE estar DENTRO de um `<li>` (nunca antes da lista, nunca depois).
 - PROIBIDO usar `<ol>` para listas que NÃO são ordem/sequência (ex: requisitos, documentos — esses continuam em `<ul>`).
 
-## SEÇÃO "ERRO FATAL" (H2 de altíssima conversão — obrigatório quando tema tem prazo/critério)
+## SEÇÃO "ERRO FATAL" (H2 OPCIONAL — só com critério eliminatório EXPLÍCITO na fonte)
 
-Quando o tema envolve **prazo** ou **critério eliminatório** (concurso, inscrição, seleção, benefício condicionado), INSERIR um H2 dedicado entre a análise contextual e o bloco de ação, chamando atenção pro erro mais comum que tira o leitor da disputa.
+Esta seção NÃO é padrão. Só entra quando a fonte cita um critério **classificatório/eliminatório explícito** que reprova candidato após inscrição válida.
 
-**SUGESTÕES DE TÍTULO:**
-- "O erro que elimina a inscrição na hora"
-- "O detalhe do edital que derruba a maioria"
-- "O que faz você perder a vaga mesmo inscrito"
-- "Por que tanta gente é eliminada antes de concorrer"
+**GATE — usar APENAS se o tema tiver UM destes:**
+- Concurso público com prova objetiva e nota de corte (ex: PF, INSS, TRF)
+- Programa com comprovação de renda CadÚnico que reprova divergência (Fies, Prouni, Bolsa Família, Pé-de-Meia)
+- Idade-limite legal eliminatória (ex: concurso militar, jovem aprendiz)
+- Edital de seleção competitiva com classificação por nota/análise curricular
+- Benefício previdenciário com requisito de tempo de contribuição/carência
 
-**ESTRUTURA (3 parágrafos curtos):**
-1. Frase de abertura com situação real ("Tem gente que preencheu o formulário inteiro e mesmo assim foi eliminado porque...")
-2. O erro específico, com atribuição à fonte ("Segundo o edital...")
-3. Como evitar — ação concreta possível AGORA
+**NÃO USAR em (lista taxativa — qualquer um destes proíbe a seção):**
+- Cursos grátis com vagas por **ordem de chegada/inscrição** (Senac, Sejuv, Sesi, Sesc, prefeituras, oficinas) — não há erro que elimina, quem não pegou foi por velocidade
+- Cursos com vagas remanescentes / oferta livre / lista de espera
+- Tutoriais, dicas, listas de cursos, comparativos
+- Posts informativos sobre calendário/datas/locais sem critério de reprovação
 
-**REGRA:** a informação do erro DEVE vir da fonte. Não invente um "erro" pra encaixar o H2. Se a fonte não tem critério eliminatório → pule esse H2 (não force).
+**ESCRITA (se o gate passou):**
+- Título do H2 deve **nomear o critério real** (não "o erro que…"). Ex: "Comprovação de renda no CadÚnico reprova [N%] das inscrições do Fies", "Falta de tempo de contribuição barra aposentadoria do INSS"
+- 3 parágrafos: situação real → critério específico atribuído à fonte → ação concreta hoje
+- PROIBIDO: títulos vagos com "o erro/detalhe/filtro/ponto que (elimina|derruba|barra)" sem o critério nomeado no próprio título
+- A informação DEVE vir da fonte. Sem fonte = sem H2.
 
-**EXEMPLO:**
-```html
-<h2>O erro que elimina candidatos do Fies antes mesmo da prova</h2>
-<p>Tem gente que termina a inscrição no Fies e fica com a sensação de dever cumprido, mas acaba eliminada na fase de comprovação de renda sem entender o porquê.</p>
-<p>Segundo o edital do Fies 2026, a renda bruta familiar per capita não pode passar de 3 salários mínimos. O erro está em não incluir todos os moradores do domicílio no cálculo — o sistema cruza com dados do CadÚnico e qualquer divergência derruba a inscrição.</p>
-<p>Dá pra evitar hoje: abrir o extrato do CadÚnico, conferir quem está registrado, e ajustar os dados antes de enviar a inscrição.</p>
-```
+**PATTERN INTERRUPT VISUAL `.alerta-critico` (opcional):**
 
-**PATTERN INTERRUPT VISUAL (opcional, USAR DENTRO da seção "Erro Fatal"):**
+UM bloco `.alerta-critico` pode ser inserido DENTRO desta seção pra destaque vermelho. CSS é injetado pelo sistema.
 
-Pra maximizar impacto visual e retenção, você pode inserir UM bloco `.alerta-critico` dentro dessa seção — funciona como box de aviso em vermelho. O CSS é injetado automaticamente pelo sistema; você só escreve o HTML:
+**Estrutura HTML** (preencher com o critério real do edital, NÃO copiar o exemplo):
+- `<div class='alerta-critico'>`
+- `<p class='alerta-critico__titulo'>` — título nomeando o critério (até 8 palavras)
+- `<p class='alerta-critico__texto'>` — explicação com `<strong>` em 1-3 palavras-chave (até 30 palavras)
+- `</div>`
 
-```html
-<div class='alerta-critico'>
-  <p class='alerta-critico__titulo'>Erro que derruba a inscrição</p>
-  <p class='alerta-critico__texto'>Sem o <strong>CadÚnico atualizado</strong>, a comprovação de renda falha automaticamente, e o sistema elimina a inscrição <strong>sem aviso</strong>.</p>
-</div>
-```
-
-**REGRAS do alerta-critico:**
-- Máximo **1 bloco** por artigo (senão perde força visual)
-- Usar APENAS em tema com prazo/critério eliminatório real
-- Título em até 8 palavras, texto em até 30 palavras
-- `<strong>` em 1-3 palavras-chave (o CSS destaca em vermelho escuro)
+**REGRAS DURAS do alerta-critico:**
+- Máximo **1 bloco** por artigo
+- Só usar se o gate da seção "Erro Fatal" passou (mesmas exclusões acima)
+- PROIBIDO copiar o título "Erro que derruba a inscrição" — esse é exemplo de prompt, não conteúdo. Nomear o critério específico do edital.
+- PROIBIDO inventar critério pra justificar o bloco visual
 
 ## Fechamento (específico ao tema, NÃO genérico) — CTA PSICOLÓGICO OBRIGATÓRIO
 
@@ -1584,8 +1642,9 @@ VERIFICAÇÃO FINAL:
 - H2s têm gatilho E ENTREGAM A RESPOSTA PRINCIPAL do tópico (nunca apenas informativo, nunca genérico)
 - Micro-cliffhanger com dado ANTES de cada H2
 - Ao menos 1 URL externa dofollow de instituição oficial (se backlinks internos insuficientes)
-- `<p class='resposta-direta'>` inserido ENTRE o P1 e o snippet-resumo, 1-2 frases factuais com 5W (GEO/citação por IA)
-- `<ul class='snippet-resumo'>` com 2-3 bullets inserido LOGO APÓS a resposta direta (se a fonte sustenta)
+- `<p class='resposta-direta'>` inserido DEPOIS do P3 e ANTES do snippet (item 4 da ORDEM FIXA), 1-2 frases factuais com 5W (GEO/citação por IA)
+- `<ul class='snippet-resumo'>` com 2-3 bullets inserido LOGO APÓS a resposta direta e ANTES do 1º H2 (item 5 da ORDEM FIXA)
+- **GATE de intro**: exatamente 3 `<p>` SEM atributo `class` antes do 1º `<h2>` (P1, P2, P3). 4 ou mais = artigo REPROVADO pelo validador, regen forçada
 - Pelo menos **2 atribuições explícitas** ao longo do artigo ("Segundo [ÓRGÃO]...", "De acordo com..."), com link dofollow pra fonte oficial quando existe
 - **H2 de análise contextual** ("O que isso sinaliza" ou similar) inserido perto do fim, sem inventar números
 - ZERO termos genéricos banidos: "oportunidade" sem qualificação, "diversos", "incrível", "relevante", "conforme mencionado", "Em suma", "Diante disso" — nenhum presente
@@ -1595,7 +1654,7 @@ VERIFICAÇÃO FINAL:
 - TÍTULO com número nas 3 primeiras palavras E entidade antes da barreira. Teste: tirando as 5 primeiras palavras, dá pra saber do que se trata? Se não → reescreva.
 - **COERÊNCIA DE TOM**: o tom do título reflete o tom da fonte? Se a fonte é OFERTA EDUCATIVA POSITIVA (curso, guia, tutorial, dica), título NÃO PODE acusar entidade de barrar/eliminar/trava/bloquear ninguém — usa Padrão 7 ou 8 com palavras de UTILIDADE (ensina, revela, mostra, destrincha). Teste do verbo oposto: se trocar o verbo do título por seu oposto a verdade fica mais clara, o título mente.
 - **COERÊNCIA DE DATAS**: toda data do título aparece LITERALMENTE no corpo E tem origem na fonte. Contagem regressiva ("em X dias") bate com o calendário real (hoje={{DATA_HOJE}}). Zero data inventada.
-- **SEÇÃO "ERRO FATAL"** inserida quando tema tem prazo/critério eliminatório — com 3 parágrafos (situação real + erro específico atribuído à fonte + ação evitável agora).
+- **SEÇÃO "ERRO FATAL"** OPCIONAL — só inserir se a fonte cita critério eliminatório EXPLÍCITO (ver gate na seção dedicada). PROIBIDA em curso por ordem de chegada, oferta livre, tutorial. Quando inserida, nomear o critério REAL no H2 (não usar "o erro que elimina" sem qualificador).
 - **FECHAMENTO com CTA psicológico**: 3 linhas com consequência datada + dado novo inédito + micro-ação executável agora. Zero "boa sorte", zero "não adie".
 - **MICRO-TENSÃO distribuída**: mínimo 3 frases no corpo com padrão "o detalhe é X", "quem só olhou A deixou escapar B", sempre com dado concreto anexado.
 - **BLOCO `.alerta-critico`** (opcional, 1 por artigo): inserir dentro da seção "Erro Fatal" se quiser destaque visual vermelho. HTML é auto-contido, CSS injetado pelo sistema.
