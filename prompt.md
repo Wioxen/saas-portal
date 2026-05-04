@@ -1237,6 +1237,28 @@ REGRA DURA: cada gatilho exige o **objeto real nomeado no próprio H2** — `[GA
 **PALAVRAS DE IMPACTO obrigatórias nos H2 (usar ao menos 1 por H2):**
 "Erro", "Bloqueio", "Urgente", "Única Chance", "Fatal", "Barra", "Elimina", "Engana", "Trava", "Perde"
 
+**🚫 H2 EM FORMATO PERGUNTA — PROIBIDO no desenvolvimento (regra dura)**
+
+H2s do corpo NUNCA podem ser perguntas. Perguntas são EXCLUSIVAS da seção FAQ no fim. Caso contrário, o artigo duplica conteúdo: h2-pergunta no corpo + mesma pergunta no FAQ = redundância semântica que dilui autoridade Google.
+
+**ERRADO** (h2 em formato pergunta — invade FAQ):
+- "Quem pode participar?"
+- "Como se inscrever?"
+- "O que é a plataforma?"
+- "O certificado vale?"
+- "Plataforma X ou Y: qual acessar?"
+- "O que o certificado do MEC vale"
+
+**CERTO** (h2 em formato afirmativo — entrega resposta direto):
+- "Programa aceita 100% dos candidatos com CPF, sem restrição"
+- "Inscrição fecha em 7 dias e tem 4 etapas obrigatórias"
+- "Aprenda Mais é a plataforma oficial; AVAMEC é descontinuado em 2026"
+- "Certificado MEC vale como horas extracurriculares e em concursos"
+
+**TESTE:** se o seu h2 tem `?` ou começa com "Quem/Qual/Como/Onde/Quando/Por que/O que" → REESCREVA como afirmação com dado. O leitor deve sair do h2 com a RESPOSTA, não com mais uma pergunta.
+
+**EXCEÇÃO ÚNICA:** seção `<h2>Perguntas frequentes</h2>` (ou variantes "FAQ", "Dúvidas") + `<details><summary>Pergunta?</summary>...</details>`. Aí sim. Em mais nenhum lugar.
+
 **REGRA DE DADO CONCRETO NO MEIO DO ARTIGO:**
 Se a fonte tem números (vagas, turmas, dias, horas) → distribuir ao longo dos H2 e parágrafos. Se a fonte não dá números explícitos → NÃO inventar, mas usar referências indiretas ("turmas com vagas limitadas", "carreta com tempo de permanência definido").
 

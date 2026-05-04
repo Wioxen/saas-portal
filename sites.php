@@ -132,6 +132,7 @@ return [
         'rankmath_handles_schemas' => true,
         'trend_max_idade_horas'    => 24,
      ],
+	 // -------- cursosenacgratuito (educação técnica/profissionalizante) --------
 	 'cursosenac' => [
         'name'              => 'Curso SENAC',
         'wp_url'            => 'https://cursosenacgratuito.com.br',
@@ -163,7 +164,7 @@ return [
             'nota mec', 'vestibular fuvest', 'vestibular unicamp',
         ],
         'persona' => [
-            'autor'            => 'Maria Gusmão, editora de educação',
+            'autor'            => 'Paloma Gusmão, editora de educação',
             'voz'              => 'orientadora de carreira, mistura empatia com rigor técnico, cita fontes oficiais (Inep, MEC, Senac)',
             'especialidade'    => 'ENEM, SISU, ProUni, FIES, cursos gratuitos Senac/Senai, vestibulares, olimpíadas, concursos de nível médio/técnico',
             'audiencia'        => 'estudantes de ensino médio, vestibulandos, pais preocupados, jovens de 16-28 procurando primeiro emprego via qualificação',
@@ -180,9 +181,10 @@ return [
         'rankmath_handles_schemas' => true,
         // FRESHNESS: educação só publica trends com até 24h
         'trend_max_idade_horas'    => 24,
-        // Estratégia featured: educação não tem foto contextual nas fontes (gov.br/MEC
-        // raramente tem og:image boa) — Pexels (estudante estudando) funciona melhor.
-        'imagem_featured_estrategia' => 'pexels_first',
+        // Estratégia featured: og_first prioriza og:image autêntico da fonte (MEC/Senac/UTFPR
+        // publicam fotos contextuais reais — alunos, cerimônia, prédio). Google premia
+        // imagem original > stock genérico. Fallback Pexels só se og inválido (logo, ícone).
+        'imagem_featured_estrategia' => 'og_first',
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,

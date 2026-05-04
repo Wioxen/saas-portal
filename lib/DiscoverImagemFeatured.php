@@ -65,9 +65,21 @@ class DiscoverImagemFeatured
 
         $slugSugerido = self::slugSeo($tituloHint, $termo);
 
-        // Estratégia legacy — ignora Pexels/DALL-E
+        // Estratégia legacy — ignora Pexels/DALL-E (leaodabarra: foto real da fonte)
         if ($estrategia === 'og_only') {
             return ['url' => $ogFallback, 'fonte' => 'og', 'metadata' => [], 'slug_sugerido' => $slugSugerido];
+        }
+
+        // og_first — tenta og:image primeiro (autenticidade da fonte), fallback Pexels/DALL-E.
+        // Recomendado pra cursosenac/guiadoscursos: MEC/Senac/UTFPR/IFs publicam imagens
+        // contextuais reais (alunos, cerimônia, prédio) que Google premia mais que stock.
+        if ($estrategia === 'og_first' && self::ogImageValido($ogFallback)) {
+            return [
+                'url' => $ogFallback,
+                'fonte' => 'og',
+                'metadata' => ['motivo' => 'og:image autêntico da fonte (og_first)'],
+                'slug_sugerido' => $slugSugerido,
+            ];
         }
 
         // 1. Pexels (preferido)
@@ -95,6 +107,23 @@ class DiscoverImagemFeatured
             'metadata' => ['motivo' => 'pexels+dalle falharam ou desabilitados'],
             'slug_sugerido' => $slugSugerido,
         ];
+    }
+
+    /**
+     * Heurística: og:image é válido se URL não está vazio e não é logo/ícone/brasão genérico.
+     * Rejeita patterns típicos de logo institucional (gov.br/imagens/brasao.svg, etc).
+     */
+    private static function ogImageValido(string $ogUrl): bool
+    {
+        if ($ogUrl === '' || !filter_var($ogUrl, FILTER_VALIDATE_URL)) return false;
+        $low = mb_strtolower($ogUrl);
+        // Patterns de logo/ícone — rejeitar
+        $rejeitar = ['/logo', '/brand', '/icon', '/favicon', 'brasao', 'avatar', 'placeholder', 'default-image', 'no-image'];
+        foreach ($rejeitar as $p) {
+            if (str_contains($low, $p)) return false;
+        }
+        // Aceitar formatos comuns
+        return preg_match('/\.(jpg|jpeg|png|webp|avif)(\?|$)/i', $low) === 1;
     }
 
     /**

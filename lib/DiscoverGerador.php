@@ -855,6 +855,62 @@ class DiscoverGerador
                                 }
                             }
 
+                            /* PROFUNDIDADE ANALÍTICA (2026-05-04) — etapa Sonnet que adiciona bloco
+                             * analítico (comparação histórica / implicação prática / contexto editorial).
+                             * Source-bound estrito. Custo +$0.05/post. Salto qualitativo pra autoridade Google. */
+                            if ($content !== '' && !empty($textosFontes)) {
+                                if (!class_exists('DiscoverProfundidade')) {
+                                    $dpPath = __DIR__ . '/DiscoverProfundidade.php';
+                                    if (file_exists($dpPath)) require_once $dpPath;
+                                }
+                                if (class_exists('DiscoverProfundidade') && !empty($this->cfg['anthropic_api_key'])) {
+                                    try {
+                                        $prof = new DiscoverProfundidade(
+                                            (string)$this->cfg['anthropic_api_key'],
+                                            (string)($this->cfg['anthropic_model'] ?? 'claude-sonnet-4-6')
+                                        );
+                                        $r = $prof->agregar($content, $textosFontes, $this->cfg);
+                                        if (!empty($r['ok']) && !empty($r['html']) && $r['html'] !== $content) {
+                                            $content = (string)$r['html'];
+                                            $validationReport['profundidade'] = ['aplicou' => true, 'log' => $r['log']];
+                                            $progress->reportar('profundidade_analitica', is_array($r['log']) ? json_encode($r['log']) : (string)$r['log']);
+                                        } else {
+                                            $validationReport['profundidade'] = ['aplicou' => false, 'log' => $r['log'] ?? '?'];
+                                        }
+                                    } catch (Throwable $e) { /* não bloqueia */ }
+                                }
+                            }
+
+                            /* POST-PROCESSING DETERMINÍSTICO (2026-05-04) — última camada antes do gate.
+                             * LLM (Sonnet+Haiku) vaza ~3-5% de frases banidas/travessões/reticências mesmo
+                             * com prompts duros. Find-replace literal aqui zera o que sobrou. Custo: 0 API.
+                             * Re-valida com AntiAI depois pra ver se severity caiu de fail → ok/warn. */
+                            if ($content !== '') {
+                                if (!class_exists('AntiAIPostProcessor')) {
+                                    $ppPath = __DIR__ . '/AntiAIPostProcessor.php';
+                                    if (file_exists($ppPath)) require_once $ppPath;
+                                }
+                                if (class_exists('AntiAIPostProcessor')) {
+                                    $pp = AntiAIPostProcessor::limpar($content, (string)($titulo ?? $termo));
+                                    if (!empty($pp['mudou'])) {
+                                        $content = (string)$pp['html'];
+                                        $reportFinal = $aiVal->validate($content);
+                                        $validationReport['anti_ai_post_processor'] = [
+                                            'aplicou' => true,
+                                            'log'     => $pp['log'],
+                                            'severity_apos' => $reportFinal['severity'] ?? '?',
+                                        ];
+                                        $progress->reportar('anti_ai_post_processor', sprintf(
+                                            'phrases=%d travessoes=%d reticencias=%d → severity %s',
+                                            count($pp['log']['phrases'] ?? []),
+                                            $pp['log']['travessoes'] ?? 0,
+                                            $pp['log']['reticencias_extras'] ?? 0,
+                                            $reportFinal['severity'] ?? '?'
+                                        ));
+                                    }
+                                }
+                            }
+
                             /* GATE PRE-PUBLISH — bloqueia QUALQUER severity=fail (mesmo sem
                              * marker `forca-regen`). Bloqueio = força draft + aviso vermelho no topo.
                              *
@@ -903,6 +959,79 @@ class DiscoverGerador
                             }
                         } catch (Throwable $e) { /* não bloqueia */ }
                     }
+
+                    /* OUTBOUND AUTHORITY (2026-05-04) — análise informativa. NÃO bloqueia.
+                     * Mapeia entidades citadas (MEC/Senac/INSS/etc.) e verifica se o artigo
+                     * tem link externo pro domínio oficial. Sugestão pra revisor humano —
+                     * link só faz sentido com contexto, não é forçado. */
+                    if (!class_exists('OutboundAuthorityChecker')) {
+                        $oacPath = __DIR__ . '/OutboundAuthorityChecker.php';
+                        if (file_exists($oacPath)) require_once $oacPath;
+                    }
+                    if (class_exists('OutboundAuthorityChecker')) {
+                        try {
+                            $oacReport = OutboundAuthorityChecker::analisar($content);
+                            $validationReport['outbound_authority'] = $oacReport;
+                            $progress->reportar('outbound_authority', OutboundAuthorityChecker::reportToLogLine($oacReport));
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+
+                    /* GATE LENGTH (2026-05-04) — sweet spot 1200-2000 palavras pra Discover/SEO.
+                     * <800 ou >2800 → fail → draft. Entre warn faixas → segue mas marca. */
+                    if (!class_exists('LengthGate')) {
+                        $lgPath = __DIR__ . '/LengthGate.php';
+                        if (file_exists($lgPath)) require_once $lgPath;
+                    }
+                    if (class_exists('LengthGate')) {
+                        try {
+                            $lengthReport = LengthGate::avaliar($content);
+                            $validationReport['length'] = $lengthReport;
+                            $progress->reportar('validando_length', LengthGate::reportToLogLine($lengthReport));
+                            if (($lengthReport['severity'] ?? '') === 'fail') {
+                                $marc = 'RASCUNHO BLOQUEADO POR LENGTH (palavras fora do sweet spot 1200-2000)';
+                                if (stripos($content, $marc) === false) {
+                                    $aviso = "<div style='background:#fef9c3;border:2px solid #ca8a04;border-left:6px solid #a16207;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                          . "<strong style='color:#713f12;font-size:15px'>📏 {$marc}</strong>"
+                                          . "<p style='margin:6px 0 0;color:#854d0e;font-size:13px'>{$lengthReport['motivo']}. Sweet spot Google Discover: 1200-2000 palavras.</p></div>";
+                                    $content = $aviso . $content;
+                                }
+                                try {
+                                    $this->wp->atualizarPost($postId, ['content' => $content, 'status' => 'draft']);
+                                    $progress->reportar('publish_bloqueado_length', $lengthReport['motivo']);
+                                } catch (Throwable $e) {}
+                                $validationReport['length_publish_blocked'] = ['blocked' => true, 'severity' => 'fail', 'motivo' => $lengthReport['motivo']];
+                            }
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+
+                    /* GATE ORIGINALITY (2026-05-04) — Jaccard contra fontes.
+                     * jaccard >= 0.60 → fail → draft (artigo é só paráfrase, Google penaliza). */
+                    if (!class_exists('OriginalityChecker')) {
+                        $ocPath = __DIR__ . '/OriginalityChecker.php';
+                        if (file_exists($ocPath)) require_once $ocPath;
+                    }
+                    if (class_exists('OriginalityChecker') && !empty($textosFontes)) {
+                        try {
+                            $origReport = OriginalityChecker::analisar($content, $textosFontes);
+                            $validationReport['originality'] = $origReport;
+                            $progress->reportar('validando_originality', OriginalityChecker::reportToLogLine($origReport));
+                            if (($origReport['severity'] ?? '') === 'fail') {
+                                $marc = 'RASCUNHO BLOQUEADO POR ORIGINALITY (artigo muito similar à fonte)';
+                                if (stripos($content, $marc) === false) {
+                                    $aviso = "<div style='background:#fef9c3;border:2px solid #ca8a04;border-left:6px solid #a16207;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                          . "<strong style='color:#713f12;font-size:15px'>🔁 {$marc}</strong>"
+                                          . "<p style='margin:6px 0 0;color:#854d0e;font-size:13px'>Jaccard máximo: {$origReport['jaccard_max']}. Acima de 0.60 = paráfrase. Google penaliza near-duplicate. Reescrever ângulo/estrutura.</p></div>";
+                                    $content = $aviso . $content;
+                                }
+                                try {
+                                    $this->wp->atualizarPost($postId, ['content' => $content, 'status' => 'draft']);
+                                    $progress->reportar('publish_bloqueado_originality', "jaccard={$origReport['jaccard_max']}");
+                                } catch (Throwable $e) {}
+                                $validationReport['originality_publish_blocked'] = ['blocked' => true, 'jaccard_max' => $origReport['jaccard_max']];
+                            }
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+
                     if (!class_exists('SourceFidelityValidator')) {
                         $sfPath = __DIR__ . '/SourceFidelityValidator.php';
                         if (file_exists($sfPath)) require_once $sfPath;
@@ -924,7 +1053,9 @@ class DiscoverGerador
                             ]);
                             $validationReport['fidelity'] = $fidReport;
                             $progress->reportar('validando_fidelidade', SourceFidelityValidator::reportToLogLine($fidReport));
-                            // Grava report quando severity=fail (não bloqueia publicação aqui — orquestrador decide)
+                            // GATE FIDELITY (endurecido 2026-05-04): severity=fail → força draft + aviso laranja.
+                            // Antes só gravava debug e marcava trend como fidelity_warn no DB, mas o post WP
+                            // continuava publicado se default=publish. Agora bloqueia visualmente também.
                             if (($fidReport['severity'] ?? '') === 'fail') {
                                 $dbgPath = __DIR__ . '/../data/debug/fidelity_fail_' . date('Ymd_His') . '_' . $trendId . '.json';
                                 @mkdir(dirname($dbgPath), 0777, true);
@@ -935,6 +1066,31 @@ class DiscoverGerador
                                     'modelo'   => 'claude',
                                     'report'   => $fidReport,
                                 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+                                $marcadorFid = 'RASCUNHO BLOQUEADO POR FIDELIDADE DE FONTE';
+                                if (stripos($content, $marcadorFid) === false) {
+                                    $aviso = "<div style='background:#fff7ed;border:2px solid #ea580c;border-left:6px solid #c2410c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                          . "<strong style='color:#9a3412;font-size:15px'>⚠️ {$marcadorFid}</strong>"
+                                          . "<p style='margin:6px 0 0;color:#7c2d12;font-size:13px'>Nomes ou URLs sem lastro nas fontes scrapeadas. CONFIRME cada um (ou remova) antes de publicar:</p>"
+                                          . "<ul style='margin:8px 0 0;color:#7c2d12;font-size:13px;padding-left:22px'>";
+                                    foreach (array_slice((array)($fidReport['issues'] ?? []), 0, 8) as $iss) {
+                                        $valor = (string)($iss['valor'] ?? '?');
+                                        $tipo = (string)($iss['tipo'] ?? '?');
+                                        $ctx = mb_substr((string)($iss['contexto'] ?? ''), 0, 90);
+                                        $aviso .= '<li><strong>[' . htmlspecialchars($tipo) . ']</strong> ' . htmlspecialchars($valor) . ($ctx ? ' — <em>"…' . htmlspecialchars($ctx) . '…"</em>' : '') . '</li>';
+                                    }
+                                    $aviso .= '</ul></div>';
+                                    $content = $aviso . $content;
+                                }
+                                try {
+                                    $this->wp->atualizarPost($postId, ['content' => $content, 'status' => 'draft']);
+                                    $progress->reportar('publish_bloqueado_fidelity', 'severity=fail SourceFidelity — forçado draft + aviso laranja');
+                                } catch (Throwable $e) {}
+                                $validationReport['fidelity_publish_blocked'] = [
+                                    'blocked'  => true,
+                                    'issues'   => array_slice((array)($fidReport['issues'] ?? []), 0, 8),
+                                    'severity' => $fidReport['severity'],
+                                ];
                             }
                         } catch (Throwable $e) { /* não bloqueia */ }
                     }

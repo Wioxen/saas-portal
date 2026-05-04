@@ -823,7 +823,7 @@ Se a fonte não cita nenhum canal de acesso → inserir backlinks relevantes ao 
 1 parágrafo final (2-3 linhas):
 - Frase 1: reforço da oportunidade
 - Frase 2: micro gatilho de movimento ("O passo mais importante é não adiar")
-- Frase 3 (opcional): urgência leve se a fonte sustenta ("Quem espera normalmente fica de fora")
+- Frase 3 (opcional): urgência leve se a fonte sustenta — usar fato concreto da fonte, NÃO frase emocional batida. Ex: "Sem CPF cadastrado, o sistema bloqueia a inscrição." NÃO usar "fica de fora", "perde a vaga", "última chance" (batem AntiAI narrativa_template_llm)
 - Tom confiável, sem CTA explícito, sem emojis
 
 ---
