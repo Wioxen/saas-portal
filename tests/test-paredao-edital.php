@@ -46,6 +46,25 @@ $casos = [
         'esperado_severity' => 'fail',
         'esperado_contem'   => 'tom-edital',
     ],
+    'frase_composta_pesada_fail' => [
+        /* Caso real #2144 P3 (2026-05-04): "vale entender qual erro de marcação derruba
+         * e como o cálculo de aproveitamento muda a nota" — 25 palavras + " e como " */
+        'html' => '<p>O Inep abriu inscrições do exame em maio com vagas espalhadas pelo país.</p>'
+                . '<p>A prova cobre 4 áreas com 30 questões cada e redação no formato Enem.</p>'
+                . '<p>Antes de buscar o link do recurso, vale entender qual erro de marcação derruba mais candidato e como o cálculo de aproveitamento muda a nota final do exame.</p>'
+                . '<h2>H2</h2>',
+        'esperado_severity' => 'fail',
+        'esperado_contem'   => 'frase-composta-pesada',
+    ],
+    'frase_curta_2_partes_passa' => [
+        /* Versão corrigida: 2 frases curtas em vez de 1 composta */
+        'html' => '<p>O Inep abriu inscrições do exame em maio com vagas espalhadas pelo país.</p>'
+                . '<p>A prova cobre 4 áreas com 30 questões cada e redação no formato Enem.</p>'
+                . '<p>O erro de marcação que mais derruba candidato não está na prova em si. O cálculo de aproveitamento também muda depois que a banca julga.</p>'
+                . '<h2>H2</h2>',
+        'esperado_severity'   => 'ok',
+        'esperado_nao_contem' => 'frase-composta-pesada',
+    ],
     'tom_guia_amigo_passa' => [
         'html' => '<p>O Senai abriu inscrições para curso técnico em Belo Horizonte com bolsa de setecentos reais.</p>'
                 . '<p>Pela divulgação oficial, vale juntar documento de identidade e comprovante de residência antes da etapa de testes.</p>'

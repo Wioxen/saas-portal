@@ -77,25 +77,65 @@ detectados nele. Sua tarefa: reescrever os trechos com problema preservando:
    (você ESTÁ revisando, não pesquisando)
 3. **Estrutura HTML**: manter h2/h3/p/ul/li/strong/table como vieram
 
-PADRÕES DE IA QUE VOCÊ DEVE REMOVER (causa de penalização Google):
-- Frases-catálogo: "Mas tem um detalhe", "E é aqui que muita gente erra",
-  "O problema? A maioria descobre tarde demais", "Só que isso muda tudo",
-  "Vale destacar", "É importante", "Diante disso", "Em suma", "Nesse contexto"
-- Teasers isolados em parágrafo único curto: <p>Mas tem um detalhe.</p>
-- Self-reference: "Veja a seguir", "Confira abaixo", "Continue lendo"
-- H2/H3 templete: "O que ninguém te conta", "O que quase ninguém percebe",
-  "Vale a pena agora?"
-- Listas com EXATAMENTE 3 itens (LLM ama trio)
-- Mesmo conector >2x ("nesse contexto" 3 vezes no artigo)
-- Adjetivos vazios isolados: "incrível", "fundamental", "essencial"
+═══ LISTA NEGRA LITERAL — REMOVER QUALQUER OCORRÊNCIA ═══
+Faça find-and-replace mental destas frases. Cada ocorrência reprova o artigo.
 
-PRINCÍPIOS DE REESCRITA:
-1. Em vez de teaser, usar FATO CONCRETO da prosa: "Mas tem um detalhe" → "A regra
-   tem uma exceção: famílias com renda acima de R\$ 1.518"
-2. Em vez de H2 "O que ninguém te conta" → H2 com dado único: "Renda até R\$ 1.518
-   garante isenção automática"
-3. Em vez de lista de 3 itens, expandir pra 4-5 OU embutir no parágrafo
-4. Cada parágrafo termina com FATO ou pausa natural — nunca com teaser-clichê
+CONECTORES ROBÔ: "em suma", "em síntese", "em conclusão", "em resumo",
+"em última análise", "em última instância", "em contrapartida", "diante disso",
+"diante desse cenário", "diante do exposto", "vale destacar", "vale ressaltar",
+"vale lembrar", "vale mencionar", "cabe destacar", "cabe ressaltar",
+"é importante destacar", "é importante ressaltar", "é fundamental destacar",
+"nesse contexto", "neste contexto", "nesse sentido", "nesse cenário",
+"sob esse prisma", "sob essa ótica", "dessa forma", "dessa maneira", "desse modo",
+"portanto", "por conseguinte", "ademais", "outrossim", "dito isso", "isto posto"
+
+CLICHÊS ABERTURA: "a verdade é que", "o que ninguém te conta",
+"o que quase ninguém percebe", "vale a pena agora", "só que isso muda tudo",
+"mas tem um detalhe que quase ninguém", "e é aqui que muita gente erra",
+"a maioria descobre tarde demais", "a vaga não espera", "fica a dica",
+"simples assim", "parece simples, não é"
+
+TEMPLATE NARRATIVO: "tem gente que", "tem gente em", "quem tenta", "quem busca",
+"quem espera", "quem precisa", "ficou de fora", "fica de fora", "fiquem de fora",
+"animada com a vaga", "esperançoso com"
+
+FILLERS NARRATIVOS: "rapidamente", "mesmo assim", "na prática", "na real",
+"no fim das contas", "logo de cara", "já de cara", "acaba descobrindo"
+
+PROMESSA VAGA: "o filtro que", "esse filtro", "o erro que", "esse erro",
+"o detalhe que", "esse detalhe", "o problema que", "esse problema", "o ponto que",
+"esse ponto", "o critério que", "esse critério", "o que muita gente desconhece"
+
+ADJETIVOS VAZIOS: "imperdível", "incrível", "revolucionário", "surpreendente",
+"transformador", "magnífico", "extraordinário", "memorável" (isolados, sem
+qualificação concreta)
+
+SELF-REFERENCE: "veja a seguir", "confira a seguir", "leia abaixo",
+"descubra a seguir", "clique aqui", "continue lendo abaixo"
+
+GERUNDISMO: "estar fazendo", "estarão recebendo", "estará buscando",
+"vai estar acompanhando"
+
+POMPOSO: "outrora", "doravante", "destarte", "far-se-á", "tem-se que"
+
+═══ ESTRUTURAIS QUE VOCÊ DEVE CORRIGIR ═══
+- Frase com 30+ palavras: QUEBRAR em 2 frases curtas
+- Travessões "—" no corpo: SUBSTITUIR por vírgula, parênteses ou ponto
+- Reticências "..." mais de 1x: REMOVER as extras
+- Listas com EXATAMENTE 3 itens: expandir pra 4-5 OU embutir no parágrafo
+- Mesmo conector >1x ("Além disso" 2x): trocar a 2ª por outro
+- 4+ parágrafos antes do 1º H2: COMPRIMIR pra exatos 3 (P1+P2+P3)
+- Tom-edital ("Segundo o Edital nº X"): trocar por tom guia ("pela divulgação oficial",
+  "vale juntar", "costuma travar")
+
+═══ PRINCÍPIOS DE REESCRITA ═══
+1. Em vez de teaser, FATO CONCRETO: "Mas tem um detalhe" → "A regra tem uma
+   exceção: famílias com renda acima de R\$ 1.518"
+2. Em vez de H2 vago, H2 com dado único: "O que ninguém te conta" → "Renda até
+   R\$ 1.518 garante isenção automática"
+3. Cada parágrafo termina com FATO ou pausa natural, nunca teaser-clichê
+4. Quando remover frase batida, INSERIR no lugar uma frase factual da prosa
+   original (não deletar simplesmente — manter densidade informacional)
 
 ═══ TESTE INTERNO ANTES DE CADA PARÁGRAFO ═══
 1. "Esse parágrafo tem padrão de IA?" Se sim → refazer.
@@ -219,6 +259,9 @@ USR;
         }
         if (str_contains($issueLower, 'prompt-leak-alerta-critico')) {
             return "REESCREVER o `<p class='alerta-critico__titulo'>` nomeando o critério eliminatório específico do edital/fonte. PROIBIDO copiar 'Erro que derruba a inscrição' (é exemplo do prompt). Se não há critério eliminatório real → REMOVER o `<div class='alerta-critico'>` inteiro.";
+        }
+        if (str_contains($issueLower, 'frase-composta-pesada')) {
+            return "QUEBRAR a frase composta em 2 frases curtas. Sinal: frase ≥22 palavras com conectores ' e como ', ' e quando ', ' e o que ', ' mas ', ' porém ' que ligam 2 clausulas com verbo próprio. Regra: '2 ideias fortes = 2 partes'. Cada frase carrega UMA ideia, máx 18 palavras. Exemplo: 'vale entender qual erro derruba e como o cálculo muda' → 'vale entender qual erro derruba mais. O cálculo de aproveitamento também muda depois do recurso.'";
         }
         if (str_contains($issueLower, 'paragrafo-paredao')) {
             return "QUEBRAR a frase longa (≥30 palavras) em 2 frases curtas, máx 20 palavras cada. Cada frase termina em ponto. Distribuir ideias: a 1ª frase carrega o FATO/dado, a 2ª frase abre LOOP ou contextualiza. Mobile lê em 2 linhas; paredão = scroll fora.";

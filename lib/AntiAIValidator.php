@@ -291,7 +291,13 @@ class AntiAIValidator
      */
     public function validate(string $html): array
     {
-        $text = strip_tags(html_entity_decode($html, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
+        // Remove blocos <script>, <style> e <code> ANTES de strip_tags — strip_tags não
+        // remove conteúdo dentro deles, só as tags. Sem isso, CSS/JS inline conta como
+        // texto (cada `;` vira reticência, cada `—` em margens vira travessão).
+        // Bug observado 2026-05-04 #4680: 21 reticências falsas vindas de .msg-card{...}.
+        $htmlSemCode = preg_replace('#<(script|style|code)\b[^>]*>.*?</\1>#is', ' ', $html);
+        if ($htmlSemCode === null) $htmlSemCode = $html; // regex falhou, fallback
+        $text = strip_tags(html_entity_decode($htmlSemCode, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
         $textLower = mb_strtolower($text);
         $violations = [];
         $totalCount = 0;
@@ -310,7 +316,9 @@ class AntiAIValidator
             }
         }
 
-        $structural = $this->detectStructuralPatterns($html);
+        // Passa HTML SEM script/style/code — caso contrário CSS inline (`.x{padding:14px}`)
+        // dispara falsos positivos em reticências/travessões/paragrafo-paredao.
+        $structural = $this->detectStructuralPatterns($htmlSemCode);
 
         return [
             'ok'                       => empty($violations) && empty($structural),
@@ -499,6 +507,13 @@ class AntiAIValidator
         $edital = $this->detectarTomEdital($html);
         foreach ($edital as $issue) $issues[] = $issue;
 
+        /* Frase com 2 ideias fortes não-separadas (caso real 2026-05-04 user no #2144 P3):
+         * "vale entender qual erro de marcação derruba e como o cálculo muda a nota" —
+         * 2 ideias coordenadas por " e como " na mesma frase. Cansa no mobile e dilui o
+         * impacto. Regra "2 ideias fortes = 2 partes" → quebrar em 2 frases curtas. */
+        $fraseComposta = $this->detectarFraseCompostaPesada($html);
+        foreach ($fraseComposta as $issue) $issues[] = $issue;
+
         /* RD na intro = posição errada (decisão editorial 2026-05-04 user). Resposta-direta
          * deve ficar no FECHAMENTO (antes do rodapé de fonte), não na intro — virava
          * "rodapé de edital" repetindo P1+P2+P3. Detector: <p class='resposta-direta'>
@@ -638,6 +653,61 @@ class AntiAIValidator
             $issues[] = 'tom-edital ' . count($achados) . 'x: ' . implode(' | ', array_slice($achados, 0, 3))
                      . ' — substituir por tom guia amigo ("pela divulgação oficial", "vale juntar", "costuma travar quem não preparou")';
             $issues[] = 'tom-edital-forca-regen';
+        }
+        return $issues;
+    }
+
+    /**
+     * Detecta frase com 2 ideias fortes coordenadas (composta-pesada) na intro.
+     * Critério: frase ≥22 palavras + presença de conector-de-clausula-nova
+     * (" e como ", " e quando ", " e o que ", " e ainda ", " mas ", " porém ", etc).
+     * Esses conectores ligam DUAS clausulas com verbo próprio na mesma frase, criando
+     * "duas ideias fortes na mesma linha" — cansa no mobile e dilui impacto.
+     *
+     * Regra editorial 2026-05-04 user: "2 ideias fortes = 2 partes" → quebrar em frases.
+     */
+    private function detectarFraseCompostaPesada(string $html): array
+    {
+        $issues = [];
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+        if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $beforeH2, $ps, PREG_SET_ORDER)) return $issues;
+
+        /* Conectores que indicam clausula NOVA (não são listas de substantivo) */
+        $conectores = [
+            ' e como ', ' e quando ', ' e onde ', ' e por que ', ' e o que ', ' e qual ',
+            ' e ainda ', ' e também ', ' e isso ', ' e por isso ', ' e por causa ',
+            ' mas ', ' porém ', ' contudo ', ' entretanto ', ' todavia ',
+            ' enquanto ', ' já que ', ' uma vez que ', ' dado que ',
+        ];
+
+        $achados = [];
+        foreach ($ps as $idx => $row) {
+            $atribs = $row[1] ?? '';
+            if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico)[^\'"]*[\'"]/i', $atribs)) continue;
+            $clean = trim(strip_tags($row[2]));
+            if (mb_strlen($clean) < 50) continue;
+            $frases = preg_split('/(?<=[.!?])\s+/u', $clean) ?: [];
+            foreach ($frases as $fIdx => $f) {
+                $wc = str_word_count($f);
+                if ($wc < 22) continue;
+                /* Pula frase que JÁ tem ponto-vírgula ou dois-pontos (sinaliza quebra estrutural) */
+                if (preg_match('/[;:]/', $f)) continue;
+                $fLower = ' ' . mb_strtolower($f) . ' ';
+                foreach ($conectores as $conn) {
+                    if (strpos($fLower, $conn) !== false) {
+                        $achados[] = "P" . ($idx + 1) . " ({$wc}p, conector='" . trim($conn) . "'): \"" . mb_substr($f, 0, 80) . "...\"";
+                        break;
+                    }
+                }
+            }
+        }
+        if (!empty($achados)) {
+            $issues[] = 'frase-composta-pesada ' . count($achados) . 'x na intro: ' . implode(' | ', array_slice($achados, 0, 3))
+                     . ' — quebrar em 2 frases curtas (regra "2 ideias fortes = 2 partes")';
+            $issues[] = 'frase-composta-pesada-forca-regen';
         }
         return $issues;
     }

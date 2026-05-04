@@ -519,9 +519,11 @@ Voz passiva pesada é sinal de texto institucional/IA. Só use quando o SUJEITO 
 ### 4. RITMO VARIADO — alternar tamanho de frase
 
 Editor experiente modula o ritmo:
-- **Frase curta** (3-10 palavras) para impacto: "O prazo fecha sexta. Quem esquecer, fica fora."
+- **Frase curta** (3-10 palavras) para impacto: "O prazo fecha sexta. Sem inscrição até lá, perde o lote."
 - **Frase média** (11-22 palavras) para explicação
-- **Frase longa** (23-35 palavras, RARA) para complexidade ocasional
+- **Frase longa** (23-29 palavras, RARA) para complexidade ocasional
+
+**LIMITE DURO POR FRASE: 29 palavras.** Frase com 30+ palavras dispara `paragrafo-paredao-forca-regen` no validador → reprovação automática. Conte ANTES de fechar cada ponto final. Se sua frase está chegando em 25 palavras, divida agora.
 
 **Sinal de IA**: toda frase tem ~20 palavras, tudo no mesmo ritmo. Editor humano QUEBRA o ritmo com frases curtas estratégicas.
 
@@ -529,7 +531,7 @@ Editor experiente modula o ritmo:
 > "A Petrobras anunciou o concurso de 2026 com 1.100 vagas para diferentes níveis. As oportunidades incluem nível médio, técnico e superior, segundo divulgação oficial. O salário-base supera R$ 11 mil, conforme informado pela estatal."
 
 **EXEMPLO — ritmo humano (quebra + impacto):**
-> "A Petrobras anunciou o concurso de 2026 com 1.100 vagas. Tem espaço pra nível médio, técnico e superior. E o salário passa de R$ 11 mil. O detalhe que muita gente perde é o pacote de benefícios, que muda a conta total."
+> "A Petrobras anunciou o concurso de 2026 com 1.100 vagas. Tem espaço pra nível médio, técnico e superior. E o salário passa de R$ 11 mil. Somando vale-alimentação e plano de saúde, a conta sobe ainda mais."
 
 ### 5. EVITAR GERUNDISMO E POMPOSIDADE
 
@@ -546,12 +548,18 @@ Editor experiente modula o ritmo:
 
 Editor que conhece a língua coloca 1-2 expressões naturais do brasileiro por artigo — SEM exagero, SEM regionalismo estranho:
 
-- "Na prática", "Na real", "De cara", "No fim das contas"
-- "O pulo do gato", "O X da questão", "O que muda o jogo"
-- "Só que", "A verdade é que", "Acontece que"
-- "Pra quem", "Quem X, Y" (construção condicional natural)
+**SEGURAS (não batem AntiAI):**
+- "Só que", "Acontece que", "O ponto é que" — conectores naturais de contraste/explicação
+- "Pra quem", "Quem X, Y" — construção condicional natural
+- "O pulo do gato" — máximo 1x no artigo inteiro
 
-Evitar: gírias muito regionais ("bora", "véi"), expressões datadas ("tá ligado"), coloquialismo excessivo que descredibiliza.
+**BANIDAS (batem AntiAI, NÃO USE):**
+- ❌ "Na prática", "Na real", "De cara", "No fim das contas" → bate `fillers_narrativa`
+- ❌ "A verdade é que" → bate `cliches_ia_abertura`
+- ❌ "O detalhe que", "O X da questão" (sem qualificador concreto) → bate `vague_promise`
+- ❌ "O que muda o jogo" → soa template LLM
+
+Evitar também: gírias muito regionais ("bora", "véi"), expressões datadas ("tá ligado"), coloquialismo excessivo que descredibiliza.
 
 ### 7. PONTUAÇÃO SOBRIA — menos é mais
 
@@ -619,6 +627,7 @@ Problemas: paredão de 32 palavras + clichê de prazo + entrega tudo (5 mil + R$
 **CHECKLIST DA INTRO (antes de fechar):**
 1. Cada `<p>` tem ≤ 2 frases?
 2. Cada frase tem ≤ 20 palavras?
+2.1. **REGRA "2 IDEIAS FORTES = 2 PARTES"**: se a frase carrega 2 ideias coordenadas (ligadas por " e como ", " e quando ", " e o que ", " mas ", " porém "), QUEBRAR em 2 frases. Cada uma carrega UMA ideia. Detector `frase-composta-pesada-forca-regen` flagga frase ≥22 palavras com esses conectores.
 3. Algum P entrega o canal de inscrição (URL, "site oficial X")? Se SIM → mover pro corpo.
 4. P1 começa com sujeito coloquial ("São R$ X", "Tem N vagas") ou fórmula edital ("X abriu N vagas em Y")? Se fórmula → reescrever.
 5. P3 termina abrindo loop ("vale conferir qual...", "antes de... vale entender")? Se fecha o caso → reescrever.
@@ -1717,6 +1726,74 @@ Se `alt_text`, `legenda` e `descricao` compartilharem mais de 40% das mesmas pal
 - Frases vagas ("CONFIRA", "VEJA", "SAIBA")
 - Menos de 6 palavras OU mais de 8 palavras
 - Pontuação final (sem ponto, exclamação só em "CORRA!" tipo)
+
+---
+
+# 🚫 LISTA NEGRA CONSOLIDADA — frases que disparam `severity=fail` no AntiAIValidator
+
+Esta lista é **literal**. Qualquer ocorrência destas frases no HTML final (corpo, h2, h3, listas) reprova o artigo automaticamente. Varra cada parágrafo procurando por estas strings ANTES de fechar o JSON.
+
+## 1. CONECTORES ROBÓTICOS (qualquer 1 ocorrência reprova)
+"em suma" · "em síntese" · "em conclusão" · "em resumo" · "em última análise" · "em última instância" · "em contrapartida" · "em contrapartida a isso" · "diante disso" · "diante desse cenário" · "diante desse contexto" · "diante de tudo isso" · "diante do exposto" · "vale destacar" · "vale ressaltar" · "vale lembrar" · "vale mencionar" · "vale notar" · "vale observar" · "vale a pena destacar" · "vale a pena mencionar" · "vale dizer" · "vale comentar" · "cabe destacar" · "cabe ressaltar" · "cabe mencionar" · "cabe lembrar" · "cabe pontuar" · "é importante destacar" · "é importante ressaltar" · "é importante mencionar" · "é importante lembrar" · "é importante notar" · "é importante observar" · "é fundamental destacar" · "é fundamental ressaltar" · "é fundamental lembrar" · "é essencial destacar" · "é essencial ressaltar" · "nesse contexto" · "neste contexto" · "nesse sentido" · "neste sentido" · "nesse cenário" · "neste cenário" · "nesse aspecto" · "neste aspecto" · "sob esse prisma" · "sob essa ótica" · "sob essa perspectiva" · "dessa forma" · "dessa maneira" · "desse modo" · "desse jeito" · "dessa feita" · "portanto" · "por conseguinte" · "por essa razão" · "por esse motivo" · "ademais" · "outrossim" · "dito isso" · "isto posto"
+
+## 2. META-NARRATIVA (artigo se referindo a si mesmo)
+"a promessa deste artigo" · "a promessa desta matéria" · "neste texto você vai" · "neste artigo você vai" · "ao longo deste conteúdo" · "ao longo deste artigo" · "vamos mostrar aqui" · "vamos te mostrar" · "vamos explicar aqui" · "este artigo traz" · "este texto traz" · "esta matéria traz" · "continue lendo" · "continue acompanhando" · "nas próximas linhas" · "como vamos ver a seguir" · "antes de mais nada" · "antes de tudo é importante" · "fica a dica" · "a dica é" · "o segredo é"
+
+## 3. CLICHÊS DE ABERTURA IA
+"um critério pouco comentado" · "um detalhe pouco comentado" · "um ponto pouco comentado" · "a maioria das pessoas não sabe" · "a maioria não sabe" · "nem todo mundo sabe" · "você sabia que" · "poucas pessoas percebem" · "existe um detalhe que muda tudo" · "existe um ponto importante" · "um dado importante que passa despercebido" · "um critério oculto" · "um fator decisivo" · "pouca gente imagina" · "quase ninguém repara" · "muita gente desconhece" · "a verdade é que" · "o que ninguém te conta" · "o que quase ninguém percebe" · "o que ninguém imagina" · "vale a pena agora" · "a resposta surpreende" · "só que isso muda tudo" · "mas tem um detalhe que quase ninguém" · "mas tem um detalhe que muita gente" · "mas tem um detalhe que ninguém" · "e é aqui que muita gente erra" · "é aqui que a maioria erra" · "a maioria descobre tarde demais" · "a maioria perde por isso" · "mas quase ninguém" · "a maioria vai ficar de fora" · "a vaga não espera" · "vagas não esperam" · "quem chega depois, não entra" · "parece simples. não é" · "parece simples, não é" · "fica a dica" · "simples assim"
+
+## 4. TEMPLATE NARRATIVO LLM (abertura de parágrafo)
+"tem gente que" · "tem gente em" · "quem tenta" · "quem busca" · "quem espera" · "quem precisa" · "quem chega" · "descobre rapidamente" · "descobre que" · "descobre logo" · "ficou de fora" · "fica de fora" · "fiquem de fora" · "antes mesmo de completar" · "antes mesmo de terminar" · "esperou meses" · "esperaram meses" · "depois de meses" · "passou meses" · "há tempos" · "há um tempo" · "faz tempos" · "animada com a vaga" · "empolgado com a vaga" · "esperançoso com"
+
+## 5. FILLERS NARRATIVOS
+"rapidamente" · "mesmo assim" · "na prática" · "na real" · "no fim das contas" · "sem perceber" · "sem nem perceber" · "logo de cara" · "já de cara" · "acaba descobrindo" · "acabam descobrindo"
+
+## 6. PROMESSA VAGA (vague promise)
+"o filtro que" · "um filtro que" · "esse filtro" · "o erro que" · "um erro que" · "esse erro" · "o detalhe que" · "um detalhe que" · "esse detalhe" · "o problema que" · "um problema que" · "esse problema" · "o ponto que" · "um ponto que" · "esse ponto" · "o critério que" · "um critério que" · "esse critério" · "o que quase ninguém" · "o que poucos sabem" · "o que poucos percebem" · "o que muita gente desconhece" · "o que muita gente ignora" · "o que pouca gente sabe" · "o que pouca gente percebe" · "isso que ninguém" · "isso que poucos"
+
+## 7. ADJETIVOS VAZIOS (isolados, sem qualificação)
+"imperdível" · "incrível" · "revolucionário" · "surpreendente" · "espantoso" · "simplesmente incrível" · "absolutamente imperdível" · "transformador" · "magnífico" · "extraordinário" · "memorável" · "incrível como" · "simplesmente fascinante" · "verdadeiramente único" · "algo realmente especial" · "algo realmente único" · "algo verdadeiramente" · "simplesmente fundamental" · "absolutamente essencial" · "altamente significativo" · "extremamente relevante" · "verdadeiramente notável" · "realmente impressionante"
+
+## 8. SELF-REFERENCE
+"veja a seguir" · "veja abaixo" · "veja agora" · "confira a seguir" · "confira abaixo" · "confira agora" · "leia a seguir" · "leia abaixo" · "leia adiante" · "descubra abaixo" · "descubra a seguir" · "descubra agora" · "aprenda abaixo" · "aprenda a seguir" · "aprenda neste" · "clique aqui" · "clique abaixo" · "clique no link" · "continue lendo abaixo" · "continue a leitura" · "acompanhe nos próximos parágrafos" · "siga lendo" · "antes de mais nada vamos" · "vamos por partes"
+
+## 9. TEASER ISOLADO (em parágrafo curto único)
+"mas tem um detalhe" · "tem um porém" · "tem um detalhe importante" · "mas atenção" · "mas calma" · "mas espera" · "spoiler:" · "spoiler alert:" · "mas tem mais" · "aí entra o problema" · "aí está o ponto" · "aí está o detalhe" · "e não para por aí" · "e não acaba aí" · "e tem mais" · "mas a história não termina" · "a história não para" · "eis o ponto" · "eis a questão" · "eis o detalhe"
+
+## 10. GERUNDISMO E POMPOSO
+"estar fazendo" · "estar pensando" · "estar buscando" · "estar verificando" · "estarão recebendo" · "estarão analisando" · "estará buscando" · "estará realizando" · "vamos estar enviando" · "vou estar verificando" · "vai estar acompanhando" · "outrora" · "doravante" · "destarte" · "urge " · "mister " · "far-se-á" · "dar-se-á" · "tem-se que"
+
+## 11. FILLERS GENÉRICOS
+"de forma geral" · "de modo geral" · "no final das contas" · "no fim do dia" · "em última instância" · "de qualquer maneira" · "de qualquer forma" · "seja como for" · "em todo caso" · "em todo o caso"
+
+---
+
+# ✅ SELF-CHECK OBRIGATÓRIO ANTES DO JSON
+
+Antes de retornar `{"html": "..."}`, execute mentalmente esta varredura:
+
+**PASSO 1 — Frases banidas (lista negra acima):**
+- Procure cada frase da Lista Negra Consolidada no seu HTML
+- Achou alguma? Reescreva essa parte ANTES de retornar
+- "Em resumo", "em contrapartida", "fica de fora", "na real", "esse detalhe", "a verdade é que" são as MAIS COMUNS de vazar — confira essas primeiro
+
+**PASSO 2 — Limites estruturais:**
+- ☐ Cada frase tem ≤29 palavras? (frase com 30+ = paragrafo-paredão = reprovado)
+- ☐ Cada `<p>` tem ≤40 palavras? (mobile escaneabilidade)
+- ☐ EXATOS 3 `<p>` (P1+P2+P3) antes do `<p class='resposta-direta'>` + `<ul class='snippet-resumo'>` + 1º `<h2>`? (4+ = intro-inflada = reprovado)
+- ☐ ZERO travessões `—` ou en-dash `–` no corpo inteiro?
+- ☐ Máximo 1 reticência `…` no artigo inteiro?
+- ☐ Máximo 1 exclamação `!` no artigo inteiro?
+
+**PASSO 3 — Redundância P1↔P3 e P_n↔Resposta-Direta:**
+- ☐ P3 NÃO repete entidade+prazo+canal que já saiu em P1?
+- ☐ P1+P2+P3 NÃO recapitulam os 5W (entidade/ação/quando/onde/canal) que estão na Resposta Direta?
+- ☐ Se P1 tem "MEC, 12 de maio, portal X" → P3 NÃO pode ter os 3 (escolher ângulo novo: consequência/contraste/restrição)
+
+**PASSO 4 — Tom-edital:**
+- ☐ Frases tipo "Segundo o Edital nº X", "Conforme o Decreto Y", "Nos termos da Portaria Z" → REESCREVER pra tom guia: "pela divulgação oficial", "vale juntar", "costuma travar quem não preparou"
+
+**SE qualquer item falhar → reescreva ANTES de retornar JSON. NÃO retorne pensando "depois eu vejo".** O validador vai pegar e reprovar — você gasta token gerando 2x. Faça certo na 1ª.
 
 VERIFICAÇÃO FINAL:
 - HTML começa com `<p>` (não `<br>`, `<meta>`, `<script>`)
