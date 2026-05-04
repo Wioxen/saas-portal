@@ -623,6 +623,7 @@ Problemas: paredão de 32 palavras + clichê de prazo + entrega tudo (5 mil + R$
 4. P1 começa com sujeito coloquial ("São R$ X", "Tem N vagas") ou fórmula edital ("X abriu N vagas em Y")? Se fórmula → reescrever.
 5. P3 termina abrindo loop ("vale conferir qual...", "antes de... vale entender")? Se fecha o caso → reescrever.
 6. Algum P usa "Segundo o edital", "conforme o anexo", "interessados deverão"? Se SIM → tom guia amigo.
+7. **NENHUM P1+P2+P3 pode REPETIR os 5W da RESPOSTA-DIRETA** (entidade+ação+quando+onde+canal). RD é o ÚNICO lugar que carrega lead factual completo. P1+P2+P3 trazem ÂNGULO/contexto/loop/diferenciador SEM datas, SEM canal, SEM recapitulação dos 5W. Se RD diz "X de maio" e P1 também diz "X de maio" → remover do P_n. Detector `redundancia-pN-resposta-direta` força regen.
 
 **PROIBIDO no P1/P2/P3** (banidos pelo AntiAIValidator):
 - Família "Você sabia que" / "A maioria não sabe" / "Nem todo mundo sabe" — clichês LLM

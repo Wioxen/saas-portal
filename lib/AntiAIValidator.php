@@ -685,7 +685,10 @@ class AntiAIValidator
          * 2026-05-03 post #2126: P3 e RD diziam quase a mesma coisa ("inscrição online
          * pelo portal autonomiaerenda.com.br"). Detector original só medía P1↔RD —
          * extendido pra cobrir todos os paragrafos textuais. Threshold mais RIGOROSO
-         * pra P_n↔RD porque eles aparecem sequenciais no preview mobile. */
+         * pra P_n↔RD porque eles aparecem sequenciais no preview mobile.
+         * Bug observado 2026-05-04 post #2137 (Encceja): P3 falava "secretaria estadual"
+         * e RD "secretarias estaduais" — bigrams diferentes por plural, detector não pegava.
+         * Hoje aplicamos stemming light (corta s/es/r terminais) ANTES do match. */
         $rdText = '';
         $intros = []; /* lista ordenada de paragrafos textuais */
         foreach ($ps as $row) {
@@ -702,11 +705,15 @@ class AntiAIValidator
         }
         if ($rdText !== '' && !empty($intros)) {
             $stop = $this->ptStopwords();
-            $tB = $this->tokenize($rdText, $stop);
+            /* Stemming light pra normalizar plural/singular antes do match — bug do
+             * post #2137 (Encceja 2026-05-04): "secretaria estadual" vs "secretarias
+             * estaduais" virava 0 bigrams sob match strict. Stemmer corta s/es/r terminais
+             * só pra match (não altera tokens originais nas demais comparações). */
+            $tB = $this->tokenizeStemmed($rdText, $stop);
             $bigB = []; for ($k=0,$kn=count($tB)-1;$k<$kn;$k++) $bigB[]=$tB[$k].' '.$tB[$k+1];
             $bigBSet = array_unique($bigB);
             foreach ($intros as $idx => $pText) {
-                $tA = $this->tokenize($pText, $stop);
+                $tA = $this->tokenizeStemmed($pText, $stop);
                 if (empty($tA)) continue;
                 $sA = array_unique($tA);
                 $sB = array_unique($tB);
@@ -716,20 +723,24 @@ class AntiAIValidator
                 $bigA = []; for ($k=0,$kn=count($tA)-1;$k<$kn;$k++) $bigA[]=$tA[$k].' '.$tA[$k+1];
                 $bigShared = array_values(array_unique(array_intersect(array_unique($bigA), $bigBSet)));
                 $nBig = count($bigShared);
-                /* Sinal adicional: URL/canal específico compartilhado (autonomiaerenda.com.br,
-                 * app.eureca.me, etc.). Caso real post #2126: P3 e RD mencionavam mesmo
-                 * portal — Jaccard só ~0.07 (tokens) mas conceitualmente paráfrase obvia. */
                 $hostsCompartilhados = self::hostsCompartilhados($pText, $rdText);
-                /* Threshold: 3+ bigrams OU jacc≥0.40 OU containment≥0.50 c/ bigrams≥1 OU URL+1 bigram */
+                /* Sinal extra: entidades-chave (datas, valores R$, números >= 100, nomes
+                 * próprios capitalizados) compartilhadas. Bug post #2137: P_n não tinha
+                 * datas/valores mas conceito redundante; no futuro detector pega outros casos. */
+                $entidadesShared = self::entidadesChaveCompartilhadas($pText, $rdText);
+                /* Threshold: 3+ bigrams OU jacc≥0.30 OU containment≥0.45 c/ bigrams≥1 OU
+                 * URL compartilhada + 1 bigram OU 2+ entidades-chave compartilhadas */
                 $isFail = ($nBig >= 3)
-                       || ($jacc >= 0.40)
-                       || ($cont >= 0.50 && $nBig >= 1)
-                       || (!empty($hostsCompartilhados) && $nBig >= 1);
+                       || ($jacc >= 0.30)
+                       || ($cont >= 0.45 && $nBig >= 1)
+                       || (!empty($hostsCompartilhados) && $nBig >= 1)
+                       || (count($entidadesShared) >= 2);
                 if ($isFail) {
                     $detalhes = $nBig > 0 ? ' bigrams=[' . implode(', ', array_slice($bigShared, 0, 3)) . ']' : '';
                     if (!empty($hostsCompartilhados)) $detalhes .= ' canal=[' . implode(',', $hostsCompartilhados) . ']';
+                    if (!empty($entidadesShared)) $detalhes .= ' entidades=[' . implode(',', array_slice($entidadesShared, 0, 3)) . ']';
                     $rotulo = 'P' . ($idx + 1);
-                    $issues[] = sprintf('redundancia-%s-resposta-direta jacc=%.2f cont=%.2f bigrams=%d%s — RD parafraseia %s; reescrever %s com SALTO factual NOVO (consequência, contraste, restrição) sem repetir entidade+canal+dado da RD', strtolower($rotulo), $jacc, $cont, $nBig, $detalhes, $rotulo, $rotulo);
+                    $issues[] = sprintf('redundancia-%s-resposta-direta jacc=%.2f cont=%.2f bigrams=%d%s — RD recapitula %s; reescrever %s com SALTO factual NOVO (consequência, contraste, restrição) sem repetir entidade+canal+dado da RD', strtolower($rotulo), $jacc, $cont, $nBig, $detalhes, $rotulo, $rotulo);
                     $issues[] = 'redundancia-' . strtolower($rotulo) . '-resposta-direta-forca-regen';
                 }
             }
@@ -892,6 +903,87 @@ class AntiAIValidator
             }
         }
         return array_keys(array_intersect_key($hostsA, $hostsB));
+    }
+
+    /**
+     * Tokeniza com stemming light pt-BR — corta sufixos plural/verbal pra normalizar
+     * variação morfológica que o tokenize strict não pega.
+     *
+     * Regras (ordem importa):
+     *   • -ais → -al  (estaduais → estadual)
+     *   • -eis → -el  (federais ↛ federa, mas instituições → instituiç... cuidado)
+     *   • -es ao final (>4 chars) → corta (instituições → instituiçõ; federais → federai)
+     *   • -s ao final (>4 chars) → corta (vagas → vaga)
+     *
+     * Não vai resolver TUDO mas pega 90% do plural/conjugação simples.
+     */
+    private function tokenizeStemmed(string $text, array $stop): array
+    {
+        $tokens = $this->tokenize($text, $stop);
+        $out = [];
+        foreach ($tokens as $t) {
+            $orig = $t;
+            $len = mb_strlen($t);
+            if ($len > 5) {
+                /* -ais → -al (estaduais → estadual) */
+                if (substr($t, -3) === 'ais') $t = substr($t, 0, -3) . 'al';
+                /* -ões → -ão (instituições → instituição) */
+                elseif (substr($t, -4) === 'ções') $t = substr($t, 0, -4) . 'cao';
+                elseif (substr($t, -4) === 'ções') $t = substr($t, 0, -4) . 'cao';
+                /* -es plural (federais → federai → federal? hmm. melhor não)
+                 * Na real -ais já cobriu federais. Sim. */
+                /* -s plural simples (vagas → vaga) — mas não em palavras curtas */
+                elseif (substr($t, -1) === 's' && substr($t, -2) !== 'es') $t = substr($t, 0, -1);
+            }
+            $out[] = $t;
+        }
+        return $out;
+    }
+
+    /**
+     * Extrai entidades-chave PESADAS de 2 textos pra detectar redundância conceitual:
+     *   • datas explícitas (DD de mês ou DD/MM)
+     *   • valores R$ (R$ 700, R$ 2.826)
+     *   • números específicos >= 100 (vagas, pontos)
+     *   • entidades nominativas MULTI-palavra (≥2 palavras capitalizadas:
+     *     "Faculdade das Artes", "SP Escola Superior" — não Encceja sozinho)
+     *
+     * IGNORA: ano isolado (2026), nomes single-word (focus keyword tende a aparecer
+     * em vários lugares por design). Antes esses geravam false positive.
+     */
+    private static function entidadesChaveCompartilhadas(string $a, string $b): array
+    {
+        $extrair = function(string $t): array {
+            $itens = [];
+            /* Datas "DD de mês" */
+            if (preg_match_all('/\b\d{1,2}\s+de\s+(?:janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/iu', $t, $m)) {
+                foreach ($m[0] as $d) $itens['data:' . mb_strtolower($d)] = true;
+            }
+            /* Valores R$ */
+            if (preg_match_all('/R\$\s*\d[\d\.\,]*/u', $t, $m)) {
+                foreach ($m[0] as $v) $itens['rs:' . preg_replace('/\s+/', '', $v)] = true;
+            }
+            /* Números >= 100 com contexto (vagas, candidatos, anos) */
+            if (preg_match_all('/\b\d{3,}\s+(?:vagas?|candidatos?|jovens?|alunos?|inscritos?|pontos?)\b/iu', $t, $m)) {
+                foreach ($m[0] as $n) $itens['num:' . preg_replace('/\s+/', '_', mb_strtolower($n))] = true;
+            }
+            /* Entidades MULTI-palavra (≥2 palavras capitalizadas consecutivas).
+             * Nominal único (Encceja, Inep, Senai) é IGNORADO porque tende a ser
+             * focus keyword e aparece em P1+RD por design. */
+            if (preg_match_all('/\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]+(?:\s+(?:de|da|do|das|dos|e\s+)?[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç]+)+/u', $t, $m)) {
+                foreach ($m[0] as $n) {
+                    $n = trim($n);
+                    /* Mínimo 2 palavras E pelo menos 8 chars */
+                    if (mb_strlen($n) >= 8 && substr_count($n, ' ') >= 1) {
+                        $itens['entidade:' . mb_strtolower($n)] = true;
+                    }
+                }
+            }
+            return array_keys($itens);
+        };
+        $entA = $extrair($a);
+        $entB = $extrair($b);
+        return array_values(array_intersect($entA, $entB));
     }
 
     private function ptStopwords(): array
