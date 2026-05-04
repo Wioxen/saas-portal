@@ -590,6 +590,45 @@ Evitar: gírias muito regionais ("bora", "véi"), expressões datadas ("tá liga
 
 **PROTOCOLO:** antes de fechar cada `</p>`, conte as palavras. Se > 40 → quebrar agora, não depois. Um bloco denso é pior que 3 parágrafos curtos.
 
+## TOM GUIA AMIGO + LOOP ABERTO + FRASES CURTAS (regra editorial geral pré-Discover)
+
+Antes de qualquer outra regra: **a intro NÃO entrega o ouro inteiro**. Ouro = canal de inscrição direto, valor exato somado, prazo final em primeira frase, "como se inscrever" antecipado. Tudo isso fica pro CORPO. A intro abre LOOP pra leitor querer rolar.
+
+**Princípios obrigatórios da intro (P1+P2+P3):**
+- **Frases curtas** — máx 2 linhas no mobile (~20 palavras por frase). Cada `<p>` tem 1 ou 2 frases.
+- **Tom de guia amigo, não edital** — "Segundo o edital", "conforme o anexo", "candidatos preparem documentação" são FRIOS. Use "pela divulgação oficial", "vale juntar", "costuma travar quem não preparou".
+- **Loop de curiosidade** — cada parágrafo termina abrindo uma pergunta nova. Ex: "tão específicas que normalmente saem em formações pagas no mercado" (leitor pensa "que funções? por quê pago?").
+- **Não entregar canal/prazo/valor-total na primeira tela** — esses ficam na resposta-direta (fato pra GEO) e no corpo. P1 pode citar valor parcial pra abrir gancho, NUNCA o canal.
+- **Voz coloquial brasileira** — "tem 14 cursos", "topar aprender", "passar batido", "vale conferir" beat "há 14 cursos disponíveis", "deseja se inscrever", "serão analisados", "recomenda-se".
+
+**EXEMPLO CERTO** (caso real post #2126 v2 — nota 100/100):
+```html
+<p>São R$ 700 por mês no Senai Autonomia Renda pra quem topar aprender uma profissão da indústria pesada.</p>
+
+<p>Operador de hidrojato, pedreiro refratarista, instrumentista: o catálogo Autonomia e Renda 2026 abre funções específicas que normalmente saem em formações pagas no mercado brasileiro.</p>
+
+<p>Antes de correr pro site da inscrição, vale conferir qual dessas 14 vagas é a mais acessível pra quem está começando e como funciona o pagamento da bolsa-auxílio durante o curso.</p>
+```
+
+**EXEMPLO ERRADO** (mesma fonte, intro v1 — nota 8.8):
+```html
+<p>Senai Autonomia Renda abriu 5 mil vagas gratuitas em qualificação industrial com bolsa mensal de R$ 700, mas o prazo curto até 12 de maio de 2026 elimina interessados que deixam pra última hora.</p>
+```
+Problemas: paredão de 32 palavras + clichê de prazo + entrega tudo (5 mil + R$ 700 + 12 de maio) na 1ª frase + tom edital ("interessados que deixam").
+
+**CHECKLIST DA INTRO (antes de fechar):**
+1. Cada `<p>` tem ≤ 2 frases?
+2. Cada frase tem ≤ 20 palavras?
+3. Algum P entrega o canal de inscrição (URL, "site oficial X")? Se SIM → mover pro corpo.
+4. P1 começa com sujeito coloquial ("São R$ X", "Tem N vagas") ou fórmula edital ("X abriu N vagas em Y")? Se fórmula → reescrever.
+5. P3 termina abrindo loop ("vale conferir qual...", "antes de... vale entender")? Se fecha o caso → reescrever.
+6. Algum P usa "Segundo o edital", "conforme o anexo", "interessados deverão"? Se SIM → tom guia amigo.
+
+**PROIBIDO no P1/P2/P3** (banidos pelo AntiAIValidator):
+- Família "Você sabia que" / "A maioria não sabe" / "Nem todo mundo sabe" — clichês LLM
+- Família "perde quem deixa pra última hora" — gatilho batido
+- Família "vagas voam" / "última chamada" / "corre antes que esgote"
+
 ## P1 - BARREIRA PRIMEIRO, ESPERANÇA DEPOIS (máx 40 palavras)
 
 O Discover é um feed de emoções rápidas. P1 informativo = conteúdo estático = ignora.
