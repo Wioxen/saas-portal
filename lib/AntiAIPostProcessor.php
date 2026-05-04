@@ -57,6 +57,15 @@ class AntiAIPostProcessor
         $html = $resReposicionar['html'];
         $log['leia_tambem_reposicionado'] = $resReposicionar['movido'];
 
+        // Merge h3-perguntas órfãs dentro do FAQ formal.
+        // Caso real #4755: h3 "Por que ENCCEJA está em alta?" + h3 "ENCCEJA é importante?"
+        // antes do h2 "Perguntas frequentes" + 3 details = 5 perguntas em 2 blocos visuais.
+        // Solução: converter h3+p em <details><summary>h3</summary><p>p</p></details> e mover
+        // pra dentro do bloco FAQ formal. Resultado: 1 bloco unificado.
+        $resMerge = self::mergeOrphanQuestionsIntoFaq($html);
+        $html = $resMerge['html'];
+        $log['h3_perguntas_movidas_pro_faq'] = $resMerge['movidas'];
+
         // Detector msg-card indevido — só permitido se título contém trigger keyword.
         // Caso real 04/05: posts #4680/#4688 (curso de IA p/ professores) ganharam msg-card
         // num número de WhatsApp/contato indevido. Sonnet ignorou regra do prompt.
@@ -250,6 +259,64 @@ class AntiAIPostProcessor
         ) ?? $html;
 
         return ['html' => $html, 'removidos' => $removidos];
+    }
+
+    /**
+     * Promove h3-perguntas órfãs próximas ao FAQ formal a <details>, dentro do bloco FAQ.
+     * Janela: h3-perguntas dentro dos últimos 4000 chars antes do h2 "Perguntas frequentes".
+     * Critério pra h3 ser pergunta: ter "?" OU começar com Quem/Qual/Como/Onde/Quando/Por que/O que.
+     */
+    private static function mergeOrphanQuestionsIntoFaq(string $html): array
+    {
+        // Acha o h2 FAQ
+        if (!preg_match('/<h2[^>]*>\s*(?:perguntas?\s*frequentes?|FAQ|d[úu]vidas?[^<]*)\s*<\/h2>/iu', $html, $hm, PREG_OFFSET_CAPTURE)) {
+            return ['html' => $html, 'movidas' => 0];
+        }
+        $faqH2Pos = $hm[0][1];
+        $faqH2End = $hm[0][1] + strlen($hm[0][0]);
+        $janelaInicio = max(0, $faqH2Pos - 4000);
+
+        // Busca h3 + p IMEDIATAMENTE seguinte na janela
+        $bloco = substr($html, $janelaInicio, $faqH2Pos - $janelaInicio);
+        $padrao = '#<h3\b[^>]*>(.*?)</h3>(\s*<p\b[^>]*>(?:(?!</p>).)*?</p>)#is';
+        if (!preg_match_all($padrao, $bloco, $mm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+            return ['html' => $html, 'movidas' => 0];
+        }
+
+        $movidas = 0;
+        $detailsParaInserir = '';
+        $remocoes = [];
+        foreach ($mm as $match) {
+            $h3Inner = $match[1][0];
+            $pHtml = $match[2][0];
+            $h3Text = trim(strip_tags(html_entity_decode($h3Inner, ENT_QUOTES, 'UTF-8')));
+            $ehPergunta = (
+                substr_count($h3Text, '?') > 0 ||
+                preg_match('/^(quem|qual|como|onde|quando|por\s+que|o\s+que)\b/iu', $h3Text)
+            );
+            if (!$ehPergunta) continue;
+            if (substr_count($h3Text, '?') === 0) $h3Text .= '?';
+
+            $pTexto = trim($pHtml);
+            $detailsParaInserir .= "\n<details><summary>" . htmlspecialchars($h3Text, ENT_QUOTES, 'UTF-8') . "</summary>" . $pTexto . "</details>";
+            $absStart = $janelaInicio + $match[0][1];
+            $absLen = strlen($match[0][0]);
+            $remocoes[] = [$absStart, $absLen];
+            $movidas++;
+        }
+
+        if ($movidas === 0) return ['html' => $html, 'movidas' => 0];
+
+        // Insere details APÓS o h2 FAQ
+        $html = substr($html, 0, $faqH2End) . $detailsParaInserir . substr($html, $faqH2End);
+        // Remove h3+p originais (de trás pra frente — antes do faqH2End que ficou intacto)
+        usort($remocoes, fn($a, $b) => $b[0] <=> $a[0]);
+        foreach ($remocoes as $rem) {
+            [$start, $len] = $rem;
+            $html = substr($html, 0, $start) . substr($html, $start + $len);
+        }
+
+        return ['html' => $html, 'movidas' => $movidas];
     }
 
     /**
