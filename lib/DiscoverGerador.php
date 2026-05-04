@@ -960,10 +960,11 @@ class DiscoverGerador
                         } catch (Throwable $e) { /* não bloqueia */ }
                     }
 
-                    /* OUTBOUND AUTHORITY (2026-05-04) — análise informativa. NÃO bloqueia.
-                     * Mapeia entidades citadas (MEC/Senac/INSS/etc.) e verifica se o artigo
-                     * tem link externo pro domínio oficial. Sugestão pra revisor humano —
-                     * link só faz sentido com contexto, não é forçado. */
+                    /* OUTBOUND AUTHORITY (2026-05-04) — análise + auto-injeção determinística.
+                     * 1) Analisa entidades citadas (MEC/Inep/Senac/etc.) e verifica se há link.
+                     * 2) Quando entidade é citada 2+ vezes E não tem link, INSERE link na 1ª
+                     *    menção (dentro de <p>, fora de <a>). Máximo 2 entidades/post.
+                     * Cuidado: link só onde HÁ contexto. Não força em h2/h3 (só corpo). */
                     if (!class_exists('OutboundAuthorityChecker')) {
                         $oacPath = __DIR__ . '/OutboundAuthorityChecker.php';
                         if (file_exists($oacPath)) require_once $oacPath;
@@ -973,6 +974,35 @@ class DiscoverGerador
                             $oacReport = OutboundAuthorityChecker::analisar($content);
                             $validationReport['outbound_authority'] = $oacReport;
                             $progress->reportar('outbound_authority', OutboundAuthorityChecker::reportToLogLine($oacReport));
+                            // Auto-injetar links nas entidades sem link (até 2)
+                            if (!empty($oacReport['sugestoes'])) {
+                                $injRes = OutboundAuthorityChecker::injetar($content, $oacReport['sugestoes'], 2);
+                                if (!empty($injRes['aplicados'])) {
+                                    $content = (string)$injRes['html'];
+                                    $validationReport['outbound_links_injetados'] = $injRes['aplicados'];
+                                    $progress->reportar('outbound_auto_link', 'links injetados: ' . implode(', ', $injRes['aplicados']));
+                                }
+                            }
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+
+                    /* INLINE IMAGES (2026-05-04) — 1-2 imagens da fonte ao longo do corpo.
+                     * Discover é visual; 1 só featured perde pra concorrentes com 5+ fotos.
+                     * Inseridas APÓS o 2º e 5º h2 (distribuição rítmica). Source-bound. */
+                    if (!class_exists('InlineImageInjector')) {
+                        $iiPath = __DIR__ . '/InlineImageInjector.php';
+                        if (file_exists($iiPath)) require_once $iiPath;
+                    }
+                    if (class_exists('InlineImageInjector') && !empty($urlsFinais)) {
+                        try {
+                            $iiRes = InlineImageInjector::injetar($content, $urlsFinais, $this->wp, 2);
+                            if (($iiRes['log']['inseridas'] ?? 0) > 0) {
+                                $content = (string)$iiRes['html'];
+                                $validationReport['inline_images'] = $iiRes['log'];
+                                $progress->reportar('inline_images', 'inseridas: ' . $iiRes['log']['inseridas']);
+                                // Re-PATCH no WP (content já foi criado no início, agora atualiza)
+                                if ($postId) try { $this->wp->atualizarPost($postId, ['content' => $content]); } catch (Throwable $e) {}
+                            }
                         } catch (Throwable $e) { /* não bloqueia */ }
                     }
 

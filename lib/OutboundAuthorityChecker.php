@@ -108,6 +108,48 @@ class OutboundAuthorityChecker
         ];
     }
 
+    /**
+     * Insere AUTO-LINK na 1ª menção de cada entidade sugerida (dentro de <p>).
+     * Limita a $maxLinks links por post (evita poluição).
+     *
+     * @param string $html
+     * @param array  $sugestoes  array de {entidade, dominio_sugerido, mencoes} (do analisar())
+     * @param int    $maxLinks   default 2 (links demais reduz CTR + parece SEO spammy)
+     * @return array {html, aplicados: array<string>}
+     */
+    public static function injetar(string $html, array $sugestoes, int $maxLinks = 2): array
+    {
+        $aplicados = [];
+        // Ordena por menções desc — entidades mais citadas ganham link primeiro
+        usort($sugestoes, fn($a, $b) => (int)($b['mencoes'] ?? 0) <=> (int)($a['mencoes'] ?? 0));
+
+        foreach ($sugestoes as $s) {
+            if (count($aplicados) >= $maxLinks) break;
+            $entidade = (string)($s['entidade'] ?? '');
+            if ($entidade === '' || strlen($entidade) < 2) continue;
+            $url = 'https://www.' . (string)($s['dominio_sugerido'] ?? '');
+
+            // Pattern: entidade dentro de <p>...</p>, fora de <a>...</a>
+            $pattern = '/(<p\b[^>]*>)((?:(?!<\/p>).)*?)(?<![\w])(' . preg_quote($entidade, '/') . ')(?![\w])/iu';
+            $count = 0;
+            $html = preg_replace_callback($pattern, function ($m) use ($url, &$count) {
+                if ($count >= 1) return $m[0];
+                // Skip se já está dentro de <a> aberto em $m[2]
+                $abre = substr_count(mb_strtolower($m[2]), '<a ');
+                $fecha = substr_count(mb_strtolower($m[2]), '</a>');
+                if ($abre > $fecha) return $m[0];
+                // Skip se há sibling link pra mesma URL no mesmo paragráfo (já tem)
+                if (stripos($m[2], $url) !== false) return $m[0];
+                $count++;
+                return $m[1] . $m[2] . '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" target="_blank" rel="noopener">' . $m[3] . '</a>';
+            }, $html, 1) ?? $html;
+
+            if ($count > 0) $aplicados[] = $entidade;
+        }
+
+        return ['html' => $html, 'aplicados' => $aplicados];
+    }
+
     public static function reportToLogLine(array $r): string
     {
         $tot = (int)($r['total_entidades_mencionadas'] ?? 0);
