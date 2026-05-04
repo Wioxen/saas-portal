@@ -47,17 +47,29 @@ $casos = [
         'esperado_severity'   => 'ok',
         'esperado_nao_contem' => 'intro-inflada',
     ],
-    'caso_3p_resposta_snippet_ok' => [
-        /* ORDEM FIXA correta: P1, P2, P3, resposta-direta, snippet, H2.
-         * Os <p class='resposta-direta'> e <ul class='snippet-resumo'> NÃO contam pra inflada. */
+    'caso_3p_snippet_h2_ok' => [
+        /* ORDEM FIXA NOVA (2026-05-04): P1, P2, P3, snippet, H2 (RD vai pro fechamento) */
         'html' => '<p>O Senac-ES abriu quinze vagas gratuitas no curso técnico de Administração em Pinheiros nesta quinta-feira.</p>'
                 . '<p>A direção regional informou que renda familiar baixa comprovada pelo CadÚnico recebe prioridade na triagem.</p>'
                 . '<p>O recorte derruba inscritos sem cadastro atualizado, padrão observado também na turma anterior segundo balanço.</p>'
-                . '<p class="resposta-direta">Senac-ES abriu 15 vagas em Pinheiros até 30 de abril pelo site oficial da instituição.</p>'
                 . '<ul class="snippet-resumo"><li>bullet 1</li><li>bullet 2</li></ul>'
-                . '<h2>Primeiro H2</h2>',
+                . '<h2>Primeiro H2</h2>'
+                . '<p>Conteúdo do corpo aqui.</p>'
+                . '<p>Mais corpo.</p>'
+                . "<p class='resposta-direta'>Senac-ES abriu 15 vagas em Pinheiros até 30 de abril pelo site oficial.</p>"
+                . "<p style='font-size:13px;color:#666'>Fonte: site.com.br</p>",
         'esperado_severity'   => 'ok',
         'esperado_nao_contem' => 'intro-inflada',
+    ],
+    'caso_rd_na_intro_fail' => [
+        /* RD ainda na posição antiga (antes do 1º H2) deve disparar rd-na-intro-forca-regen */
+        'html' => '<p>P1 com vinte palavras pra forçar contagem suficiente no detector.</p>'
+                . '<p>P2 com vinte palavras pra forçar contagem suficiente também aqui.</p>'
+                . '<p>P3 com vinte palavras pra forçar contagem suficiente também aqui terceiro.</p>'
+                . "<p class='resposta-direta'>RD ainda na intro deve disparar erro novo.</p>"
+                . '<h2>H2</h2>',
+        'esperado_severity' => 'fail',
+        'esperado_contem'   => 'rd-na-intro',
     ],
     'caso_p1_paraphrasea_resposta_direta' => [
         /* Caso real post 2102: P1 e resposta-direta começam idênticos

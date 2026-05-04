@@ -862,26 +862,32 @@ P3 puxa pro 1º H2 sem teaser-fórmula — só com o salto factual já feito.
 
 ## LIMITE DE INTRODUÇÃO — MÁXIMO 3 PARÁGRAFOS DE TEXTO ANTES DO 1º H2 (regra dura)
 
-Para Discover/mobile, **a introdução textual é P1 + P2 + P3 — exatos 3 parágrafos. Nunca 4. Nunca 5.** Depois do P3 vem a Resposta Direta (1 `<p class='resposta-direta'>`), depois o snippet `<ul class='snippet-resumo'>` e logo em seguida o **primeiro `<h2>`**.
+Para Discover/mobile, **a introdução textual é P1 + P2 + P3 — exatos 3 parágrafos. Nunca 4. Nunca 5.** Depois do P3 vem o snippet `<ul class='snippet-resumo'>` e logo em seguida o **primeiro `<h2>`**. A **Resposta Direta NÃO fica mais na intro** — ela vai pro fechamento do artigo, antes do rodapé de fonte (ver seção RESPOSTA DIRETA NO FECHAMENTO abaixo).
 
 **ORDEM FIXA E ÚNICA DO TOPO (nenhuma variação):**
-1. `<p>` P1 — barreira + dado + entidade (máx 40 palavras)
-2. `<p>` P2 — autoridade/atribuição + dado novo (máx 40 palavras)
-3. `<p>` P3 — salto factual NOVO que puxa o 1º H2 (máx 40 palavras)
-4. `<p class='resposta-direta'>` — resposta neutra factual GEO (máx 35 palavras)
-5. `<ul class='snippet-resumo'>` — 2 ou 3 `<li>` curtos
-6. `<h2>` primeiro H2 do desenvolvimento
+1. `<p>` P1 — ângulo único da fonte + loop de curiosidade (máx 40 palavras, ≤2 frases)
+2. `<p>` P2 — autoridade/atribuição + dado novo (máx 40 palavras, ≤2 frases)
+3. `<p>` P3 — salto factual NOVO que puxa o 1º H2 (máx 40 palavras, ≤2 frases)
+4. `<ul class='snippet-resumo'>` — 2 a 4 `<li>` curtos (≤14 palavras cada)
+5. `<h2>` primeiro H2 do desenvolvimento
+
+**ORDEM FIXA DO FECHAMENTO (final do artigo):**
+- Último parágrafo de fechamento (CTA psicológico)
+- `<p class='resposta-direta'>` — Resposta Direta com 5W (factual, GEO) ← AQUI
+- `<p style='font-size:13px;color:#666'>` Fonte: ...
+- Scripts JSON-LD (FAQPage, HowTo)
 
 **PROIBIDO ABSOLUTO (= artigo REPROVADO pelo validador, regen forçada):**
 - Inserir 4º, 5º ou qualquer parágrafo `<p>` SEM classe extra entre P3 e o `<h2>`
-- Inserir parágrafo "de transição" / "de contexto" / "de gancho" / "release institucional" / "o que significa isso" entre P3 e o snippet
-- Reescrever o mesmo fato em 2 parágrafos da introdução (mesmo que com palavras diferentes — redundância conceitual também conta)
-- Mover a Resposta Direta ou o snippet pra depois do 1º H2
+- Inserir parágrafo "de transição" / "de contexto" / "de gancho" / "release institucional" entre P3 e o snippet
+- Reescrever o mesmo fato em 2 parágrafos da introdução (redundância conceitual conta)
+- **Inserir `<p class='resposta-direta'>` na intro** — ela vai pro fechamento, NÃO antes do 1º H2
+- Mover snippet pra depois do 1º H2
 
 **TESTE PROGRAMÁTICO (validador roda automático no HTML final):**
-- Conte os `<p>` SEM atributo `class` antes do 1º `<h2>`. **Resultado obrigatório: exatamente 3.**
-- Conte o total de `<p>` (com ou sem class) + `<ul>` antes do 1º `<h2>`. **Resultado obrigatório: máximo 5** (P1, P2, P3, resposta-direta, snippet — onde snippet `<ul>` conta como 1 elemento).
-- Se o validador detectar `<p>` sem class > 3 antes do `<h2>` → severidade=fail → regen automática com feedback.
+- Conte `<p>` SEM atributo `class` antes do 1º `<h2>`. **Obrigatório: exatamente 3.**
+- Conte o total de `<p>` + `<ul>` antes do 1º `<h2>`. **Obrigatório: máximo 4** (P1, P2, P3, snippet — RD não fica mais aqui).
+- Se validador detectar `<p>` sem class > 3 OU `<p class='resposta-direta'>` antes do `<h2>` → severidade=fail → regen automática com feedback.
 
 **RAZÃO EDITORIAL** (pra modelo entender, não só obedecer):
 - Mobile preview do Discover corta em ~150 chars. Quem só lê o P1 precisa ter o LEAD inteiro. Inflar pra 5 parágrafos NÃO ajuda — só dilui.
@@ -905,55 +911,64 @@ Para Discover/mobile, **a introdução textual é P1 + P2 + P3 — exatos 3 par�
 <p>O combo de previdência complementar e participação nos lucros muda a conta total — e é justamente o que a divulgação preliminar não destaca.</p>
 ```
 
-## RESPOSTA DIRETA (OBRIGATÓRIO — inserir DEPOIS do P3 e ANTES do snippet-resumo)
+## RESPOSTA DIRETA NO FECHAMENTO (OBRIGATÓRIO — inserir DEPOIS do último parágrafo de fechamento e ANTES do rodapé de fonte)
 
-**POSIÇÃO ÚNICA:** item 4 da ORDEM FIXA DO TOPO — DEPOIS do `<p>` do P3, ANTES do `<ul class='snippet-resumo'>`. Nunca colar imediatamente após o P1, nunca depois do snippet, nunca depois do 1º H2.
+**POSIÇÃO ÚNICA:** no FINAL do artigo, depois do último parágrafo do CTA psicológico de fechamento e ANTES do `<p style='...font-size:13px...'>Fonte: ...</p>`. Nunca na intro, nunca antes do 1º H2.
 
-O P1 carrega o gancho emocional para o Discover (clique). **A RESPOSTA DIRETA carrega o fato para GEO** (citação por ChatGPT, Perplexity, Gemini, AI Overview). Sem ela, nosso conteúdo NÃO é citado por IA generativa em 2026.
+A Resposta Direta foi MOVIDA da intro pro fechamento (decisão editorial 2026-05-04 user). Razão: na intro virava "rodapé de edital" repetindo P1+P2+P3 (datas, canal, entidade) e quebrava o fluxo. No fechamento ela cumpre o papel GEO (citação por IA generativa) sem competir com o lead emocional do P1.
 
 **O que é:** 1 parágrafo curto, NEUTRO e FACTUAL, que responde à pergunta principal do leitor em 1-2 frases. Contém: **quem + o quê + quando/onde + quanto/número**. Nada de gancho, nada de emoção — é a resposta que uma IA vai extrair e citar.
 
 **REGRAS:**
-- Máximo **35 palavras** (mais curto e direto que o P1)
+- Máximo **35 palavras** (1-2 frases curtas)
 - Começar SEMPRE com o sujeito concreto (entidade ou número), nunca com "Tem gente que...", nunca com conceito abstrato
 - Resposta = quem fez + o quê + quando + número-chave
 - Classe CSS: `<p class='resposta-direta'>` (marcação semântica pra IAs identificarem)
+- Estilo recomendado: `style='background:#f1f8ff;border-left:4px solid #0ea5e9;padding:14px 18px;margin:24px 0;border-radius:6px;font-size:14px;color:#1e3a5f'` (visual de "resumo factual")
 - ZERO frase emocional, ZERO pergunta retórica, ZERO "descubra/veja/entenda"
 
-**EXEMPLO — ordem completa do topo (P1, P2, P3, resposta-direta, snippet, H2):**
+**EXEMPLO — ordem completa do topo + final:**
 ```html
-<!-- P1: gancho emocional (barreira + dado) -->
-<p>Tem gente que fez toda a inscrição no Senac-ES em Pinheiros, anexou documento certinho e mesmo assim ficou de fora — o motivo está num trecho do edital que muda quem garante uma das <strong>15 vagas gratuitas</strong> liberadas nesta quinta.</p>
+<!-- TOPO -->
+<p>Aprendiz MRS SENAI Horto pode receber R$ 2.826 ou R$ 2.343 por mês. A diferença está numa escolha de jornada que costuma passar batido na hora da inscrição.</p>
 
-<!-- P2: autoridade + dado novo -->
-<p>O Senac-ES informa que a triagem privilegia inscritos com renda familiar abaixo de 2 salários mínimos comprovada pelo CadÚnico, segundo o edital nº 12/2026.</p>
+<p>O programa abre vagas em eletromecânica voltadas pra operação ferroviária. É um segmento que raramente aparece em outras parcerias do Senai pelo país.</p>
 
-<!-- P3: salto factual NOVO que puxa o 1º H2 (não repete entidade+prazo+canal) -->
-<p>O recorte de renda é o ponto que mais elimina inscritos no estado: em 2025, 41% dos candidatos apresentaram CadÚnico desatualizado e perderam a vaga.</p>
+<p>Antes de checar o site da seleção, vale entender qual jornada paga mais. Importa também o filtro de CEP da capital mineira e a etapa do processo que mais derruba candidato preparado.</p>
 
-<!-- Resposta direta: factual, pra citação por IA -->
-<p class='resposta-direta'>O Senac-ES abriu 15 vagas gratuitas no curso técnico de Administração em Pinheiros nesta quinta-feira, com inscrições até 30 de abril pelo site oficial da instituição.</p>
-
-<!-- Snippet escaneável: 2-3 bullets com dados-chave -->
-<ul class='snippet-resumo' style='background:#fafafa; border-left:4px solid #0b57d0; padding:14px 18px; margin:18px 0; list-style:none;'>
-  <li style='margin:6px 0;'><strong>Vagas:</strong> 15 no Senac-ES de Pinheiros (ES).</li>
-  <li style='margin:6px 0;'><strong>Prazo:</strong> inscrições até 30 de abril.</li>
-  <li style='margin:6px 0;'><strong>Requisito:</strong> CadÚnico ativo + renda até 2 salários mínimos.</li>
+<ul class='snippet-resumo' style='...'>
+  <li><strong>Pacote:</strong> bolsa de R$ 1.035 (6h) ou R$ 1.518 (8h) mais ticket de R$ 1.308.</li>
+  <li><strong>Prazo:</strong> até 21 de maio de 2026.</li>
+  <li><strong>Curso:</strong> eletromecânica em 6 meses no SENAI Horto e MRS Horto.</li>
+  <li><strong>Diferencial:</strong> filtro automático de CEP de Belo Horizonte antes da pré-inscrição.</li>
 </ul>
 
-<!-- 1º H2 do desenvolvimento -->
-<h2>Como o CadÚnico decide quem fica com cada uma das 15 vagas em Pinheiros</h2>
+<h2>Bolsa do aprendiz MRS SENAI: R$ 1.035 ou R$ 1.518 por jornada...</h2>
+
+[... corpo do artigo com H2s, parágrafos, FAQ ...]
+
+<!-- FECHAMENTO -->
+<p>Quem perde o prazo de 21 de maio fica fora da turma 2026.2...</p>
+<p>Em 2025, a MRS formou 87 jovens em três frentes técnicas...</p>
+<p>Dá pra abrir agora a página da seleção no portal Eureca e checar a documentação...</p>
+
+<!-- RESPOSTA DIRETA NO FECHAMENTO -->
+<p class='resposta-direta' style='background:#f1f8ff;border-left:4px solid #0ea5e9;padding:14px 18px;margin:24px 0;border-radius:6px;font-size:14px;color:#1e3a5f'>O Programa de Aprendizagem 2026.2 da MRS Logística aceita jovens de 18 a 23 anos de Belo Horizonte até 21 de maio de 2026, pelo portal Eureca, em curso de eletromecânica no SENAI Horto.</p>
+
+<!-- RODAPÉ DE FONTE -->
+<p style='margin-top:30px;font-size:13px;color:#666'>Fonte: <a ...>...</a></p>
 ```
 
 **POR QUE ISSO FUNCIONA:**
-- O Discover clica no P1 (emocional). P2 e P3 entregam autoridade + ângulo novo SEM parafrasear.
-- A IA extrai a RESPOSTA DIRETA (factual, curta, com 5W).
+- O Discover clica no P1 (emocional). P2 e P3 entregam autoridade + ângulo novo SEM repetir.
+- A IA generativa extrai a RESPOSTA DIRETA do FINAL do doc (scrapeia inteiro, ordem não afeta GEO).
 - O snippet escaneia em 2 segundos no mobile.
-- Total: exatos 3 `<p>` SEM classe + 1 `<p class='resposta-direta'>` + 1 `<ul>` antes do H2 — gate do validador passa.
+- Leitor mobile não vê paráfrase obvia da intro (RD ficou longe).
+- Total: exatos 3 `<p>` SEM classe + 1 `<ul>` antes do H2 — gate do validador passa.
 
-## SNIPPET DE RESUMO (OBRIGATÓRIO — inserir LOGO APÓS A RESPOSTA DIRETA)
+## SNIPPET DE RESUMO (OBRIGATÓRIO — inserir LOGO APÓS o P3 e ANTES do 1º H2)
 
-O Google Discover e o Search adoram snippets escaneáveis logo no topo. **Posição exata: imediatamente APÓS o `<p class='resposta-direta'>` e ANTES do primeiro `<h2>`** (item 5 da ORDEM FIXA DO TOPO). Inserir `<ul>` com **2 ou 3 bullets** que resumem as informações VITAIS do artigo.
+O Google Discover e o Search adoram snippets escaneáveis logo no topo. **Posição exata: imediatamente APÓS o `<p>` do P3 e ANTES do primeiro `<h2>`** (item 4 da ORDEM FIXA DO TOPO — RD não fica mais aqui, foi pro fechamento). Inserir `<ul>` com **2 a 4 bullets** que resumem as informações VITAIS do artigo.
 
 **REGRAS:**
 - 2 ou 3 itens (nunca 1, nunca 4+). Cada `<li>` tem 1 frase curta (máx **14 palavras**).
@@ -971,7 +986,7 @@ O Google Discover e o Search adoram snippets escaneáveis logo no topo. **Posiç
 </ul>
 ```
 
-**POSIÇÃO EXATA (item 5 da ORDEM FIXA DO TOPO):** DEPOIS do `<p class='resposta-direta'>`, ANTES do primeiro `<h2>`. Nunca dentro de um `<p>`. Nunca no fechamento. Nunca antes do P2 ou P3.
+**POSIÇÃO EXATA (item 4 da ORDEM FIXA DO TOPO):** DEPOIS do `<p>` do P3, ANTES do primeiro `<h2>`. Nunca dentro de um `<p>`. Nunca antes do P2 ou P3. Nunca após o 1º H2.
 
 ## BACKLINKS INTERNOS — SEMPRE EMBUTIDOS EM FRASE CONTEXTUAL (nunca standalone)
 

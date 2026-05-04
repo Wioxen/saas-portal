@@ -499,6 +499,13 @@ class AntiAIValidator
         $edital = $this->detectarTomEdital($html);
         foreach ($edital as $issue) $issues[] = $issue;
 
+        /* RD na intro = posição errada (decisão editorial 2026-05-04 user). Resposta-direta
+         * deve ficar no FECHAMENTO (antes do rodapé de fonte), não na intro — virava
+         * "rodapé de edital" repetindo P1+P2+P3. Detector: <p class='resposta-direta'>
+         * antes do 1º <h2> = posição errada → force-regen. */
+        $rdNaIntro = $this->detectarRdNaIntro($html);
+        foreach ($rdNaIntro as $issue) $issues[] = $issue;
+
         /* Intro inflada (caso reportado 2026-05-03 user nos posts 2082, 2091, 2075):
          * 5 <p> SEM class antes do 1º <h2>, mesmo com Jaccard baixo. Não é paráfrase
          * textual (que detectarRedundanciaP1P3 pega) — é dilução estrutural. Conta os
@@ -631,6 +638,25 @@ class AntiAIValidator
             $issues[] = 'tom-edital ' . count($achados) . 'x: ' . implode(' | ', array_slice($achados, 0, 3))
                      . ' — substituir por tom guia amigo ("pela divulgação oficial", "vale juntar", "costuma travar quem não preparou")';
             $issues[] = 'tom-edital-forca-regen';
+        }
+        return $issues;
+    }
+
+    /**
+     * Detecta `<p class='resposta-direta'>` ANTES do 1º <h2>. Decisão editorial 2026-05-04:
+     * RD vai pro fechamento (antes do rodapé de fonte), não na intro. Manter na intro
+     * disparou redundância visível com P1+P2+P3 (recap "rodapé de edital").
+     */
+    private function detectarRdNaIntro(string $html): array
+    {
+        $issues = [];
+        $beforeH2 = $html;
+        if (preg_match('/<h2/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $beforeH2 = substr($html, 0, $m[0][1]);
+        }
+        if (preg_match('/<p\s+class\s*=\s*[\'"][^\'"]*resposta-direta[^\'"]*[\'"]/i', $beforeH2)) {
+            $issues[] = 'rd-na-intro: <p class="resposta-direta"> antes do 1º <h2> — mover pra ANTES do rodapé de fonte (no fechamento). Decisão editorial 2026-05-04: RD na intro virava recap repetindo P_n.';
+            $issues[] = 'rd-na-intro-forca-regen';
         }
         return $issues;
     }
