@@ -855,23 +855,29 @@ class DiscoverGerador
                                 }
                             }
 
-                            /* GATE PRE-PUBLISH (FORA do if AutoRevisor) — dispara mesmo quando Haiku falha
-                             * silenciosamente. Critério: $reportFinal contém sentinel `*-forca-regen` ou
-                             * `*-forca-fail` E severity=fail. Bloqueio = força draft + aviso vermelho no topo.
-                             * Bug observado 2026-05-03 post 2110: Haiku falhou (sem chave?), gate antigo
-                             * ficava dentro do if(reescreveu) e nunca disparava. */
+                            /* GATE PRE-PUBLISH — bloqueia QUALQUER severity=fail (mesmo sem
+                             * marker `forca-regen`). Bloqueio = força draft + aviso vermelho no topo.
+                             *
+                             * Histórico:
+                             *   - 2026-05-03: gate só disparava com forca-regen E severity=fail.
+                             *     Bug: Haiku reescrevia removendo markers MAS deixando padrões
+                             *     reais (paragrafo-paredao, intro-inflada). Sem markers, gate não
+                             *     disparava → publicava com fail. 6 posts saíram assim 03/05.
+                             *   - 2026-05-04: simplificado pra severity=fail puro. Custo:
+                             *     mais drafts pra revisar manual; benefício: nenhum padrão IA
+                             *     publicado sem revisão. */
                             $structFinal = (array)($reportFinal['structural'] ?? []);
-                            $temForcaRegen = false;
+                            $violationsFinal = (array)($reportFinal['violations'] ?? []);
                             $issuesCriticos = [];
                             foreach ($structFinal as $iss) {
-                                if (!is_string($iss)) continue;
-                                if (str_contains($iss, '-forca-regen') || str_contains($iss, '-forca-fail')) {
-                                    $temForcaRegen = true;
-                                } elseif (preg_match('/^(intro-inflada|intro-redundancia|prompt-leak|redundancia-p1-p3|redundancia-p1-resposta-direta)/i', $iss)) {
-                                    $issuesCriticos[] = $iss;
+                                if (is_string($iss)) $issuesCriticos[] = $iss;
+                            }
+                            foreach ($violationsFinal as $v) {
+                                if (is_array($v) && !empty($v['phrase'])) {
+                                    $issuesCriticos[] = "frase-batida [" . ($v['category'] ?? '?') . "]: '" . $v['phrase'] . "' x" . ($v['count'] ?? 1);
                                 }
                             }
-                            if ($temForcaRegen && ($reportFinal['severity'] ?? '') === 'fail') {
+                            if (($reportFinal['severity'] ?? '') === 'fail') {
                                 $marcador = 'RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR';
                                 /* Idempotente: não injeta se aviso já está presente (re-roda do mesmo cron) */
                                 if (stripos($content, $marcador) === false) {

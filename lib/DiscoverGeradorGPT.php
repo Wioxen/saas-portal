@@ -164,19 +164,22 @@ class DiscoverGeradorGPT
                         }
                     }
                 }
-                /* GATE pre-publish — força aviso vermelho + (futuro: status=draft via caller)
-                 * quando sentinel forca-regen persistir. Idempotente. */
+                /* GATE pre-publish — bloqueia QUALQUER severity=fail (mesmo sem marker
+                 * `forca-regen`). Paridade com DiscoverGerador (path Claude) — endurecido
+                 * 2026-05-04 após posts publicados com fail no path Claude.
+                 * Aviso vermelho injetado; status=draft fica pro caller. Idempotente. */
                 $structFinal = (array)($reportFinal['structural'] ?? []);
-                $temForcaRegen = false; $issuesCriticos = [];
+                $violationsFinal = (array)($reportFinal['violations'] ?? []);
+                $issuesCriticos = [];
                 foreach ($structFinal as $iss) {
-                    if (!is_string($iss)) continue;
-                    if (str_contains($iss, '-forca-regen') || str_contains($iss, '-forca-fail')) {
-                        $temForcaRegen = true;
-                    } elseif (preg_match('/^(intro-inflada|intro-redundancia|prompt-leak|redundancia-p[0-9]?-resposta-direta|redundancia-p1-p3|gatilho-batido|paragrafo-paredao|tom-edital)/i', $iss)) {
-                        $issuesCriticos[] = $iss;
+                    if (is_string($iss)) $issuesCriticos[] = $iss;
+                }
+                foreach ($violationsFinal as $v) {
+                    if (is_array($v) && !empty($v['phrase'])) {
+                        $issuesCriticos[] = "frase-batida [" . ($v['category'] ?? '?') . "]: '" . $v['phrase'] . "' x" . ($v['count'] ?? 1);
                     }
                 }
-                if ($temForcaRegen && ($reportFinal['severity'] ?? '') === 'fail') {
+                if (($reportFinal['severity'] ?? '') === 'fail') {
                     $marcador = 'RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR';
                     if (stripos($content, $marcador) === false) {
                         $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
