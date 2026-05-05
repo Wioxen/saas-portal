@@ -178,6 +178,98 @@ class AntiAIPostProcessor
         ) ?? $html;
         if ($a_sanitized > 0) $log['links_sem_href_removidos'] = $a_sanitized;
 
+        // 4.7. Auto-link de URLs em texto puro.
+        // Caso real #4982 reportado pelo user: passos do tutorial tinham
+        //   "Acesse smallpdf.com/pt/comprimir-pdf no navegador"
+        //   "<strong>pdf.wps.com/pt/comprimir-pdf/</strong>"
+        // como TEXTO (não <a>), parecendo links mas não-clicáveis.
+        // Estratégia: encontra URL bruta ou em <strong>, converte em <a>.
+        // CUIDADO: pula conteúdo dentro de aviso editorial (alucinado/fidelity)
+        // e dentro de <a>/<code>/<pre> (já preservados acima).
+        $auto_linked = 0;
+        // Marca o bloco de aviso editorial pra não auto-linkar dentro
+        $avisoBlocos = [];
+        $html = preg_replace_callback(
+            '#<div\b[^>]*\bcc-(?:fidelity|alucinado|nao-confirmado|aviso)\b[^>]*>[\s\S]*?</div>(?:\s*</div>)?#i',
+            function ($m) use (&$avisoBlocos) {
+                $tk = '@@@AVISO_' . count($avisoBlocos) . '@@@';
+                $avisoBlocos[$tk] = $m[0];
+                return $tk;
+            },
+            $html
+        ) ?? $html;
+        // Fallback: bloco com cor de aviso (#7c2d12 / #92400e / fundo #fef3c7)
+        $html = preg_replace_callback(
+            '~<div\b[^>]*\bstyle=[\'"][^\'"]*(?:\#7c2d12|\#92400e|\#fef3c7)[^>]*>[\s\S]*?</div>\s*</div>?~i',
+            function ($m) use (&$avisoBlocos) {
+                $tk = '@@@AVISO_' . count($avisoBlocos) . '@@@';
+                $avisoBlocos[$tk] = $m[0];
+                return $tk;
+            },
+            $html
+        ) ?? $html;
+
+        // (a) URLs em <strong>...URL...</strong> → <a href>...</a>
+        $html = preg_replace_callback(
+            '#<strong>((?:https?://)?[a-z0-9-]+(?:\.[a-z0-9-]+){1,3}(?:/[^\s<>"\']*)?)</strong>#iu',
+            function ($m) use (&$auto_linked) {
+                $url = trim($m[1]);
+                $href = (stripos($url, 'http') === 0) ? $url : ('https://' . $url);
+                // Skip se url muito curta ou suspeita
+                if (strlen($url) < 8 || !preg_match('#\.(com|com\.br|net|org|gov\.br|edu\.br|io|co)#i', $url)) return $m[0];
+                $auto_linked++;
+                return '<a href="' . htmlspecialchars($href, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>';
+            },
+            $html
+        ) ?? $html;
+
+        // (b) URLs bare em texto: detecta dentro de <p>, <li>, <td> mas FORA de <a>
+        $html = preg_replace_callback(
+            '#(<(?:p|li|td)\b[^>]*>)([\s\S]*?)(</(?:p|li|td)>)#i',
+            function ($wrap) use (&$auto_linked) {
+                [$full, $open, $inner, $close] = $wrap;
+                // Skip se já tem <a> dentro (evita double-process)
+                $temA = preg_match('#<a\b#i', $inner);
+                // Mascara <a>...</a> existentes pra não tocar
+                $masks = [];
+                $innerMasked = preg_replace_callback('#<a\b[^>]*>[\s\S]*?</a>#i', function ($mm) use (&$masks) {
+                    $tk = '@@@A_' . count($masks) . '@@@';
+                    $masks[$tk] = $mm[0];
+                    return $tk;
+                }, $inner) ?? $inner;
+                // Linka URLs https?:// soltas
+                $innerMasked = preg_replace_callback(
+                    '#(?<![\'"=>/\w])(https?://[a-z0-9.-]+(?:/[^\s<>"\']*)?)#iu',
+                    function ($m) use (&$auto_linked) {
+                        $auto_linked++;
+                        $url = rtrim($m[1], '.,;:!?)');
+                        $tail = substr($m[1], strlen($url));
+                        return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
+                    },
+                    $innerMasked
+                ) ?? $innerMasked;
+                // Linka domínios bare COM PATH (smallpdf.com/pt/comprimir-pdf)
+                $innerMasked = preg_replace_callback(
+                    '#(?<![\'"=>/@\w-])([a-z0-9-]+\.(?:com\.br|gov\.br|edu\.br|com|net|org|io|co)/[a-z0-9/_.\-]+)#iu',
+                    function ($m) use (&$auto_linked) {
+                        $auto_linked++;
+                        $url = rtrim($m[1], '.,;:!?)');
+                        $tail = substr($m[1], strlen($url));
+                        return '<a href="https://' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
+                    },
+                    $innerMasked
+                ) ?? $innerMasked;
+                // Restaura <a> originais
+                foreach ($masks as $tk => $orig) $innerMasked = str_replace($tk, $orig, $innerMasked);
+                return $open . $innerMasked . $close;
+            },
+            $html
+        ) ?? $html;
+
+        // Restaura blocos de aviso (sem auto-link interno)
+        foreach ($avisoBlocos as $tk => $bloco) $html = str_replace($tk, $bloco, $html);
+        if ($auto_linked > 0) $log['urls_auto_linkadas'] = $auto_linked;
+
         // 4.5. Fix HTML escapado: tags aparecem como `&lt;strong&gt;` no texto visível.
         //      Caso real #4805: "strong&gt; com quatro modalidades" — Sonnet ou pipeline
         //      escapou duplicado. Detecta entidades de tag em contexto NÃO-atributo e decodifica.
