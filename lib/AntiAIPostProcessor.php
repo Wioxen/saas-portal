@@ -615,6 +615,29 @@ class AntiAIPostProcessor
             'implica necessidade de' => 'obriga a',
             'implica obrigatoriedade de' => 'obriga a',
             'regime jurídico de exceção' => 'regra excepcional',
+            'instrumento de política' => 'ferramenta de política',
+            'como instrumento de' => 'como ferramenta de',
+            'enquanto instrumento' => 'como ferramenta',
+
+            // ── Clickbait title comum (escapa h1 muitas vezes) ──
+            'a resposta que muda tudo' => '',
+            'a resposta surpreende' => '',
+            'que muda tudo em' => 'em',
+            'que muda tudo para' => 'para',
+
+            // ── Tom edital institucional → tom guia (jornalismo) ──
+            // Sonnet copia linguagem do edital quando fonte é gov.br/mec.
+            'será divulgada pelo' => 'sai pelo',
+            'será divulgado pelo' => 'sai pelo',
+            'será divulgada pela' => 'sai pela',
+            'será divulgado pela' => 'sai pela',
+            'será publicada no diário oficial' => 'sai no Diário Oficial',
+            'será publicado no diário oficial' => 'sai no Diário Oficial',
+            'no momento oportuno' => '',
+            'em data a ser definida' => 'em data ainda não definida',
+            'oportunamente será' => 'será',
+            'serão informadas oportunamente' => 'saem mais pra frente',
+            'serão informados oportunamente' => 'saem mais pra frente',
 
             // ── Verbos eliminação genéricos (fingerprint LLM em educação/benefícios) ──
             // CASO real #4796: padrão "pode barrar"/"elimina"/"impede" sem qualificador
