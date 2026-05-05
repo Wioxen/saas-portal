@@ -100,6 +100,25 @@ class AntiAIPostProcessor
         $html = $resStrong['html'];
         $log['strong_perguntas_movidas_pro_faq'] = $resStrong['movidas'];
 
+        // Remove "?" final de H2 do corpo (proibido pelo prompt mas Sonnet ignora às vezes).
+        // Caso real #5021: H2 "O que é o Mestrado Profissional em Educação da UFFS?".
+        // Estratégia conservadora: tira só o "?" final em H2s do CORPO (preserva H2 do FAQ
+        // que naturalmente usa "Perguntas frequentes" sem "?").
+        $h2_perg_fixed = 0;
+        $html = preg_replace_callback(
+            '#<h2([^>]*)>([^<]+)\?(\s*)</h2>#i',
+            function ($m) use (&$h2_perg_fixed) {
+                $txt = trim($m[2]);
+                // Pula h2 do FAQ (Perguntas frequentes, FAQ, Dúvidas...) — ali ? é raro mas
+                // se aparecer a pergunta vai pra summary; aqui tô só limpando h2-pergunta-no-corpo.
+                if (preg_match('/perguntas?\s*frequentes?|^FAQ\b|d[úu]vidas?/iu', $txt)) return $m[0];
+                $h2_perg_fixed++;
+                return '<h2' . $m[1] . '>' . $txt . '</h2>';
+            },
+            $html
+        ) ?? $html;
+        if ($h2_perg_fixed > 0) $log['h2_pergunta_corrigido'] = $h2_perg_fixed;
+
         // Detector msg-card indevido — só permitido se título contém trigger keyword.
         // Caso real 04/05: posts #4680/#4688 (curso de IA p/ professores) ganharam msg-card
         // num número de WhatsApp/contato indevido. Sonnet ignorou regra do prompt.
