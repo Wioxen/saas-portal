@@ -171,8 +171,14 @@ function aplicarSite(array &$cfg, array $sites, string $slug): void
         // Aplicado pelo InternalLinkGlossary no PostProcess pra construir cluster topical
         // authority (cada termo aponta sempre pra mesma URL hub do nicho).
         'internal_link_glossary',
+        // Modo de validação de anchor pra backlinks internos. Default true (sites
+        // multi-nicho — exige overlap entre título do candidato e keyword âncora).
+        // Sites mono-nicho (cursosenac, leaodabarra) setam false: TODOS os posts
+        // são do mesmo nicho, filtro extra elimina links bons.
+        'internal_links_strict_anchor',
     ];
     foreach ($campos as $k) {
+        // Booleanos false são valores válidos — só pula se ausente OU string vazia
         if (isset($s[$k]) && $s[$k] !== '') $cfg[$k] = $s[$k];
     }
     $cfg['_site_slug'] = $slug;

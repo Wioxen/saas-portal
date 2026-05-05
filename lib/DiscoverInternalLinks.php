@@ -69,10 +69,24 @@ class DiscoverInternalLinks
     /** Termo-seed do artigo atual (usado pra filtrar candidatos cross-nicho). Setado por setKeywordAncora(). */
     private string $keywordAncora = '';
 
+    /** Modo strict: exige overlap entre título do candidato e keyword âncora.
+     * Default true (sites multi-nicho). Em sites mono-nicho (cursosenac, leaodabarra)
+     * setar false: TODOS os posts são do mesmo nicho, filtro extra elimina links bons.
+     * Caso real #4995: site mono-nicho educação, post sobre Fatec não tinha siblings com
+     * "Fatec" mas tinha 5 sobre EAD/Senac/IFSertão — ambos altamente relevantes pro leitor.
+     */
+    private bool $strictAnchor = true;
+
     public function __construct(Wordpress $wp, int $maxLinks = 3)
     {
         $this->wp = $wp;
         $this->maxLinks = $maxLinks;
+    }
+
+    /** Liga/desliga validação de anchor estrita (default true). */
+    public function setStrictAnchor(bool $strict): void
+    {
+        $this->strictAnchor = $strict;
     }
 
     /** Define a palavra-chave principal do artigo — candidatos sem overlap com ela são rejeitados. */
@@ -127,8 +141,10 @@ class DiscoverInternalLinks
 
             // Termos semânticos do cluster (pré-validados por contexto editorial) pulam filtro.
             // Outros termos (de H2, strong, etc.) precisam bater com a keyword-âncora.
+            // Em modo NÃO-strict (sites mono-nicho), pula filtro de anchor — qualquer termo
+            // do post é considerado relevante pro nicho.
             $termoNorm = mb_strtolower(trim($termo), 'UTF-8');
-            $ehSemantico = isset($this->termosSemanticosCluster[$termoNorm]);
+            $ehSemantico = isset($this->termosSemanticosCluster[$termoNorm]) || !$this->strictAnchor;
             if (!$ehSemantico && $this->keywordAncora !== '' && !$this->termoCasaComAncora($termo)) continue;
 
             // Busca WP por este termo
@@ -146,14 +162,20 @@ class DiscoverInternalLinks
                 // Dedupe: URL já linkada no HTML (inclui authority-links ou prévia geração)
                 if (isset($urlsJaLinkadas[$link])) continue;
 
-                // VALIDAÇÃO DE RELEVÂNCIA 1: título do candidato casa com o termo buscado
-                if (!$this->tituloRelevante($title, $termo)) continue;
+                // VALIDAÇÃO DE RELEVÂNCIA 1: título do candidato casa com o termo buscado.
+                // Em modo NÃO-strict (mono-nicho), confiar no fuzzy match do WP REST search:
+                // se WP retornou, é relevante o suficiente. Validação textual elimina links
+                // bons quando termo (ex: "Estadual de Educação Tecnológica") tem 0 overlap
+                // com candidatos válidos do mesmo nicho ("SP Escola Superior de Teatro").
+                if ($this->strictAnchor && !$this->tituloRelevante($title, $termo)) continue;
 
-                // VALIDAÇÃO DE RELEVÂNCIA 2 (só aplica a termos NÃO-semânticos):
+                // VALIDAÇÃO DE RELEVÂNCIA 2 (só aplica a termos NÃO-semânticos E em strict mode):
                 // título do candidato também casa com a keyword-âncora do artigo.
                 // Termos semânticos (do cluster ou n-gramas do próprio texto) pulam
                 // esse filtro porque já foram validados por contexto editorial/textual.
-                if (!$ehSemantico && $this->keywordAncora !== '' && !$this->tituloRelevante($title, $this->keywordAncora)) continue;
+                // Em sites mono-nicho (strictAnchor=false), TODOS os posts compartilham
+                // o nicho — esse filtro elimina links bons (caso #4995 cursosenac).
+                if (!$ehSemantico && $this->strictAnchor && $this->keywordAncora !== '' && !$this->tituloRelevante($title, $this->keywordAncora)) continue;
 
                 // Tenta injetar: busca o termo no HTML (ocorrência natural em <p>, fora de <a>)
                 $novoHtml = $this->injetarLinkNoBody($html, $termo, $link, $title);

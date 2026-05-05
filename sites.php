@@ -186,6 +186,10 @@ return [
         // publicam fotos contextuais reais — alunos, cerimônia, prédio). Google premia
         // imagem original > stock genérico. Fallback Pexels só se og inválido (logo, ícone).
         'imagem_featured_estrategia' => 'og_first',
+        // Internal links: site mono-nicho — TODOS os posts são sobre educação/cursos. Filtro
+        // de "title casa com keyword âncora" elimina links bons (caso #4995: Fatec EAD não
+        // tinha siblings com "Fatec" mas tinha 5 sobre EAD/Senac/IFSertão — todos relevantes).
+        'internal_links_strict_anchor' => false,
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,
@@ -380,6 +384,9 @@ return [
          // entrega cara genérica chutando bola. og:image da fonte (ge.globo,
          // bahianoticias, lance) é foto contextual real. og_only força usar.
          'imagem_featured_estrategia' => 'og_only',
+         // Internal links: mono-nicho EC Vitória/futebol. TODOS os posts giram sobre
+         // o mesmo time. Filtro estrito de keyword âncora elimina links válidos.
+         'internal_links_strict_anchor' => false,
          // Esporte muda rápido: pré-jogo dura horas (escalação/arbitragem morre no apito),
          // pós-jogo dura ~36h. 96h era folgado demais e deixava entrar pré-jogo de partida
          // já realizada — ver descarte de #1710/#1721 em 03/05.

@@ -1240,11 +1240,25 @@ class DiscoverGerador
                         if (!empty($termosLink)) {
                             $linker = new DiscoverInternalLinks($this->wp, 5); // 5 max backlinks internos
                             $linker->setKeywordAncora($termo);
-                            // Combina termos do cluster + n-gramas do próprio texto (ambos "seguros")
+                            // Sites mono-nicho (cursosenac, leaodabarra): desliga validação
+                            // de keyword-âncora estrita — todos os posts são do mesmo nicho.
+                            // Default true pra sites multi-nicho (vagasebeneficios, etc.)
+                            $strictAnchor = (bool)($cfgTrend['internal_links_strict_anchor'] ?? true);
+                            $linker->setStrictAnchor($strictAnchor);
+                            // Combina termos do cluster + n-gramas do próprio texto + relacionados
+                            // do trend + termos canônicos do nicho do site (todos "seguros").
                             $termosSeguros = !empty($clusterDet2['key'])
                                 ? DiscoverClusterMatcher::termosSemanticos($clusterDet2['key'])
                                 : [];
                             $termosSeguros = array_merge($termosSeguros, DiscoverInternalLinks::extrairNgramasSignificativos($content));
+                            // Relacionados do trend (cursos/educação/destaque) — termos do mesmo nicho
+                            if (!empty($trend['relacionados']) && is_array($trend['relacionados'])) {
+                                $termosSeguros = array_merge($termosSeguros, $trend['relacionados']);
+                            }
+                            // Termos canônicos do nicho do site (sites.php nicho_termos)
+                            if (!empty($cfgTrend['nicho_termos']) && is_array($cfgTrend['nicho_termos'])) {
+                                $termosSeguros = array_merge($termosSeguros, $cfgTrend['nicho_termos']);
+                            }
                             $linker->setTermosSemanticos($termosSeguros);
                             $r = $linker->injetar($content, $termosLink, [], $postId);
                             if ($r['aplicados'] > 0) {
