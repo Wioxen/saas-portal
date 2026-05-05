@@ -135,6 +135,12 @@ class AntiAIPostProcessor
             $log['travessoes'] = $travessoesAntes;
         }
 
+        // 4.4. Promove links gov.br genéricos pra específicos.
+        // Caso real #4911/#4878/#4805: Sonnet gera "<a href='https://www.gov.br/'>" no
+        // rodapé "🏛️ Portal Gov.br" (genérico) mesmo quando o post fala de Inep/MEC/etc.
+        // Estratégia: se há gov.br/X específico no post, remove o genérico (redundante).
+        $html = self::corrigirLinksGenericosGovBr($html);
+
         // 4.5. Fix HTML escapado: tags aparecem como `&lt;strong&gt;` no texto visível.
         //      Caso real #4805: "strong&gt; com quatro modalidades" — Sonnet ou pipeline
         //      escapou duplicado. Detecta entidades de tag em contexto NÃO-atributo e decodifica.
@@ -182,6 +188,51 @@ class AntiAIPostProcessor
     private static function contemMsgCard(string $html): bool
     {
         return stripos($html, 'msg-card') !== false;
+    }
+
+    /**
+     * Promove links gov.br genéricos pra específicos.
+     * Caso real: Sonnet gera "<a href='https://www.gov.br/'>Portal Gov.br</a>" no rodapé,
+     * mas o post fala de Inep/MEC/Caixa específicos (que JÁ TÊM link específico em outro
+     * lugar). Esse genérico é redundante e fraco pra autoridade.
+     *
+     * Estratégia:
+     *   1. Se há gov.br/X específicos no post → o gov.br/ genérico é REDUNDANTE → remove
+     *   2. Senão (só genérico existe) → tenta promover pro órgão mais mencionado no texto
+     */
+    private static function corrigirLinksGenericosGovBr(string $html): string
+    {
+        // 1. Detecta se há links gov.br ESPECÍFICOS (com path)
+        $temEspecifico = preg_match('#href=[\'"]https?://(?:www\.)?gov\.br/[^\'"\s/]+/?[\'"]#i', $html) === 1;
+        // Ou gov.br/inep, gov.br/mec, etc.
+        if (!$temEspecifico) {
+            $temEspecifico = preg_match('#href=[\'"]https?://(?:www\.)?(?:inep|mec|capes|cnpq|caixa|inss)\.gov\.br#i', $html) === 1;
+        }
+        if (!$temEspecifico) return $html; // não há específico, não toca no genérico
+
+        // 2. Tem específicos — então o gov.br/ genérico vira redundante. Remove o <a> genérico
+        //    mantendo o texto interno (não destrói leitura).
+        $html = preg_replace_callback(
+            '#<a\s+[^>]*href=[\'"]https?://(?:www\.)?gov\.br/?[\'"][^>]*>(.*?)</a>#is',
+            function ($m) {
+                $texto = $m[1];
+                // Se texto é genérico tipo "Portal Gov.br" / "gov.br" → remove tudo (link + texto)
+                $textoLimpo = trim(strip_tags($texto));
+                if (preg_match('/^(?:🏛️\s*)?(portal\s+)?gov\.br/iu', $textoLimpo)
+                    || mb_strlen($textoLimpo) < 12) {
+                    return ''; // remove inteiro
+                }
+                // Texto descritivo — preserva texto, descarta link
+                return $texto;
+            },
+            $html
+        ) ?? $html;
+
+        // Cleanup de <li> ou item de lista vazio que possa ter sobrado
+        $html = preg_replace('#<li[^>]*>\s*</li>#is', '', $html) ?? $html;
+        $html = preg_replace('#<p[^>]*>\s*</p>#is', '', $html) ?? $html;
+
+        return $html;
     }
 
     /**
