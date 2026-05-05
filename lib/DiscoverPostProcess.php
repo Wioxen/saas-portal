@@ -1873,16 +1873,29 @@ class DiscoverPostProcess
         // depois h2 + qualquer conteúdo limitado a 2000 chars + ol (caso com p intermediário).
         $kwTutorial = 'Como\s+[^<]+|Passo\s+a\s+passo[^<]*|Tutorial[^<]*|Guia\s+(?:passo\s+a\s+passo|completo|pr[áa]tico)[^<]*|[^<]+\sem\s+\d+\s+passos[^<]*';
         $m = null;
-        // Pass 1: h2 imediatamente seguido de <ol> (whitespace só)
+        // Pass 1: h2 imediatamente seguido de <ol> (whitespace só) — caso mais comum
         $pad1 = '/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>\s*<ol[^>]*>([\s\S]*?)<\/ol>/iu';
         if (!preg_match($pad1, $html, $m)) {
-            // Pass 2: h2 + alguns parágrafos (max 2000 chars) + <ol>
-            $pad2 = '/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>(?:[^<]|<(?!h[23])){0,2000}?<ol[^>]*>([\s\S]*?)<\/ol>/iu';
+            // Pass 2: h2 + 1 ou mais <p> intermediários + <ol>. Padrão simples (sem
+            // {0,2000} negative-lookahead que estoura regex size em PCRE).
+            $pad2 = '/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>\s*(?:<p[^>]*>[\s\S]*?<\/p>\s*){1,5}<ol[^>]*>([\s\S]*?)<\/ol>/iu';
             if (!preg_match($pad2, $html, $m)) {
-                // Trigger 2: H2 com id='como-*'
-                $pad3 = "/<h2[^>]*id=['\"]como-[^'\"]+['\"][^>]*>([^<]+)<\/h2>(?:[^<]|<(?!h[23])){0,2000}?<ol[^>]*>([\s\S]*?)<\/ol>/iu";
+                // Pass 3: H2 com id='como-*' (fallback) — só com <ol> direto após h2
+                $pad3 = "/<h2[^>]*id=['\"]como-[^'\"]+['\"][^>]*>([^<]+)<\/h2>\s*(?:<p[^>]*>[\s\S]*?<\/p>\s*){0,5}<ol[^>]*>([\s\S]*?)<\/ol>/iu";
                 if (!preg_match($pad3, $html, $m)) {
-                    return $html;
+                    // Pass 4: localiza h2-tutorial e <ol> separadamente, valida proximidade.
+                    // Cobre casos atípicos sem regex grande.
+                    if (preg_match('/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>/iu', $html, $hm, PREG_OFFSET_CAPTURE)) {
+                        $h2End = $hm[0][1] + strlen($hm[0][0]);
+                        $resto = substr($html, $h2End, 5000);
+                        if (preg_match('/<ol[^>]*>([\s\S]*?)<\/ol>/i', $resto, $om)) {
+                            $m = [$hm[0][0], $hm[1][0], $om[1]];
+                        } else {
+                            return $html;
+                        }
+                    } else {
+                        return $html;
+                    }
                 }
             }
         }
