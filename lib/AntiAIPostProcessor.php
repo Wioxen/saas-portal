@@ -368,11 +368,16 @@ class AntiAIPostProcessor
 
     private static function tokenizar(string $s): array
     {
+        $s = trim($s);
+        if ($s === '') return [];
         $s = strtr($s, 'áéíóúâêôàãõçÁÉÍÓÚÂÊÔÀÃÕÇ', 'aeiouaeoaaocAEIOUAEOAAOC');
-        $s = preg_replace('/[^\w\s]/u', ' ', $s) ?? $s;
+        $s = preg_replace('/[^\w\s]/u', ' ', $s);
+        if (!is_string($s)) return [];
+        $parts = preg_split('/\s+/u', trim($s));
+        if (!is_array($parts)) return [];
         $stopwords = ['de','da','do','das','dos','o','a','os','as','um','uma','e','ou','que','com','para','por','no','na','nos','nas','em','é','ser','estar','ter','tem','seu','sua','seus','suas','isso','esse','essa','este','esta','qual','como','onde','quando','por','que','quem','não','sim'];
         $tokens = array_filter(
-            array_map('mb_strtolower', preg_split('/\s+/u', trim($s))),
+            array_map('mb_strtolower', $parts),
             fn($t) => $t && mb_strlen($t) > 2 && !in_array($t, $stopwords, true)
         );
         return array_unique(array_values($tokens));
