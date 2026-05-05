@@ -62,9 +62,9 @@ class InlineImageInjector
                     $media = $wp->getMedia($mediaId);
                     $imgUrl = $media['source_url'] ?? $img['url'];
                     $figcaption = htmlspecialchars($img['legenda'] ?: $alt, ENT_QUOTES, 'UTF-8');
-                    $imgHtml = "\n<figure class='inline-img' style='margin:24px 0'>"
-                             . "<img src='" . htmlspecialchars($imgUrl, ENT_QUOTES) . "' alt='" . htmlspecialchars($alt, ENT_QUOTES) . "' loading='lazy' style='width:100%;height:auto;border-radius:8px'>"
-                             . "<figcaption style='font-size:13px;color:#64748b;margin-top:6px;text-align:center'>{$figcaption}</figcaption>"
+                    $imgHtml = "\n<figure class='inline-img' style='margin:24px 0;width:100%;display:block'>"
+                             . "<img src='" . htmlspecialchars($imgUrl, ENT_QUOTES) . "' alt='" . htmlspecialchars($alt, ENT_QUOTES) . "' loading='lazy' style='width:100%;height:auto;border-radius:8px;display:block'>"
+                             . "<figcaption style='font-size:13px;color:#64748b;margin-top:8px;text-align:center;line-height:1.4;padding:0 12px;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;display:block'>{$figcaption}</figcaption>"
                              . "</figure>\n";
                     $html = substr($html, 0, $pos) . $imgHtml . substr($html, $pos);
                     $log['inseridas']++;

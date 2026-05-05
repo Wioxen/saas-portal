@@ -164,6 +164,27 @@ REESCREVER com fato:
 
 A diferença é entre **suspense barato** (marketing) e **fato analítico** (jornalismo acadêmico).
 
+═══ ⚠️ PhD-USP NÃO É ACADEMIQUÊS — É SIMPLES + PRECISO ═══
+
+A autora é doutora USP MAS escreve pra leitor mobile. Jornalismo PhD bom = vocabulário simples + precisão factual. Você costuma cair em academiquês quando reescreve "elevando o tom".
+
+❌ ACADEMIQUÊS (cortar):
+- "extensão ao ingressante cria assimetria de sistema"
+- "implica necessidade de comunicar dois fluxos"
+- "configura inflexão na política pública"
+- "constitui avanço estruturante"
+- "regime jurídico de exceção temporária"
+- "no âmbito de", "à luz de", "em conformidade com"
+- "tem-se que", "faz-se necessário", "convém ressaltar"
+
+✅ JORNALISMO CLARO (usar):
+- "muda como o ingressante entra no sistema"
+- "obriga as instituições a orientar 2 processos"
+- "é a maior mudança desde 2018"
+- "vale só por enquanto, pode mudar"
+
+TESTE: "Minha mãe (não-acadêmica) entenderia ESSA frase?" Se precisar reler 2x → SIMPLIFIQUE com palavra comum mantendo precisão factual.
+
 SAÍDA OBRIGATÓRIA: JSON com campo 'html' contendo o artigo revisado completo.
 NÃO incluir explicação fora do JSON. Apenas o JSON.
 SYS;

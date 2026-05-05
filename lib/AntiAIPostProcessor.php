@@ -135,6 +135,17 @@ class AntiAIPostProcessor
             $log['travessoes'] = $travessoesAntes;
         }
 
+        // 4.5. Fix HTML escapado: tags aparecem como `&lt;strong&gt;` no texto visível.
+        //      Caso real #4805: "strong&gt; com quatro modalidades" — Sonnet ou pipeline
+        //      escapou duplicado. Detecta entidades de tag em contexto NÃO-atributo e decodifica.
+        $html = preg_replace_callback(
+            '/&lt;(\/?)(strong|em|b|i|u|p|br)([^&]{0,40})&gt;/i',
+            fn($m) => '<' . $m[1] . $m[2] . html_entity_decode($m[3], ENT_QUOTES) . '>',
+            $html
+        ) ?? $html;
+        // Caso só fechamento órfão — remove
+        $html = preg_replace('/(?<![<\w])(strong|em|b|i|u)&gt;/i', '', $html) ?? $html;
+
         // 5. Cleanup de artefatos da remoção de frases:
         //    - vírgulas duplicadas → vírgula
         //    - ponto + vírgula sequência → ponto
@@ -569,6 +580,41 @@ class AntiAIPostProcessor
             'esse problema' => 'isso',
             'esse critério' => 'esse requisito',
             'esse filtro' => 'essa exigência',
+
+            // ── Jargão acadêmico desnecessário (PhD-USP é simples + preciso) ──
+            // Caso real #4805: Sonnet caiu em academiquês qd pediram tom PhD-USP.
+            // Substitutos mantêm precisão sem fricção cognitiva.
+            'no âmbito de' => 'em',
+            'no âmbito do' => 'no',
+            'no âmbito da' => 'na',
+            'no escopo de' => 'em',
+            'no escopo do' => 'no',
+            'à luz de' => 'segundo',
+            'à luz do' => 'segundo o',
+            'à luz da' => 'segundo a',
+            'em conformidade com' => 'segundo',
+            'tem-se que' => '',
+            'faz-se necessário' => 'é preciso',
+            'convém ressaltar' => '',
+            'convém destacar' => '',
+            'convém mencionar' => '',
+            'no que tange' => 'sobre',
+            'no que tange a' => 'sobre',
+            'no que se refere a' => 'sobre',
+            'no que diz respeito a' => 'sobre',
+            'cumpre destacar' => '',
+            'cumpre mencionar' => '',
+            'cumpre ressaltar' => '',
+            'mister se faz' => 'é preciso',
+            'configura uma inflexão' => 'é uma mudança',
+            'configura inflexão' => 'é mudança',
+            'constitui um avanço estruturante' => 'é avanço',
+            'constitui marco' => 'é marco',
+            'cria uma assimetria' => 'cria desequilíbrio',
+            'cria assimetria' => 'desequilibra',
+            'implica necessidade de' => 'obriga a',
+            'implica obrigatoriedade de' => 'obriga a',
+            'regime jurídico de exceção' => 'regra excepcional',
 
             // ── Verbos eliminação genéricos (fingerprint LLM em educação/benefícios) ──
             // CASO real #4796: padrão "pode barrar"/"elimina"/"impede" sem qualificador
