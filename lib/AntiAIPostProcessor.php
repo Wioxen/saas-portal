@@ -66,6 +66,14 @@ class AntiAIPostProcessor
         $html = $resMerge['html'];
         $log['h3_perguntas_movidas_pro_faq'] = $resMerge['movidas'];
 
+        // Merge perguntas em <strong>Pergunta?</strong> + <p>Resposta</p> pro FAQ.
+        // Caso real #4982: Sonnet usou 4 strong-perguntas no corpo que duplicavam com
+        // details FAQ (palavra-chave "É seguro comprimir PDF...", "Como comprimir...").
+        // Detector h3 não pegou porque era <strong>, não <h3>.
+        $resStrong = self::mergeStrongPerguntasIntoFaq($html);
+        $html = $resStrong['html'];
+        $log['strong_perguntas_movidas_pro_faq'] = $resStrong['movidas'];
+
         // Detector msg-card indevido — só permitido se título contém trigger keyword.
         // Caso real 04/05: posts #4680/#4688 (curso de IA p/ professores) ganharam msg-card
         // num número de WhatsApp/contato indevido. Sonnet ignorou regra do prompt.
@@ -140,6 +148,35 @@ class AntiAIPostProcessor
         // rodapé "🏛️ Portal Gov.br" (genérico) mesmo quando o post fala de Inep/MEC/etc.
         // Estratégia: se há gov.br/X específico no post, remove o genérico (redundante).
         $html = self::corrigirLinksGenericosGovBr($html);
+
+        // 4.6. Sanitiza <a> sem href, com href vazio, "#" ou javascript:.
+        // Caso real reportado pelo user 03/05: "links na paginas sem href" — pode ser
+        // <a> sobrando após algum step de limpeza, ou Sonnet gerou âncora truncada.
+        // Estratégia: descasca o <a> mantendo o texto interno (link inválido vira texto).
+        $a_sanitized = 0;
+        $html = preg_replace_callback(
+            '#<a\b([^>]*)>([\s\S]*?)</a>#i',
+            function ($m) use (&$a_sanitized) {
+                $attrs = (string)$m[1];
+                $inner = (string)$m[2];
+                // Captura href se existir
+                $temHref = preg_match('/\bhref\s*=\s*([\'"])([^\'"]*)\1/i', $attrs, $hm);
+                if (!$temHref) {
+                    $a_sanitized++;
+                    return $inner; // <a> sem href: descasca
+                }
+                $href = trim($hm[2]);
+                // href vazio, só "#", javascript:, "void(0)" — todos inválidos
+                if ($href === '' || $href === '#' || stripos($href, 'javascript:') === 0
+                    || stripos($href, 'void(0)') !== false) {
+                    $a_sanitized++;
+                    return $inner;
+                }
+                return $m[0]; // link válido, mantém
+            },
+            $html
+        ) ?? $html;
+        if ($a_sanitized > 0) $log['links_sem_href_removidos'] = $a_sanitized;
 
         // 4.5. Fix HTML escapado: tags aparecem como `&lt;strong&gt;` no texto visível.
         //      Caso real #4805: "strong&gt; com quatro modalidades" — Sonnet ou pipeline
@@ -321,6 +358,94 @@ class AntiAIPostProcessor
         ) ?? $html;
 
         return ['html' => $html, 'removidos' => $removidos];
+    }
+
+    /**
+     * Detecta perguntas em <strong>Pergunta?</strong> (Sonnet às vezes usa em vez de h3)
+     * + parágrafo seguinte como resposta. Promove pra <details> dentro do FAQ.
+     * Caso real #4982: 4 perguntas em <strong> duplicavam com details FAQ.
+     */
+    private static function mergeStrongPerguntasIntoFaq(string $html): array
+    {
+        // Acha h2 FAQ
+        if (!preg_match('/<h2[^>]*>\s*(?:perguntas?\s*frequentes?|FAQ|d[úu]vidas?[^<]*)\s*<\/h2>/iu', $html, $hm, PREG_OFFSET_CAPTURE)) {
+            return ['html' => $html, 'movidas' => 0];
+        }
+        $faqH2Pos = $hm[0][1];
+        $faqH2End = $hm[0][1] + strlen($hm[0][0]);
+        $janelaInicio = max(0, $faqH2Pos - 8000);
+        $bloco = substr($html, $janelaInicio, $faqH2Pos - $janelaInicio);
+
+        // 3 padrões reais que Sonnet usa:
+        //   A) <p><strong>P?</strong><br>R</p>   ← caso real #4982 (Sonnet usa esse)
+        //   B) <p><strong>P?</strong></p><p>R</p>
+        //   C) <strong>P?</strong><p>R</p>
+        // Captura tudo num só regex usando alternativas. Grupos:
+        //   (A) inline: pergunta=g1, respostaInline=g2
+        //   (B/C) split: pergunta=g3, respostaP=g4
+        $padrao = '#(?:<p\b[^>]*>\s*<strong>([^<]*\?)</strong>\s*<br\s*/?>\s*((?:(?!</p>).)+?)</p>)|(?:(?:<p\b[^>]*>\s*<strong>([^<]*\?)</strong>\s*</p>|<strong>([^<]*\?)</strong>)\s*(<p\b[^>]*>(?:(?!</p>).)*?</p>))#is';
+        if (!preg_match_all($padrao, $bloco, $mm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+            return ['html' => $html, 'movidas' => 0];
+        }
+
+        $movidas = 0;
+        $detailsParaInserir = '';
+        $remocoes = [];
+        foreach ($mm as $match) {
+            // Tipo A (inline com <br>)
+            if (!empty($match[1][0])) {
+                $perguntaTexto = trim((string)$match[1][0]);
+                $respostaHtml = '<p>' . trim((string)$match[2][0]) . '</p>';
+            } else {
+                $perguntaTexto = trim((string)($match[3][0] ?: $match[4][0]));
+                $respostaHtml = (string)($match[5][0] ?? '');
+            }
+            if ($perguntaTexto === '' || mb_strlen($perguntaTexto) < 10) continue;
+            // Skip se já existe pergunta similar nos details
+            if (self::perguntaJaExisteNoFaq($html, $perguntaTexto)) {
+                // Só remove o duplicado do corpo, não migra
+                $absStart = $janelaInicio + $match[0][1];
+                $absLen = strlen($match[0][0]);
+                $remocoes[] = [$absStart, $absLen];
+                $movidas++;
+                continue;
+            }
+            // Migra pro FAQ
+            $detailsParaInserir .= "\n<details><summary>" . htmlspecialchars($perguntaTexto, ENT_QUOTES, 'UTF-8') . "</summary>" . trim($respostaHtml) . "</details>";
+            $absStart = $janelaInicio + $match[0][1];
+            $absLen = strlen($match[0][0]);
+            $remocoes[] = [$absStart, $absLen];
+            $movidas++;
+        }
+
+        if ($movidas === 0) return ['html' => $html, 'movidas' => 0];
+
+        // Insere details novos APÓS h2 FAQ
+        if ($detailsParaInserir !== '') {
+            $html = substr($html, 0, $faqH2End) . $detailsParaInserir . substr($html, $faqH2End);
+        }
+        // Remove originais (de trás pra frente)
+        usort($remocoes, fn($a, $b) => $b[0] <=> $a[0]);
+        foreach ($remocoes as $rem) {
+            [$start, $len] = $rem;
+            $html = substr($html, 0, $start) . substr($html, $start + $len);
+        }
+        return ['html' => $html, 'movidas' => $movidas];
+    }
+
+    /** Verifica se pergunta similar já está nos <details> do FAQ (Jaccard 0.5). */
+    private static function perguntaJaExisteNoFaq(string $html, string $pergunta): bool
+    {
+        if (!preg_match_all('#<details\b[^>]*>\s*<summary[^>]*>(.+?)</summary>#is', $html, $m)) return false;
+        $tokensP = self::tokenizar(mb_strtolower($pergunta));
+        if (count($tokensP) < 2) return false;
+        foreach ($m[1] as $sumHtml) {
+            $sumTxt = mb_strtolower(trim(strip_tags(html_entity_decode($sumHtml, ENT_QUOTES, 'UTF-8'))));
+            $tokensS = self::tokenizar($sumTxt);
+            if (count($tokensS) < 2) continue;
+            if (self::jaccard($tokensP, $tokensS) >= 0.5) return true;
+        }
+        return false;
     }
 
     /**

@@ -1463,6 +1463,25 @@ NUNCA crie a estrutura "h3 com pergunta + p com resposta" no DESENVOLVIMENTO do 
 
 **TESTE:** após escrever, conte quantas perguntas você criou. Cada pergunta deve aparecer EM UM ÚNICO LUGAR (no FAQ details). Duplicar = artigo reprovado, custo extra de tokens, redundância semântica.
 
+## 🚫 `<strong>Pergunta?</strong>` NO CORPO — PROIBIDO (regra dura, mesma família do h3-pergunta)
+
+NUNCA escreva pergunta dentro de `<strong>` seguida de parágrafo-resposta. Isso é equivalente a h3-pergunta+p e duplica com o FAQ details. Caso real #4982: 4 strong-perguntas no corpo duplicaram com 5 details no FAQ — desperdício duplo de tokens.
+
+**ERRADO** (qualquer forma de pergunta + resposta no corpo):
+```html
+<p><strong>É seguro comprimir PDF online com documentos pessoais?</strong></p>
+<p>Plataformas confiáveis usam HTTPS...</p>
+```
+
+**ERRADO TAMBÉM:**
+```html
+<p><strong>Como otimizar PDF no celular?</strong> Use o app X que oferece...</p>
+```
+
+**CERTO:** mover essa pergunta-resposta pro bloco `<details><summary>` do FAQ. No corpo, use `<strong>` SOMENTE pra destacar dados, números, prazos, nomes de instituição — NUNCA pergunta.
+
+**REGRA UNIFICADA:** qualquer texto terminando com `?` (ponto de interrogação) → vai SOMENTE em `<details><summary>`. Não em `<h2>`, não em `<h3>`, não em `<h4>`, não em `<strong>`, não em `<p>`. Em NENHUM outro lugar.
+
 **REGRA DE DADO CONCRETO NO MEIO DO ARTIGO:**
 Se a fonte tem números (vagas, turmas, dias, horas) → distribuir ao longo dos H2 e parágrafos. Se a fonte não dá números explícitos → NÃO inventar, mas usar referências indiretas ("turmas com vagas limitadas", "carreta com tempo de permanência definido").
 
