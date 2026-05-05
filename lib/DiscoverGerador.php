@@ -1637,6 +1637,32 @@ class DiscoverGerador
         }
 
         // 6.5) HTML VALIDATOR — sanity check final antes de marcar publicado
+        // 2ª PASSADA do AntiAIPostProcessor (2026-05-05) — última camada antes do
+        // DiscoverHtmlValidator. Captura padrões IA injetados por steps APÓS a 1ª
+        // passada (DiscoverPostProcess::processar adiciona "leia também", cluster,
+        // schemas — frequentemente com "continue lendo" / travessões em title atributo).
+        // Caso real #4851: "continue lendo" + 6 travessões + 17 reticências sobraram.
+        if (!empty($content) && $postId > 0) {
+            try {
+                if (!class_exists('AntiAIPostProcessor')) {
+                    require_once __DIR__ . '/AntiAIPostProcessor.php';
+                }
+                $tituloRev = is_string($titulo ?? null) ? $titulo : (string)($trend['termo'] ?? '');
+                $pp2 = AntiAIPostProcessor::limpar($content, $tituloRev);
+                if (!empty($pp2['mudou'])) {
+                    $content = (string)$pp2['html'];
+                    $validationReport['anti_ai_post_processor_pass2'] = $pp2['log'];
+                    try { $this->wp->atualizarPost($postId, ['content' => $content]); } catch (Throwable $e) {}
+                    $progress->reportar('anti_ai_pass2', sprintf(
+                        'frases=%d travessoes=%d reticencias=%d',
+                        count($pp2['log']['phrases'] ?? []),
+                        $pp2['log']['travessoes'] ?? 0,
+                        $pp2['log']['reticencias_extras'] ?? 0
+                    ));
+                }
+            } catch (Throwable $e) { /* não bloqueia */ }
+        }
+
         // Detecta bugs invisíveis: <a> aninhado, atributos vazados em text nodes, smart quotes.
         // Auto-fix via DOM. Se restar crítico, marca status='html_invalido' (não publica).
         $htmlValidatorInfo = null;
