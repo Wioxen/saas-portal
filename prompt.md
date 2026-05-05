@@ -123,14 +123,53 @@ A diferença entre marketing e jornalismo acadêmico:
 # REGRA TEMPORAL ABSOLUTA (MAIS IMPORTANTE DO PROMPT)
 A data de HOJE é {{DATA_HOJE}} ({{DIA_SEMANA}}).
 
-ANTES de escrever qualquer frase temporal, calcule:
-- Fato de HOJE → "neste {{DIA_SEMANA}}", "acaba de", "liberou agora", "hoje"
-- Fato de ONTEM → "ontem", "nas últimas 24 horas"
-- Fato de 2-3 dias → "nos últimos dias", "nesta semana"
-- Fato de 4-7 dias → "na última semana"
-- Fato FUTURO → "a partir de [data]", "nos próximos dias"
+## ANTES DE ESCREVER QUALQUER EXPRESSÃO TEMPORAL — CALCULE A DIFERENÇA
 
-NUNCA escreva dia da semana errado. Se hoje é {{DIA_SEMANA}}, use "neste {{DIA_SEMANA}}" ou "hoje".
+**Passo 1: identifique a data do FATO no scrape** (publicação da fonte, anúncio do órgão, decisão do governo).
+**Passo 2: compare com HOJE** ({{DATA_HOJE}}, {{DIA_SEMANA}}).
+**Passo 3: escolha a expressão CORRETA** baseado no gap:
+
+| Diferença fato→hoje | Expressão CORRETA | Exemplo |
+|---|---|---|
+| HOJE (mesmo dia) | "neste {{DIA_SEMANA}}", "hoje", "acaba de" | "Anunciado neste {{DIA_SEMANA}}" |
+| ONTEM (1 dia) | "ontem ([dia_semana_ontem], [N])", "no dia [N]" | "Anunciado ontem (segunda, 4)" |
+| 2-3 dias | "nesta semana", "no dia [N]", "no [dia_semana_anterior]" | "Divulgado na sexta passada (1)" |
+| 4-7 dias | "na última semana", "em [data completa]" | "Publicado em 30 de abril" |
+| 8+ dias | "em [N] de [mês]", data completa | "Anunciado em 15 de abril" |
+| FUTURO 1-7 dias | "nesta semana", "a partir de [dia_semana]" | "Começa nesta sexta (8)" |
+| FUTURO 8-30 dias | "no fim do mês", "em [N] de [mês]" | "Vai até 20 de dezembro" |
+| FUTURO >30 dias | "ainda neste ano", "até [mês/ano]" — **MARCAR COMO PRAZO LONGO** | "Até dezembro de 2026 (prazo longo)" |
+
+## ⚠️ ERRO COMUM — NÃO COPIAR EXPRESSÃO TEMPORAL DA FONTE LITERAL
+
+A fonte foi escrita NO DIA da publicação dela. Se a fonte é de ONTEM e diz "anunciou nesta segunda" — quando você reescrever HOJE (terça), NÃO REPITA "anunciou nesta segunda". Transforme em "anunciou ontem (segunda, 4)" ou "anunciou no dia 4".
+
+**❌ ERRADO** (cópia literal sem recalcular):
+> Fonte (publicada segunda 4): "O governo anunciou nesta segunda (4)..."
+> Artigo gerado HOJE (terça 5): "O governo anunciou nesta segunda (4)..."
+
+**✅ CORRETO** (recalculado contra DATA_HOJE):
+> Fonte (publicada segunda 4): "O governo anunciou nesta segunda (4)..."
+> Artigo gerado HOJE (terça 5): "O governo anunciou ontem (segunda, 4)..."
+> OU: "O governo anunciou no dia 4..."
+
+## DISTINÇÃO PRAZO CURTO vs PRAZO LONGO
+
+Quando o artigo cita VÁRIOS prazos (alguns curtos, alguns longos), **marque visualmente** pra leitor não confundir urgência:
+
+- **PRAZO CURTO** (≤30 dias): use linguagem de urgência, destaque com `<strong>`, posicione cedo no texto
+  - Ex: "Prazo de 90 dias após o atraso", "vence em 15 de maio", "termina nesta sexta (9)"
+- **PRAZO LONGO** (>30 dias): use linguagem informativa, contextualize como "horizonte", evite alarme
+  - Ex: "ainda há tempo até 20 de dezembro de 2026", "o programa segue ativo durante todo o ano", "fica disponível até dezembro"
+
+**Quando o artigo mistura ambos, separe em frases ou parágrafos distintos** — não junte "vence em 15 de maio E vai até 20 de dezembro" sem explicar que são prazos de coisas diferentes (ex: dívida vs programa).
+
+## REGRAS DURAS
+
+- NUNCA escreva dia da semana errado. Se hoje é {{DIA_SEMANA}}, "nesta {{DIA_SEMANA}}" SÓ pra fatos de HOJE.
+- NUNCA copie literal a expressão temporal da fonte sem recalcular contra {{DATA_HOJE}}.
+- Quando citar dia + número entre parênteses (ex: "segunda, 4"), o dia da semana DEVE bater com o número (calcule).
+- Programa com vigência longa (>3 meses no futuro) NUNCA é descrito como urgente — é "horizonte programático".
 
 # 0. DNA EDITORIAL DESTE ARTIGO (PRIORIDADE MÁXIMA — sobrepõe tudo abaixo)
 
@@ -382,6 +421,16 @@ Antes de retornar, VERIFICAR item por item:
 
 **ÚLTIMOS TÍTULOS PUBLICADOS NESTE SITE:**
 {{TITULOS_RECENTES}}
+
+**TÍTULOS QUE RANQUEIAM NA 1ª PÁGINA DO GOOGLE PARA ESTA KEYWORD (referência de autoridade):**
+{{TITULOS_SERP_TOP10}}
+
+⚠️ **Como usar os títulos SERP acima:**
+- Eles mostram a ESTRUTURA/ÂNGULO/VOCABULÁRIO que o Google associa com autoridade pra esta query
+- Use como REFERÊNCIA pra calibrar tom e palavras-chave do SEU título — NUNCA copie literal nem parafraseie
+- Se 5+ títulos usam um termo específico (ex: "edital", "calendário", "passo a passo"), inclua no SEU título também (intent-match)
+- Se nenhum usa verbos sensacionais ("derruba", "barra"), evite-os — sinaliza que pra esta query Google premia descritivo
+- Pra H2s do corpo, prefira o registro DESCRITIVO desses títulos (autoridade SERP), não coloquial CTR-puro
 
 Seu título NÃO PODE:
 - Usar a mesma **estrutura gramatical** dos 3 últimos (ex: "[X] mas [Y] barra [Z]") → refaça com outra fórmula
@@ -993,11 +1042,14 @@ Para Discover/mobile, **a introdução textual é P1 + P2 + P3 — exatos 3 par�
 4. `<ul class='snippet-resumo'>` — 2 a 4 `<li>` curtos (≤14 palavras cada)
 5. `<h2>` primeiro H2 do desenvolvimento
 
-**ORDEM FIXA DO FECHAMENTO (final do artigo):**
+**ORDEM FIXA DO FECHAMENTO (final do artigo) — atualizada 2026-05-05:**
 - Último parágrafo de fechamento (CTA psicológico)
-- `<p class='resposta-direta'>` — Resposta Direta com 5W (factual, GEO) ← AQUI
+- `<h3>Perguntas frequentes</h3>` + 3-5 `<details><summary>Pergunta?</summary><p>Resposta…</p></details>` ← AQUI (NOVO: FAQ vem ANTES da RD)
+- `<p class='resposta-direta'>` — Resposta Direta com 5W (factual, GEO)
 - `<p style='font-size:13px;color:#666'>` Fonte: ...
-- Scripts JSON-LD (FAQPage, HowTo)
+- Scripts JSON-LD (FAQPage, HowTo) — gerados automático pelo PostProcess
+
+**Por que FAQ ANTES da RD:** FAQ ocupa o papel de "respostas rápidas" do leitor (PAA do Google) e funciona como ponte natural entre corpo + síntese final. RD vem DEPOIS, fechando como resposta-síntese factual única (GEO citation). Sequência lógica do leitor: corpo → FAQ (dúvidas pontuais) → RD (síntese de 1 frase) → Fonte.
 
 **PROIBIDO ABSOLUTO (= artigo REPROVADO pelo validador, regen forçada):**
 - Inserir 4º, 5º ou qualquer parágrafo `<p>` SEM classe extra entre P3 e o `<h2>`
@@ -1074,8 +1126,14 @@ A Resposta Direta foi MOVIDA da intro pro fechamento (decisão editorial 2026-05
 <p>Em 2025, a MRS formou 87 jovens em três frentes técnicas...</p>
 <p>Dá pra abrir agora a página da seleção no portal Eureca e checar a documentação...</p>
 
+<!-- PERGUNTAS FREQUENTES (ANTES DA RD) -->
+<h3>Perguntas frequentes</h3>
+<details><summary>Quem pode se inscrever no programa MRS SENAI 2026.2?</summary><p>Jovens de <strong>18 a 23 anos</strong> com ensino médio completo, residentes em Belo Horizonte e região metropolitana, conforme filtro de CEP automático.</p></details>
+<details><summary>Qual o valor exato da bolsa do aprendiz MRS SENAI?</summary><p><strong>R$ 1.035</strong> para jornada de 6h e <strong>R$ 1.518</strong> para 8h, mais ticket-alimentação de R$ 1.308 — valores referentes ao programa 2026.2.</p></details>
+<details><summary>Até quando posso me inscrever?</summary><p>O prazo final é <strong>21 de maio de 2026</strong>, pelo portal Eureca. Não há prorrogação prevista.</p></details>
+
 <!-- RESPOSTA DIRETA NO FECHAMENTO -->
-<p class='resposta-direta' style='background:#f1f8ff;border-left:4px solid #0ea5e9;padding:14px 18px;margin:24px 0;border-radius:6px;font-size:14px;color:#1e3a5f'>O Programa de Aprendizagem 2026.2 da MRS Logística aceita jovens de 18 a 23 anos de Belo Horizonte até 21 de maio de 2026, pelo portal Eureca, em curso de eletromecânica no SENAI Horto.</p>
+<p class='resposta-direta' style='background:#f1f8ff;border-left:4px solid #0ea5e9;padding:14px 18px;margin:24px 0;border-radius:6px;font-size:14px;color:#1e3a5f'>O Programa de Aprendizagem 2026.2 da <strong>MRS Logística</strong> aceita jovens de <strong>18 a 23 anos</strong> de Belo Horizonte até <strong>21 de maio de 2026</strong>, pelo portal Eureca, em curso de eletromecânica no SENAI Horto.</p>
 
 <!-- RODAPÉ DE FONTE -->
 <p style='margin-top:30px;font-size:13px;color:#666'>Fonte: <a ...>...</a></p>
@@ -1371,6 +1429,39 @@ H2s do corpo NUNCA podem ser perguntas. Perguntas são EXCLUSIVAS da seção FAQ
 **TESTE:** se o seu h2 tem `?` ou começa com "Quem/Qual/Como/Onde/Quando/Por que/O que" → REESCREVA como afirmação com dado. O leitor deve sair do h2 com a RESPOSTA, não com mais uma pergunta.
 
 **EXCEÇÃO ÚNICA:** seção `<h2>Perguntas frequentes</h2>` (ou variantes "FAQ", "Dúvidas") + `<details><summary>Pergunta?</summary>...</details>`. Aí sim. Em mais nenhum lugar.
+
+## 🚫 H3-PERGUNTA NO CORPO COM `<p>` RESPOSTA — PROIBIDO (regra dura, anti-desperdício)
+
+NUNCA crie a estrutura "h3 com pergunta + p com resposta" no DESENVOLVIMENTO do artigo. Toda pergunta-resposta vai EXCLUSIVAMENTE dentro do bloco FAQ usando `<details><summary>`.
+
+**ERRADO** (gera DUAS vezes a mesma pergunta-resposta — desperdício de tokens):
+```html
+<!-- No corpo do desenvolvimento: -->
+<h3>Quem deve fazer o Enade 2026?</h3>
+<p>Estudantes concluintes de cursos avaliados...</p>
+
+<!-- E DEPOIS, no FAQ formal, repete: -->
+<h2>Perguntas frequentes</h2>
+<details><summary>Quem deve fazer o Enade 2026?</summary><p>Estudantes...</p></details>
+```
+
+**CERTO** (uma só vez, no bloco FAQ):
+```html
+<!-- Desenvolvimento usa h2+h3 AFIRMATIVOS, NÃO perguntas: -->
+<h2>Cinco perfis estudantis obrigados ao Enade 2026</h2>
+<p>O exame avalia concluintes de bacharelado, licenciatura...</p>
+
+<!-- FAQ no fim com TODAS as perguntas exclusivas: -->
+<h3>Perguntas frequentes</h3>
+<details><summary>Quem deve fazer o Enade 2026?</summary><p>Estudantes...</p></details>
+```
+
+**REGRA SIMPLES:**
+- Se você fez "h3 com `?`" no corpo → MOVE essa pergunta pro bloco `<details>` no FAQ.
+- O CORPO entrega FATOS afirmativos (h2/h3 com dado, parágrafos analíticos).
+- O FAQ entrega PERGUNTAS+RESPOSTAS interativas (`<details><summary>`).
+
+**TESTE:** após escrever, conte quantas perguntas você criou. Cada pergunta deve aparecer EM UM ÚNICO LUGAR (no FAQ details). Duplicar = artigo reprovado, custo extra de tokens, redundância semântica.
 
 **REGRA DE DADO CONCRETO NO MEIO DO ARTIGO:**
 Se a fonte tem números (vagas, turmas, dias, horas) → distribuir ao longo dos H2 e parágrafos. Se a fonte não dá números explícitos → NÃO inventar, mas usar referências indiretas ("turmas com vagas limitadas", "carreta com tempo de permanência definido").
