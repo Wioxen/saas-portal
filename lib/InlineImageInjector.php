@@ -19,15 +19,16 @@ declare(strict_types=1);
 class InlineImageInjector
 {
     /**
-     * @param string  $html        HTML do artigo
-     * @param array   $sourcesUrls URLs das fontes scrapeadas
-     * @param object  $wp          Wordpress instance (uploadImagemPorUrl)
-     * @param int     $maxImagens  default 2
+     * @param string  $html         HTML do artigo
+     * @param array   $sourcesUrls  URLs das fontes scrapeadas
+     * @param object  $wp           Wordpress instance (uploadImagemPorUrl)
+     * @param int     $maxImagens   default 2
+     * @param string  $titulo       Título do artigo (pra filtrar imagens off-topic)
      * @return array {html, log}
      */
-    public static function injetar(string $html, array $sourcesUrls, $wp, int $maxImagens = 2): array
+    public static function injetar(string $html, array $sourcesUrls, $wp, int $maxImagens = 2, string $titulo = ''): array
     {
-        $log = ['candidatas_encontradas' => 0, 'aprovadas' => 0, 'inseridas' => 0, 'erros' => []];
+        $log = ['candidatas_encontradas' => 0, 'aprovadas' => 0, 'inseridas' => 0, 'descartadas_off_topic' => 0, 'erros' => []];
 
         if (empty($sourcesUrls)) return ['html' => $html, 'log' => $log];
 
@@ -35,6 +36,31 @@ class InlineImageInjector
         $candidatas = self::extrairImagensFontes($sourcesUrls);
         $log['candidatas_encontradas'] = count($candidatas);
         if (empty($candidatas)) return ['html' => $html, 'log' => $log];
+
+        // Filtro semântico: alt/legenda precisa ter overlap mínimo com título do post.
+        // Caso real: trend Enade pegou imagem "O Diabo Veste Prada 2" do querobolsa
+        // (matéria relacionada linkada, não a real). Filtro Jaccard ≥0.10 elimina.
+        if ($titulo !== '') {
+            $tokensTitulo = self::tokenizarTitulo($titulo);
+            $candidatasFiltradas = [];
+            foreach ($candidatas as $c) {
+                $contextoImg = trim(($c['legenda'] ?? '') . ' ' . ($c['alt'] ?? ''));
+                if ($contextoImg === '') {
+                    // Sem caption/alt — não dá pra avaliar tópico, mantém (fallback genérico)
+                    $candidatasFiltradas[] = $c;
+                    continue;
+                }
+                $tokensImg = self::tokenizarTitulo($contextoImg);
+                $jacc = self::jaccardSimples($tokensTitulo, $tokensImg);
+                if ($jacc >= 0.10) {
+                    $candidatasFiltradas[] = $c;
+                } else {
+                    $log['descartadas_off_topic']++;
+                }
+            }
+            $candidatas = $candidatasFiltradas;
+            if (empty($candidatas)) return ['html' => $html, 'log' => $log];
+        }
 
         // Aprova as melhores
         $aprovadas = self::aprovar($candidatas, $maxImagens);
@@ -182,6 +208,34 @@ class InlineImageInjector
         // Mais autoridade que só "Crédito: X" suspenso.
         if ($base === '') return 'Imagem ilustrativa · Crédito: ' . $credito;
         return $base . ' · Crédito: ' . $credito;
+    }
+
+    /**
+     * Tokeniza titulo/legenda/alt removendo stopwords PT-BR e acentos.
+     * Usado pra Jaccard de relevância imagem-vs-titulo.
+     */
+    private static function tokenizarTitulo(string $s): array
+    {
+        $s = trim($s);
+        if ($s === '') return [];
+        $s = strtr($s, 'áéíóúâêôàãõçÁÉÍÓÚÂÊÔÀÃÕÇ', 'aeiouaeoaaocAEIOUAEOAAOC');
+        $s = preg_replace('/[^\w\s]/u', ' ', mb_strtolower($s, 'UTF-8'));
+        if (!is_string($s)) return [];
+        $parts = preg_split('/\s+/u', trim($s));
+        if (!is_array($parts)) return [];
+        $stopwords = ['de','da','do','das','dos','o','a','os','as','um','uma','e','ou','que','com','para','por','no','na','nos','nas','em','é','ser','estar','ter','tem','seu','sua','seus','suas','isso','esse','essa','este','esta','qual','como','onde','quando','quem','não','sim','já','mais','até','sobre','foto','imagem'];
+        return array_values(array_unique(array_filter(
+            $parts,
+            fn($t) => $t && mb_strlen($t) > 2 && !in_array($t, $stopwords, true)
+        )));
+    }
+
+    private static function jaccardSimples(array $a, array $b): float
+    {
+        if (empty($a) || empty($b)) return 0.0;
+        $inter = count(array_intersect($a, $b));
+        $union = count(array_unique(array_merge($a, $b)));
+        return $union > 0 ? $inter / $union : 0.0;
     }
 
     /**
