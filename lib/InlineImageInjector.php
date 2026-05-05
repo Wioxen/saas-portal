@@ -86,6 +86,11 @@ class InlineImageInjector
 
     /**
      * Extrai <img> das URLs fontes (até 5 candidatas total).
+     * RESTRITO ao bloco de conteúdo (<article>/<main>) — evita pegar imagens
+     * de sidebar/header/footer/nav que NÃO têm relação com o tema do post.
+     * Caso real: posts pegavam imagens genéricas do site fonte (banner, lateral, autor)
+     * em vez de fotos da matéria. Filter por container resolve.
+     *
      * PRIORIZA <figure><img/><figcaption>X</figcaption></figure> — pega legenda real.
      * Em segundo lugar: alt do <img>. Em último: caption vazia (atribuição de fonte só).
      */
@@ -93,8 +98,14 @@ class InlineImageInjector
     {
         $candidatas = [];
         foreach (array_slice($urls, 0, 3) as $url) {
-            $html = self::fetchHtml($url);
-            if ($html === '') continue;
+            $htmlFull = self::fetchHtml($url);
+            if ($htmlFull === '') continue;
+
+            // 0. ISOLAR conteúdo principal: <article>, depois <main>, depois fallback
+            //    pra body sem header/footer/aside/nav. Garante que pegamos só imagens
+            //    da MATÉRIA, não do template do site.
+            $html = self::isolarConteudoPrincipal($htmlFull);
+            if ($html === '') $html = $htmlFull; // fallback se não isolou
 
             // 1. PRIMEIRO: extrai <figure><img/><figcaption>...</figcaption></figure> (com legenda real)
             if (preg_match_all('/<figure\b[^>]*>([\s\S]*?)<\/figure>/i', $html, $figs)) {
@@ -222,6 +233,43 @@ class InlineImageInjector
             }
         }
         return $bestMatch !== '' ? $bestMatch : $host;
+    }
+
+    /**
+     * Isola o conteúdo editorial do post (matéria), removendo header/sidebar/footer/nav.
+     * Sequência:
+     *   1. Tenta <article> (mais comum em portais editoriais)
+     *   2. Tenta <main>
+     *   3. Tenta div com class contendo "content"/"post"/"article"/"materia"/"entry"
+     *   4. Fallback: body inteiro mas SEM tags de cromo (header/footer/aside/nav/script)
+     */
+    private static function isolarConteudoPrincipal(string $html): string
+    {
+        // 1. <article>
+        if (preg_match('#<article\b[^>]*>([\s\S]*?)</article>#is', $html, $m)) {
+            return $m[1];
+        }
+        // 2. <main>
+        if (preg_match('#<main\b[^>]*>([\s\S]*?)</main>#is', $html, $m)) {
+            return $m[1];
+        }
+        // 3. div com class de conteúdo
+        $classesContent = ['post-content', 'entry-content', 'article-content', 'materia-content', 'single-content', 'post__content', 'article__body', 'post-body'];
+        foreach ($classesContent as $cls) {
+            $pattern = '#<div\s+[^>]*class=[\'"][^\'"]*\b' . preg_quote($cls, '#') . '\b[^\'"]*[\'"][^>]*>#i';
+            if (preg_match($pattern, $html, $m, PREG_OFFSET_CAPTURE)) {
+                $start = $m[0][1] + strlen($m[0][0]);
+                // Encontra </div> correspondente (heurística — pega contexto razoável)
+                $end = $start + 50000; // limit
+                if (preg_match('#</div>\s*</(?:section|main|body)#is', substr($html, $start, $end - $start), $em, PREG_OFFSET_CAPTURE)) {
+                    return substr($html, $start, $em[0][1]);
+                }
+                return substr($html, $start, $end - $start);
+            }
+        }
+        // 4. Fallback: remove cromo (header/footer/aside/nav/script/style)
+        $clean = preg_replace('#<(header|footer|aside|nav|script|style|noscript|form|iframe)\b[^>]*>[\s\S]*?</\1>#i', '', $html) ?: $html;
+        return $clean;
     }
 
     private static function fetchHtml(string $url): string

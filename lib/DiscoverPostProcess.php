@@ -1864,16 +1864,31 @@ class DiscoverPostProcess
         $titulo = trim(strip_tags($m[1]));
         // Extrai <li>
         if (!preg_match_all('/<li[^>]*>([\s\S]*?)<\/li>/i', $m[2], $lis)) return $html;
+        // URL canônica do post (se disponível em $meta) pra fallback de step.url
+        $postUrl = (string)($meta['url'] ?? $meta['url_post'] ?? '');
         $steps = [];
         foreach ($lis[1] as $i => $li) {
             $texto = trim(preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode($li))));
             if ($texto === '') continue;
-            $steps[] = [
+            $step = [
                 '@type' => 'HowToStep',
                 'position' => $i + 1,
                 'name' => mb_strimwidth($texto, 0, 80, '...', 'UTF-8'),
                 'text' => $texto,
             ];
+            // Extrai 1º <a href> dentro do <li> (link real pra portal de inscrição/recurso)
+            // Schema.org HowToStep recommended: ter url pra cada passo aponta pra ancora ou portal externo
+            if (preg_match('/<a\s+[^>]*href=[\'"]([^\'"]+)[\'"]/i', $li, $hm)) {
+                $href = trim($hm[1]);
+                if ($href !== '' && $href !== '#' && stripos($href, 'javascript:') !== 0) {
+                    $step['url'] = $href;
+                }
+            }
+            // Fallback: se não tem link no <li> mas temos URL do post → âncora pro step
+            if (empty($step['url']) && $postUrl !== '') {
+                $step['url'] = rtrim($postUrl, '/') . '#passo-' . ($i + 1);
+            }
+            $steps[] = $step;
         }
         if (count($steps) < 2) return $html;
 
@@ -1883,6 +1898,8 @@ class DiscoverPostProcess
             'name'     => $titulo,
             'step'     => $steps,
         ];
+        // totalTime opcional: estima 5min por step (boa heurística pra processo de inscrição)
+        $schema['totalTime'] = 'PT' . (count($steps) * 5) . 'M';
         $script = "\n" . '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>' . "\n";
         return $html . $script;
     }
