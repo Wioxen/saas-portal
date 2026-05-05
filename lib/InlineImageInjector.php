@@ -61,7 +61,13 @@ class InlineImageInjector
                 if ($mediaId) {
                     $media = $wp->getMedia($mediaId);
                     $imgUrl = $media['source_url'] ?? $img['url'];
-                    $figcaption = htmlspecialchars($img['legenda'] ?: $alt, ENT_QUOTES, 'UTF-8');
+                    // Legenda fidedigna com crédito da fonte
+                    $legendaFinal = self::montarLegenda(
+                        (string)($img['legenda'] ?? ''),
+                        (string)($img['alt'] ?? ''),
+                        (string)($img['fonte_url'] ?? '')
+                    );
+                    $figcaption = htmlspecialchars(mb_substr($legendaFinal, 0, 220), ENT_QUOTES, 'UTF-8');
                     $imgHtml = "\n<figure class='inline-img' style='margin:24px 0;width:100%;display:block'>"
                              . "<img src='" . htmlspecialchars($imgUrl, ENT_QUOTES) . "' alt='" . htmlspecialchars($alt, ENT_QUOTES) . "' loading='lazy' style='width:100%;height:auto;border-radius:8px;display:block'>"
                              . "<figcaption style='font-size:13px;color:#64748b;margin-top:8px;text-align:center;line-height:1.4;padding:0 12px;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;display:block'>{$figcaption}</figcaption>"
@@ -80,6 +86,8 @@ class InlineImageInjector
 
     /**
      * Extrai <img> das URLs fontes (até 5 candidatas total).
+     * PRIORIZA <figure><img/><figcaption>X</figcaption></figure> — pega legenda real.
+     * Em segundo lugar: alt do <img>. Em último: caption vazia (atribuição de fonte só).
      */
     private static function extrairImagensFontes(array $urls): array
     {
@@ -87,36 +95,127 @@ class InlineImageInjector
         foreach (array_slice($urls, 0, 3) as $url) {
             $html = self::fetchHtml($url);
             if ($html === '') continue;
-            // Procura <img>: pega src + alt
+
+            // 1. PRIMEIRO: extrai <figure><img/><figcaption>...</figcaption></figure> (com legenda real)
+            if (preg_match_all('/<figure\b[^>]*>([\s\S]*?)<\/figure>/i', $html, $figs)) {
+                foreach ($figs[1] as $figInner) {
+                    if (!preg_match('/<img\s+[^>]*>/i', $figInner, $imgM)) continue;
+                    if (!preg_match('/src=[\'"]([^\'"]+)[\'"]/i', $imgM[0], $sm)) continue;
+                    $src = self::resolverUrl($sm[1], $url);
+                    if ($src === '' || !self::passaFiltro($src)) continue;
+                    $alt = preg_match('/alt=[\'"]([^\'"]*)[\'"]/i', $imgM[0], $am) ? trim($am[1]) : '';
+                    $legenda = '';
+                    if (preg_match('/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i', $figInner, $cm)) {
+                        $legenda = trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode($cm[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
+                    }
+                    $candidatas[] = ['url' => $src, 'alt' => $alt, 'legenda' => $legenda, 'fonte_url' => $url];
+                    if (count($candidatas) >= 5) break 2;
+                }
+            }
+
+            // 2. FALLBACK: <img> soltos sem <figure>
             if (preg_match_all('/<img\s+[^>]*>/i', $html, $imgs)) {
                 foreach ($imgs[0] as $img) {
                     if (!preg_match('/src=[\'"]([^\'"]+)[\'"]/i', $img, $sm)) continue;
-                    $src = $sm[1];
-                    if (!filter_var($src, FILTER_VALIDATE_URL)) {
-                        // Resolve relativo
-                        $base = parse_url($url);
-                        if (str_starts_with($src, '//')) {
-                            $src = ($base['scheme'] ?? 'https') . ':' . $src;
-                        } elseif (str_starts_with($src, '/')) {
-                            $src = ($base['scheme'] ?? 'https') . '://' . ($base['host'] ?? '') . $src;
-                        } else {
-                            continue;
-                        }
-                    }
+                    $src = self::resolverUrl($sm[1], $url);
+                    if ($src === '' || !self::passaFiltro($src)) continue;
                     $alt = preg_match('/alt=[\'"]([^\'"]*)[\'"]/i', $img, $am) ? trim($am[1]) : '';
-                    $width = preg_match('/width=[\'"]?(\d+)/i', $img, $wm) ? (int)$wm[1] : 0;
-
-                    // Filtros básicos: skip se URL contém logo/icon/avatar/sprite
-                    $low = mb_strtolower($src);
-                    if (preg_match('#(logo|favicon|icon|avatar|sprite|brasao|emoji|gravatar|placeholder)#i', $low)) continue;
-                    if (!preg_match('/\.(jpg|jpeg|png|webp)(\?|$)/i', $low)) continue;
-
-                    $candidatas[] = ['url' => $src, 'alt' => $alt, 'width' => $width, 'legenda' => '', 'fonte_url' => $url];
+                    // Skip duplicada (já pegou via figure)
+                    foreach ($candidatas as $c) if ($c['url'] === $src) continue 2;
+                    $candidatas[] = ['url' => $src, 'alt' => $alt, 'legenda' => '', 'fonte_url' => $url];
                     if (count($candidatas) >= 5) break 2;
                 }
             }
         }
         return $candidatas;
+    }
+
+    private static function resolverUrl(string $src, string $baseUrl): string
+    {
+        if (filter_var($src, FILTER_VALIDATE_URL)) return $src;
+        $base = parse_url($baseUrl);
+        if (str_starts_with($src, '//')) return ($base['scheme'] ?? 'https') . ':' . $src;
+        if (str_starts_with($src, '/'))  return ($base['scheme'] ?? 'https') . '://' . ($base['host'] ?? '') . $src;
+        return '';
+    }
+
+    private static function passaFiltro(string $src): bool
+    {
+        $low = mb_strtolower($src);
+        if (preg_match('#(logo|favicon|icon|avatar|sprite|brasao|emoji|gravatar|placeholder)#i', $low)) return false;
+        return (bool)preg_match('/\.(jpg|jpeg|png|webp)(\?|$)/i', $low);
+    }
+
+    /**
+     * Constrói legenda fidedigna com crédito de fonte:
+     *   "Legenda real da fonte · Crédito: Vestibulando Web"
+     *   "Imagem ilustrativa do programa · Crédito: Sedu/ES" (quando alt é genérico)
+     *   "Crédito: gov.br" (quando não tem legenda nem alt)
+     */
+    public static function montarLegenda(string $legenda, string $alt, string $fonteUrl): string
+    {
+        $base = trim($legenda);
+        if ($base === '') $base = trim($alt);
+        // Normaliza: capitaliza 1ª letra
+        if ($base !== '') {
+            $base = mb_strtoupper(mb_substr($base, 0, 1)) . mb_substr($base, 1);
+            // Remove ponto final pra concatenar com crédito
+            $base = rtrim($base, '. ');
+        }
+        $credito = self::nomearFonte($fonteUrl);
+        if ($base === '') return 'Crédito: ' . $credito;
+        return $base . ' · Crédito: ' . $credito;
+    }
+
+    /**
+     * Mapeia host → nome editorial bonito. Cobre principais fontes BR.
+     */
+    private static function nomearFonte(string $url): string
+    {
+        $host = parse_url($url, PHP_URL_HOST) ?: $url;
+        $host = preg_replace('/^www\./', '', mb_strtolower($host));
+        $mapa = [
+            'gov.br' => 'Gov.br',
+            'mec.gov.br' => 'MEC',
+            'inep.gov.br' => 'Inep',
+            'inss.gov.br' => 'INSS',
+            'caixa.gov.br' => 'Caixa',
+            'capes.gov.br' => 'Capes',
+            'cnpq.br' => 'CNPq',
+            'senac.br' => 'Senac',
+            'senai.br' => 'Senai',
+            'sebrae.com.br' => 'Sebrae',
+            'sedu.es.gov.br' => 'Sedu/ES',
+            'usp.br' => 'USP',
+            'unicamp.br' => 'Unicamp',
+            'unesp.br' => 'Unesp',
+            'utfpr.edu.br' => 'UTFPR',
+            'ufrj.br' => 'UFRJ',
+            'ufmg.br' => 'UFMG',
+            'ufba.br' => 'UFBA',
+            'ufpe.br' => 'UFPE',
+            'g1.globo.com' => 'G1/Globo',
+            'globo.com' => 'Globo',
+            'folha.uol.com.br' => 'Folha de SP',
+            'estadao.com.br' => 'Estadão',
+            'agenciabrasil.ebc.com.br' => 'Agência Brasil',
+            'jornaldebrasilia.com.br' => 'Jornal de Brasília',
+            'vestibulandoweb.com.br' => 'Vestibulando Web',
+            'guiadoestudante.abril.com.br' => 'Guia do Estudante',
+            'conectaprofessores.com' => 'Conecta Professores',
+            'educamaisbrasil.com.br' => 'Educa Mais Brasil',
+            'gestaouniversitaria.com.br' => 'Gestão Universitária',
+        ];
+        // Match longest suffix
+        $bestMatch = '';
+        $bestLen = 0;
+        foreach ($mapa as $h => $name) {
+            if (str_ends_with($host, $h) && strlen($h) > $bestLen) {
+                $bestMatch = $name;
+                $bestLen = strlen($h);
+            }
+        }
+        return $bestMatch !== '' ? $bestMatch : $host;
     }
 
     private static function fetchHtml(string $url): string
