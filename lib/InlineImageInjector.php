@@ -65,14 +65,26 @@ class InlineImageInjector
         $aprovadas = self::aprovar($candidatas, $maxImagens);
         $log['aprovadas'] = count($aprovadas);
 
-        // PIRÂMIDE 3: Fallback DALL-E quando 0 imagens contextuais aprovadas.
-        // Sem isso, post sai sem inline image — perde sinal visual no Discover.
-        // Custo: ~$0.04/imagem. Só roda se DALL-E habilitado em $cfg.
-        if (empty($aprovadas) && !empty($cfg['openai_api_key']) && !empty($cfg['imagem_featured_dalle_fallback']) && $titulo !== '') {
-            $dalleImg = self::gerarImagemDalle($titulo, $cfg);
-            if ($dalleImg) {
-                $aprovadas = [$dalleImg];
-                $log['dalle_fallback'] = 1;
+        // PIRÂMIDE FALLBACKS quando 0 imagens contextuais aprovadas.
+        // Ordem: Pexels (grátis, sem risco texto-em-outro-idioma) → DALL-E (pago, risco mas
+        // contextual). User reportou DALL-E gerando placas com texto em inglês — Pexels é
+        // foto stock real, sem esse risco.
+        if (empty($aprovadas) && $titulo !== '' && !empty($cfg)) {
+            // 1. Pexels (preferido pra inline fallback)
+            if (!empty($cfg['pexels_api_key'])) {
+                $pexImg = self::tentarPexelsInline($titulo, $cfg);
+                if ($pexImg) {
+                    $aprovadas = [$pexImg];
+                    $log['pexels_fallback'] = 1;
+                }
+            }
+            // 2. DALL-E (último recurso, prompt anti-texto reforçado)
+            if (empty($aprovadas) && !empty($cfg['openai_api_key']) && !empty($cfg['imagem_featured_dalle_fallback'])) {
+                $dalleImg = self::gerarImagemDalle($titulo, $cfg);
+                if ($dalleImg) {
+                    $aprovadas = [$dalleImg];
+                    $log['dalle_fallback'] = 1;
+                }
             }
         }
 
@@ -243,6 +255,44 @@ class InlineImageInjector
     }
 
     /**
+     * Busca 1 imagem Pexels usando query semântica derivada do título do post.
+     * Usado como fallback antes do DALL-E (Pexels = foto real sem risco de texto-em-idioma-estranho).
+     */
+    private static function tentarPexelsInline(string $titulo, array $cfg): ?array
+    {
+        try {
+            require_once __DIR__ . '/Pexels.php';
+            $pexels = new Pexels((string)$cfg['pexels_api_key']);
+            // Query: tira números/datas/valores e usa keywords centrais do título
+            $tema = preg_replace('/\b\d{4}\b|\b\d{1,3}[.\s]?\d{3}\b|\bR\$\s*[\d,.]+\b|\bat[ée]\s+\d+\s+de\s+\w+/iu', '', $titulo);
+            $tema = preg_replace('/[:;–—]/u', ' ', $tema);
+            $tema = trim(preg_replace('/\s+/u', ' ', $tema));
+            // PT→EN heurística básica pra Pexels (mais resultados em EN)
+            $traducao = ['inscrições' => 'registration', 'inscrição' => 'registration', 'curso' => 'course', 'cursos' => 'courses', 'gratuito' => 'free', 'gratuitas' => 'free', 'aluno' => 'student', 'alunos' => 'students', 'estudante' => 'student', 'estudantes' => 'students', 'edital' => 'document', 'vagas' => 'opportunity', 'professor' => 'teacher', 'educação' => 'education'];
+            $temaEn = strtr(mb_strtolower($tema), $traducao);
+            $words = preg_split('/\s+/', $temaEn) ?: [];
+            $stop = ['de', 'do', 'da', 'em', 'para', 'com', 'em', 'o', 'a', 'as', 'os', 'na', 'no'];
+            $words = array_filter($words, fn($w) => $w && !in_array($w, $stop, true) && mb_strlen($w) > 2);
+            $query = implode(' ', array_slice($words, 0, 4)) ?: 'brazilian student studying';
+
+            $candidatos = $pexels->buscar($query, 10, 'landscape');
+            if (empty($candidatos)) return null;
+            $candidatos = array_filter($candidatos, fn($c) => ($c['score'] ?? 0) >= 30);
+            if (empty($candidatos)) return null;
+            $top = reset($candidatos);
+            return [
+                'url' => $top['url'],
+                'alt' => $top['alt'] ?? $titulo,
+                'legenda' => '',
+                'fonte_url' => 'pexels.com',
+                'is_pexels' => true,
+            ];
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Gera 1 imagem editorial via DALL-E quando 0 candidatas contextuais.
      * Prompt baseado no título do post (remove números/datas/valores pra ficar genérico-tema).
      * Retorna candidata com URL DALL-E (DALL-E URLs expiram em ~1h, sideload imediato).
@@ -257,7 +307,12 @@ class InlineImageInjector
             $tema = preg_replace('/\bat[ée]\s+\d+\s+de\s+\w+/iu', '', $tema);
             $tema = preg_replace('/[:;–—,]+\s*\w+\s+\w+\s+\w+\s*$/u', '', $tema); // remove trailing clauses
             $tema = trim(preg_replace('/\s+/u', ' ', $tema));
-            $prompt = "Editorial photography, Brazilian context, {$tema}, natural light, professional documentary style, no text overlays, no logos, no graphics, no infographics. Realistic, soft tones.";
+            // Prompt MUITO firme contra texto: DALL-E rotineiramente renderiza placas/letreiros
+            // com palavras em inglês ou inventadas. User reportou caso real. Negative reforçado:
+            $prompt = "Editorial photography of {$tema} in Brazilian context. Professional documentary style, natural light, soft tones, realistic. "
+                    . "ABSOLUTELY NO TEXT anywhere in the image: no words, no letters, no signs, no billboards, no street signs, no labels, no banners with text, no readable writing in any language (no English, no Portuguese, no Spanish text). "
+                    . "No logos. No graphics. No infographics. No watermarks. No UI elements. "
+                    . "Pure photographic scene: people, environment, objects only. If buildings or signs appear, they must be blurred or out of focus so no text is readable.";
             $url = $openai->gerarImagem($prompt, '1792x1024', 'hd', 'natural');
             if (!$url) return null;
             return [
