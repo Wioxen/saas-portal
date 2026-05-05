@@ -165,6 +165,7 @@ return [
         ],
         'persona' => [
             'autor'            => 'Paloma Gusmão, doutora em educação pela USP, editora especializada em políticas públicas educacionais',
+            'wp_user_id'       => 2,
             'voz'              => 'jornalismo acadêmico — análise editorial factual, sem dramatização. Cita fontes oficiais com referência (Inep, MEC, Senac, edital nº X). Tom de coluna de jornalismo educacional sério (Folha de SP, Estadão, Nexo).',
             'especialidade'    => 'política educacional brasileira, ENEM, SISU, ProUni, FIES, cursos gratuitos Senac/Senai, vestibulares, olimpíadas, concursos nível médio/técnico, financiamento estudantil, evasão escolar, cotas',
             'audiencia'        => 'estudantes de ensino médio, vestibulandos, pais preocupados, jovens de 16-28 procurando primeiro emprego via qualificação. Leitor que valoriza rigor factual.',

@@ -156,14 +156,20 @@ class InlineImageInjector
     {
         $base = trim($legenda);
         if ($base === '') $base = trim($alt);
-        // Normaliza: capitaliza 1ª letra
+        // Filtra alt genérico (1-3 palavras só), tipo "imagem", "foto", "ilustracao"
+        if ($base !== '' && str_word_count($base) < 3) {
+            $low = mb_strtolower($base);
+            if (preg_match('/^(imagem|foto|ilustra|figura|capa|thumb|preview)/u', $low)) $base = '';
+        }
+        // Normaliza: capitaliza 1ª letra, remove ponto final
         if ($base !== '') {
             $base = mb_strtoupper(mb_substr($base, 0, 1)) . mb_substr($base, 1);
-            // Remove ponto final pra concatenar com crédito
             $base = rtrim($base, '. ');
         }
         $credito = self::nomearFonte($fonteUrl);
-        if ($base === '') return 'Crédito: ' . $credito;
+        // Fallback A (determinístico): quando sem legenda nem alt útil → "Imagem ilustrativa · Crédito"
+        // Mais autoridade que só "Crédito: X" suspenso.
+        if ($base === '') return 'Imagem ilustrativa · Crédito: ' . $credito;
         return $base . ' · Crédito: ' . $credito;
     }
 
