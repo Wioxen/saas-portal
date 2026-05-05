@@ -36,6 +36,32 @@ class AntiAIPostProcessor
             'msg_cards_removidos' => 0,
         ];
 
+        // 0. Decodifica escape literais \n \r \t — caso real #4995:
+        // HTML salvo no WP tinha bytes 0x5C 0x6E (\n literal) entre </p> e <h3>
+        // em vez de newline real. Causa raiz: Sonnet retorna `\\n` (DOUBLE-backslash
+        // + n) no JSON source. Após json_decode, fica `\` + `n` literal na string PHP,
+        // que vai bruto pro WP. Detectores de FAQ/h3 falham porque \s* não casa.
+        //
+        // Cuidado: NÃO decodar dentro de atributos HTML (href, src, class, style).
+        // Solução: aplica só FORA de tags, processando token a token.
+        $escapes_decoded = 0;
+        $htmlNovo = preg_replace_callback(
+            '#(<[^>]*>)|([^<]+)#',
+            function ($m) use (&$escapes_decoded) {
+                if (!empty($m[1])) return $m[1]; // tag — não toca
+                $txt = $m[2];
+                $count = substr_count($txt, '\\n') + substr_count($txt, '\\r') + substr_count($txt, '\\t');
+                if ($count === 0) return $txt;
+                $escapes_decoded += $count;
+                return str_replace(['\\n', '\\r', '\\t'], ["\n", "\r", "\t"], $txt);
+            },
+            $html
+        );
+        if ($htmlNovo !== null && $escapes_decoded > 0) {
+            $html = $htmlNovo;
+            $log['escapes_literais_decodificados'] = $escapes_decoded;
+        }
+
         // Dedup semântico: remove perguntas do FAQ <details> que duplicam tema dos h2s do corpo.
         // Caso real 04/05 #4727: h2 "Plataforma Aprenda Mais ou AVAMEC: qual acessar?" + FAQ
         // pergunta similar = redundância semântica. Google penaliza repetição.
