@@ -37,6 +37,20 @@ class DiscoverPostProcess
 
     private static function processarInterno(string $html, array $meta = [], array $trend = [], array $cfg = []): string
     {
+        // 0-pre. Decode \n \r \t LITERAIS em texto fora de tags. Caso real #4995:
+        // Sonnet retorna `\\n` no source JSON → após json_decode vira `\` + `n` literal
+        // bruto. Detectores de Schema (HowTo, FAQ) e migradores de h3-pergunta dependem
+        // de `\s*` em regex que NÃO casa com bytes `\` + `n`. Sem decode, HowTo schema
+        // não é detectado mesmo com <h2>Passo a passo</h2><ol><li>... bem formado.
+        $html = preg_replace_callback(
+            '#(<[^>]*>)|([^<]+)#',
+            function ($m) {
+                if (!empty($m[1])) return $m[1]; // tag — preserva atributos com \n se houver
+                return str_replace(['\\n', '\\r', '\\t'], ["\n", "\r", "\t"], $m[2]);
+            },
+            $html
+        ) ?? $html;
+
         // 0. Converte "Leia também" antigo (cards com imagens) em lista simples de títulos
         $html = self::limparLeiaTambemAntigo($html);
 
@@ -1853,12 +1867,23 @@ class DiscoverPostProcess
 
         // Trigger 1: H2/H3 com keyword de tutorial seguido de <ol> (passo-a-passo)
         // Cobre: "Como X", "Passo a passo", "Tutorial", "Guia", "X em N passos"
+        // NOTA: o `(?:<p>.*?</p>\s*)*` opcional original causava catastrophic backtracking
+        // em conteúdos longos (regex engine atinge limite e retorna 0). Estratégia nova:
+        // 2 passes — primeiro tenta h2+ol direto (caso simples, mais comum),
+        // depois h2 + qualquer conteúdo limitado a 2000 chars + ol (caso com p intermediário).
         $kwTutorial = 'Como\s+[^<]+|Passo\s+a\s+passo[^<]*|Tutorial[^<]*|Guia\s+(?:passo\s+a\s+passo|completo|pr[áa]tico)[^<]*|[^<]+\sem\s+\d+\s+passos[^<]*';
         $m = null;
-        if (!preg_match('/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>\s*(?:<p[^>]*>[\s\S]*?<\/p>\s*)*<ol[^>]*>([\s\S]*?)<\/ol>/iu', $html, $m)) {
-            // Trigger 2: H2 com id='como-*' (CLAUDE.md instrui como-se-inscrever, como-acessar, como-sacar, como-consultar)
-            if (!preg_match("/<h2[^>]*id=['\"]como-[^'\"]+['\"][^>]*>([^<]+)<\/h2>\s*(?:<p[^>]*>[\s\S]*?<\/p>\s*)*<ol[^>]*>([\s\S]*?)<\/ol>/iu", $html, $m)) {
-                return $html;
+        // Pass 1: h2 imediatamente seguido de <ol> (whitespace só)
+        $pad1 = '/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>\s*<ol[^>]*>([\s\S]*?)<\/ol>/iu';
+        if (!preg_match($pad1, $html, $m)) {
+            // Pass 2: h2 + alguns parágrafos (max 2000 chars) + <ol>
+            $pad2 = '/<h[23][^>]*>(' . $kwTutorial . ')<\/h[23]>(?:[^<]|<(?!h[23])){0,2000}?<ol[^>]*>([\s\S]*?)<\/ol>/iu';
+            if (!preg_match($pad2, $html, $m)) {
+                // Trigger 2: H2 com id='como-*'
+                $pad3 = "/<h2[^>]*id=['\"]como-[^'\"]+['\"][^>]*>([^<]+)<\/h2>(?:[^<]|<(?!h[23])){0,2000}?<ol[^>]*>([\s\S]*?)<\/ol>/iu";
+                if (!preg_match($pad3, $html, $m)) {
+                    return $html;
+                }
             }
         }
         $titulo = trim(strip_tags($m[1]));

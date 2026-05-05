@@ -204,6 +204,43 @@ class AntiAIPostProcessor
         ) ?? $html;
         if ($a_sanitized > 0) $log['links_sem_href_removidos'] = $a_sanitized;
 
+        // 4.7-pre. Tenta completar URLs truncadas usando ocorrências completas no MESMO post.
+        // Caso real #4995: "vestibular.fatec.sp." (sem .gov.br) no passo 1 mas o post tem
+        // 8x "vestibular.fatec.sp.gov.br" em outros lugares. Detecta truncamento + completa
+        // a partir do contexto. NÃO INVENTA — só usa o que já está escrito no post.
+        $urls_completadas = 0;
+        // Coleta todas as URLs completas (com TLD válido) presentes no HTML
+        $urlsCompletas = [];
+        if (preg_match_all('#\b([a-z][a-z0-9-]*(?:\.[a-z0-9-]+){2,4})(?:/[^\s<>"\')]*)?#iu', $html, $um)) {
+            foreach ($um[1] as $u) {
+                $u = strtolower($u);
+                // Só considera URLs com TLD final válido (.com, .br, .gov, etc)
+                if (preg_match('#\.(?:com|net|org|br|edu|gov|io|co|info|app|tech|me|pt|dev|biz|store|online|site|blog|news|tv|fm|jobs)(?:\.[a-z]{2,3})?$#u', $u)) {
+                    $urlsCompletas[$u] = true;
+                }
+            }
+        }
+        if (!empty($urlsCompletas)) {
+            // Busca padrões truncados: "dom.sub.tld." seguido de espaço/parênteses/pontuação não-letra
+            $html = preg_replace_callback(
+                '#(?<![\w/-])([a-z][a-z0-9-]*(?:\.[a-z0-9-]+){2,3})\.(?=[\s)\]])#iu',
+                function ($m) use ($urlsCompletas, &$urls_completadas) {
+                    $truncado = strtolower($m[1]);
+                    // Busca completa no mesmo post: "trunc.algo" onde algo=gov.br/com/etc
+                    foreach (array_keys($urlsCompletas) as $completa) {
+                        if (str_starts_with($completa, $truncado . '.') && $completa !== $truncado) {
+                            // Tem versão completa — substitui
+                            $urls_completadas++;
+                            return $completa;
+                        }
+                    }
+                    return $m[0]; // sem versão completa, mantém
+                },
+                $html
+            ) ?? $html;
+        }
+        if ($urls_completadas > 0) $log['urls_truncadas_completadas'] = $urls_completadas;
+
         // 4.7. Auto-link de URLs em texto puro.
         // Caso real #4982 reportado pelo user: passos do tutorial tinham
         //   "Acesse smallpdf.com/pt/comprimir-pdf no navegador"
@@ -235,62 +272,88 @@ class AntiAIPostProcessor
             $html
         ) ?? $html;
 
+        // TLDs aceitos (ampla — qualquer domínio do post deve virar link).
+        // Regra: precisa ter ao menos 1 TLD reconhecível pra evitar falso positivo.
+        $tldRegex = '(?:com|net|org|br|edu|gov|io|co|info|app|tech|me|pt|us|uk|de|fr|es|jobs|news|tv|fm|tk|biz|store|online|site|blog|dev|cloud|email|pro|club|space|website|xyz|live|world|today|life|works|tools|guru|expert|center|services|solutions|digital|systems|design|agency|media|studio|press|review|art|news|host|fans|fund|games|gift|gold|green|group|guide|host|inc|ink|link|lol|love|ltd|men|mom|page|party|run|run|sale|shop|show|site|sport|store|tax|team|tech|top|trade|tube|vip|vote|win|wine|world|wow|wtf|xyz|yoga|zone)';
+
         // (a) URLs em <strong>...URL...</strong> → <a href>...</a>
         $html = preg_replace_callback(
-            '#<strong>((?:https?://)?[a-z0-9-]+(?:\.[a-z0-9-]+){1,3}(?:/[^\s<>"\']*)?)</strong>#iu',
-            function ($m) use (&$auto_linked) {
+            '#<strong>\s*((?:https?://)?[a-z][a-z0-9-]*(?:\.[a-z0-9-]+){1,4}(?:/[^\s<>"\']*)?)\s*</strong>#iu',
+            function ($m) use (&$auto_linked, $tldRegex) {
                 $url = trim($m[1]);
+                if (strlen($url) < 5) return $m[0];
+                if (!preg_match('#\.' . $tldRegex . '(?:\.[a-z]{2,3})?(?:[/\s]|$)#iu', $url)) return $m[0];
                 $href = (stripos($url, 'http') === 0) ? $url : ('https://' . $url);
-                // Skip se url muito curta ou suspeita
-                if (strlen($url) < 8 || !preg_match('#\.(com|com\.br|net|org|gov\.br|edu\.br|io|co)#i', $url)) return $m[0];
                 $auto_linked++;
                 return '<a href="' . htmlspecialchars($href, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>';
             },
             $html
         ) ?? $html;
 
-        // (b) URLs bare em texto: detecta dentro de <p>, <li>, <td> mas FORA de <a>
-        $html = preg_replace_callback(
-            '#(<(?:p|li|td)\b[^>]*>)([\s\S]*?)(</(?:p|li|td)>)#i',
-            function ($wrap) use (&$auto_linked) {
-                [$full, $open, $inner, $close] = $wrap;
-                // Skip se já tem <a> dentro (evita double-process)
-                $temA = preg_match('#<a\b#i', $inner);
-                // Mascara <a>...</a> existentes pra não tocar
-                $masks = [];
-                $innerMasked = preg_replace_callback('#<a\b[^>]*>[\s\S]*?</a>#i', function ($mm) use (&$masks) {
-                    $tk = '@@@A_' . count($masks) . '@@@';
-                    $masks[$tk] = $mm[0];
-                    return $tk;
-                }, $inner) ?? $inner;
-                // Linka URLs https?:// soltas
-                $innerMasked = preg_replace_callback(
-                    '#(?<![\'"=>/\w])(https?://[a-z0-9.-]+(?:/[^\s<>"\']*)?)#iu',
-                    function ($m) use (&$auto_linked) {
-                        $auto_linked++;
-                        $url = rtrim($m[1], '.,;:!?)');
-                        $tail = substr($m[1], strlen($url));
-                        return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
-                    },
-                    $innerMasked
-                ) ?? $innerMasked;
-                // Linka domínios bare COM PATH (smallpdf.com/pt/comprimir-pdf)
-                $innerMasked = preg_replace_callback(
-                    '#(?<![\'"=>/@\w-])([a-z0-9-]+\.(?:com\.br|gov\.br|edu\.br|com|net|org|io|co)/[a-z0-9/_.\-]+)#iu',
-                    function ($m) use (&$auto_linked) {
-                        $auto_linked++;
-                        $url = rtrim($m[1], '.,;:!?)');
-                        $tail = substr($m[1], strlen($url));
-                        return '<a href="https://' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
-                    },
-                    $innerMasked
-                ) ?? $innerMasked;
-                // Restaura <a> originais
-                foreach ($masks as $tk => $orig) $innerMasked = str_replace($tk, $orig, $innerMasked);
-                return $open . $innerMasked . $close;
+        // (b) URLs no body inteiro fora de <a>/<code>/<pre>/<script>/<style> e fora de avisos
+        // (avisos editoriais já mascarados em $avisoBlocos acima).
+        // Mascara <a>/<code>/<pre>/<script>/<style> com tokens, processa, restaura.
+        $masksBlock = [];
+        $htmlMasked = preg_replace_callback(
+            '#<(a|code|pre|script|style)\b[^>]*>[\s\S]*?</\1>#i',
+            function ($mm) use (&$masksBlock) {
+                $tk = '@@@MK_' . count($masksBlock) . '@@@';
+                $masksBlock[$tk] = $mm[0];
+                return $tk;
             },
             $html
         ) ?? $html;
+
+        // (b1) URLs com protocolo: https?:// — sempre linkar (qualquer TLD válido)
+        $htmlMasked = preg_replace_callback(
+            '#(?<![\'"=>])(https?://[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?:/[^\s<>"\')]*)?)#iu',
+            function ($m) use (&$auto_linked) {
+                $url = rtrim($m[1], '.,;:!?)');
+                $tail = substr($m[1], strlen($url));
+                $auto_linked++;
+                return '<a href="' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
+            },
+            $htmlMasked
+        ) ?? $htmlMasked;
+
+        // (b2) Domínios bare COM PATH (mais específicos primeiro):
+        //   - dominio.tld/path  → linkar com https://
+        $htmlMasked = preg_replace_callback(
+            '#(?<![\'"=>/@\w.-])([a-z][a-z0-9-]*(?:\.[a-z0-9-]+){1,3}/[a-z0-9/_.\-]+)#iu',
+            function ($m) use (&$auto_linked, $tldRegex) {
+                $url = rtrim($m[1], '.,;:!?)');
+                $tail = substr($m[1], strlen($url));
+                // Valida TLD entre as partes (ex: vestibular.fatec.sp.gov.br/...)
+                if (!preg_match('#\.' . $tldRegex . '(?:\.[a-z]{2,3})?(?=/)#iu', $url)) return $m[0];
+                $auto_linked++;
+                return '<a href="https://' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>' . $tail;
+            },
+            $htmlMasked
+        ) ?? $htmlMasked;
+
+        // (b3) Domínios bare SEM path (ex: "vestibular.fatec.sp.gov.br") — só linka se
+        //   for domínio multi-segmento que termina em TLD válido (.gov.br, .edu.br, .com.br).
+        //   Evita linkar coisas tipo "Pé.de.Meia.Bolsa" que não são URLs.
+        //   Lookahead: termina ao ver whitespace, pontuação SENTENCIAL (ponto seguido de espaço/fim),
+        //   vírgula, parêntese, ou fim de string. NÃO termina antes de outro `.letra` (que indica
+        //   continuação do domínio).
+        $htmlMasked = preg_replace_callback(
+            '#(?<![\'"=>/@\w.-])([a-z][a-z0-9-]+(?:\.[a-z0-9-]+){2,4})(?=[\s,;:!?)]|\.\s|\.$|\.</|$)#iu',
+            function ($m) use (&$auto_linked, $tldRegex) {
+                $url = $m[1];
+                // Precisa terminar em TLD reconhecível
+                if (!preg_match('#\.' . $tldRegex . '(?:\.[a-z]{2,3})?$#iu', $url)) return $m[0];
+                // Pula se já é um caminho ou se parece com versão de software (1.2.3.4)
+                if (preg_match('#^\d#u', $url) || preg_match('#\.\d+\.#u', $url)) return $m[0];
+                $auto_linked++;
+                return '<a href="https://' . htmlspecialchars($url, ENT_QUOTES) . '" rel="noopener nofollow" target="_blank">' . $url . '</a>';
+            },
+            $htmlMasked
+        ) ?? $htmlMasked;
+
+        // Restaura blocos mascarados
+        foreach ($masksBlock as $tk => $orig) $htmlMasked = str_replace($tk, $orig, $htmlMasked);
+        $html = $htmlMasked;
 
         // Restaura blocos de aviso (sem auto-link interno)
         foreach ($avisoBlocos as $tk => $bloco) $html = str_replace($tk, $bloco, $html);
