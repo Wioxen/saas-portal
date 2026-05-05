@@ -996,7 +996,7 @@ class DiscoverGerador
                     if (class_exists('InlineImageInjector') && !empty($urlsFinais)) {
                         try {
                             $tituloRev = is_string($titulo ?? null) ? $titulo : (string)($trend['termo'] ?? '');
-                            $iiRes = InlineImageInjector::injetar($content, $urlsFinais, $this->wp, 2, $tituloRev);
+                            $iiRes = InlineImageInjector::injetar($content, $urlsFinais, $this->wp, 2, $tituloRev, $this->cfg);
                             if (($iiRes['log']['inseridas'] ?? 0) > 0) {
                                 $content = (string)$iiRes['html'];
                                 $validationReport['inline_images'] = $iiRes['log'];

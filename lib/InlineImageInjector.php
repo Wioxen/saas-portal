@@ -19,28 +19,28 @@ declare(strict_types=1);
 class InlineImageInjector
 {
     /**
-     * @param string  $html         HTML do artigo
-     * @param array   $sourcesUrls  URLs das fontes scrapeadas
-     * @param object  $wp           Wordpress instance (uploadImagemPorUrl)
-     * @param int     $maxImagens   default 2
-     * @param string  $titulo       Título do artigo (pra filtrar imagens off-topic)
+     * @param string      $html         HTML do artigo
+     * @param array       $sourcesUrls  URLs das fontes scrapeadas
+     * @param object      $wp           Wordpress instance (uploadImagemPorUrl)
+     * @param int         $maxImagens   default 2
+     * @param string      $titulo       Título do artigo (pra filtrar imagens off-topic)
+     * @param array|null  $cfg          Config (precisa pra Haiku caption + DALL-E fallback)
      * @return array {html, log}
      */
-    public static function injetar(string $html, array $sourcesUrls, $wp, int $maxImagens = 2, string $titulo = ''): array
+    public static function injetar(string $html, array $sourcesUrls, $wp, int $maxImagens = 2, string $titulo = '', ?array $cfg = null): array
     {
-        $log = ['candidatas_encontradas' => 0, 'aprovadas' => 0, 'inseridas' => 0, 'descartadas_off_topic' => 0, 'erros' => []];
+        $log = ['candidatas_encontradas' => 0, 'aprovadas' => 0, 'inseridas' => 0, 'descartadas_off_topic' => 0, 'dalle_fallback' => 0, 'haiku_legendas' => 0, 'erros' => []];
 
         if (empty($sourcesUrls)) return ['html' => $html, 'log' => $log];
 
         // Coleta imagens das fontes
         $candidatas = self::extrairImagensFontes($sourcesUrls);
         $log['candidatas_encontradas'] = count($candidatas);
-        if (empty($candidatas)) return ['html' => $html, 'log' => $log];
 
         // Filtro semântico: alt/legenda precisa ter overlap mínimo com título do post.
         // Caso real: trend Enade pegou imagem "O Diabo Veste Prada 2" do querobolsa
         // (matéria relacionada linkada, não a real). Filtro Jaccard ≥0.10 elimina.
-        if ($titulo !== '') {
+        if ($titulo !== '' && !empty($candidatas)) {
             $tokensTitulo = self::tokenizarTitulo($titulo);
             $candidatasFiltradas = [];
             foreach ($candidatas as $c) {
@@ -59,12 +59,23 @@ class InlineImageInjector
                 }
             }
             $candidatas = $candidatasFiltradas;
-            if (empty($candidatas)) return ['html' => $html, 'log' => $log];
         }
 
         // Aprova as melhores
         $aprovadas = self::aprovar($candidatas, $maxImagens);
         $log['aprovadas'] = count($aprovadas);
+
+        // PIRÂMIDE 3: Fallback DALL-E quando 0 imagens contextuais aprovadas.
+        // Sem isso, post sai sem inline image — perde sinal visual no Discover.
+        // Custo: ~$0.04/imagem. Só roda se DALL-E habilitado em $cfg.
+        if (empty($aprovadas) && !empty($cfg['openai_api_key']) && !empty($cfg['imagem_featured_dalle_fallback']) && $titulo !== '') {
+            $dalleImg = self::gerarImagemDalle($titulo, $cfg);
+            if ($dalleImg) {
+                $aprovadas = [$dalleImg];
+                $log['dalle_fallback'] = 1;
+            }
+        }
+
         if (empty($aprovadas)) return ['html' => $html, 'log' => $log];
 
         // Pontos de inserção: APÓS o 2º e o 5º </p> que segue um <h2>
@@ -87,12 +98,33 @@ class InlineImageInjector
                 if ($mediaId) {
                     $media = $wp->getMedia($mediaId);
                     $imgUrl = $media['source_url'] ?? $img['url'];
-                    // Legenda fidedigna com crédito da fonte
-                    $legendaFinal = self::montarLegenda(
-                        (string)($img['legenda'] ?? ''),
-                        (string)($img['alt'] ?? ''),
-                        (string)($img['fonte_url'] ?? '')
-                    );
+                    // Legenda: prioridade
+                    //   1. legenda real da fonte (figcaption scrapeado)
+                    //   2. alt descritivo (>3 palavras)
+                    //   3. Haiku gera legenda contextual baseada em título + h2 onde insere
+                    //   4. fallback determinístico "Imagem ilustrativa · Crédito: X"
+                    $legendaReal = trim((string)($img['legenda'] ?? ''));
+                    $altReal = trim((string)($img['alt'] ?? ''));
+                    $isDalle = !empty($img['is_dalle']);
+                    if ($legendaReal === '' && (str_word_count($altReal) < 4 || $isDalle) && !empty($cfg['anthropic_api_key'])) {
+                        $h2Ctx = self::h2AntesPos($html, $pos);
+                        $legendaHaiku = self::gerarLegendaContextualHaiku(
+                            $titulo,
+                            $h2Ctx,
+                            $altReal,
+                            (string)($img['fonte_url'] ?? ''),
+                            (string)$cfg['anthropic_api_key'],
+                            $isDalle
+                        );
+                        if ($legendaHaiku !== '') {
+                            $legendaFinal = $legendaHaiku;
+                            $log['haiku_legendas']++;
+                        } else {
+                            $legendaFinal = self::montarLegenda($legendaReal, $altReal, (string)($img['fonte_url'] ?? ''));
+                        }
+                    } else {
+                        $legendaFinal = self::montarLegenda($legendaReal, $altReal, (string)($img['fonte_url'] ?? ''));
+                    }
                     $figcaption = htmlspecialchars(mb_substr($legendaFinal, 0, 220), ENT_QUOTES, 'UTF-8');
                     $imgHtml = "\n<figure class='inline-img' style='margin:24px 0;width:100%;display:block'>"
                              . "<img src='" . htmlspecialchars($imgUrl, ENT_QUOTES) . "' alt='" . htmlspecialchars($alt, ENT_QUOTES) . "' loading='lazy' style='width:100%;height:auto;border-radius:8px;display:block'>"
@@ -208,6 +240,82 @@ class InlineImageInjector
         // Mais autoridade que só "Crédito: X" suspenso.
         if ($base === '') return 'Imagem ilustrativa · Crédito: ' . $credito;
         return $base . ' · Crédito: ' . $credito;
+    }
+
+    /**
+     * Gera 1 imagem editorial via DALL-E quando 0 candidatas contextuais.
+     * Prompt baseado no título do post (remove números/datas/valores pra ficar genérico-tema).
+     * Retorna candidata com URL DALL-E (DALL-E URLs expiram em ~1h, sideload imediato).
+     */
+    private static function gerarImagemDalle(string $titulo, array $cfg): ?array
+    {
+        try {
+            require_once __DIR__ . '/OpenAI.php';
+            $openai = new OpenAI((string)$cfg['openai_api_key'], 'gpt-4o-mini');
+            // Tema: remove números, datas, valores, prazos
+            $tema = preg_replace('/\b\d{4}\b|\b\d{1,3}[.\s]?\d{3}\b|\bR\$\s*[\d,.]+\b/u', '', $titulo);
+            $tema = preg_replace('/\bat[ée]\s+\d+\s+de\s+\w+/iu', '', $tema);
+            $tema = preg_replace('/[:;–—,]+\s*\w+\s+\w+\s+\w+\s*$/u', '', $tema); // remove trailing clauses
+            $tema = trim(preg_replace('/\s+/u', ' ', $tema));
+            $prompt = "Editorial photography, Brazilian context, {$tema}, natural light, professional documentary style, no text overlays, no logos, no graphics, no infographics. Realistic, soft tones.";
+            $url = $openai->gerarImagem($prompt, '1792x1024', 'hd', 'natural');
+            if (!$url) return null;
+            return [
+                'url' => $url,
+                'alt' => mb_substr($titulo, 0, 100),
+                'legenda' => '',
+                'fonte_url' => '',
+                'is_dalle' => true,
+            ];
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Gera legenda contextual via Haiku (~$0.005/img). Usa título + h2 + alt + fonte.
+     * Retorna string formatada com crédito. Em caso de erro, retorna ''.
+     */
+    private static function gerarLegendaContextualHaiku(
+        string $titulo,
+        string $h2Contexto,
+        string $alt,
+        string $fonteUrl,
+        string $anthropicKey,
+        bool $isDalle = false
+    ): string {
+        try {
+            require_once __DIR__ . '/Claude.php';
+            $haiku = new Claude($anthropicKey, 'claude-haiku-4-5');
+            $credito = $isDalle ? 'Ilustração editorial' : ('Crédito: ' . self::nomearFonte($fonteUrl));
+            $system = "Você gera legendas factuais pra imagens em artigos de portais educacionais. Tom jornalístico simples (Folha/Nexo). 8-15 palavras. Sem clickbait. Sem suspense. Sem 'descubra'/'confira'. PT-BR. Termina sem ponto (sistema adiciona crédito depois). Apenas a legenda, sem aspas.";
+            $user = "Título do artigo: {$titulo}\nSeção do artigo (h2 mais próximo): {$h2Contexto}\nDescrição alt da imagem (curta): {$alt}\n\nGere a legenda factual contextual.";
+            $resp = $haiku->callPublic([['role' => 'user', 'content' => $user]], $system, 80);
+            $texto = trim((string)($resp['content'][0]['text'] ?? ''));
+            $texto = trim($texto, '"\' ');
+            $texto = mb_substr($texto, 0, 140);
+            if ($texto === '') return '';
+            return $texto . ' · ' . $credito;
+        } catch (Throwable $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Encontra texto do <h2> imediatamente antes da posição $pos no HTML.
+     * Usado pra contextualizar legenda da imagem.
+     */
+    private static function h2AntesPos(string $html, int $pos): string
+    {
+        if (!preg_match_all('/<h2[^>]*>(.*?)<\/h2>/is', $html, $m, PREG_OFFSET_CAPTURE)) return '';
+        $maisProximo = '';
+        foreach ($m[1] as $i => $tup) {
+            $h2Pos = $m[0][$i][1];
+            if ($h2Pos < $pos) {
+                $maisProximo = trim(strip_tags(html_entity_decode($tup[0], ENT_QUOTES, 'UTF-8')));
+            } else break;
+        }
+        return $maisProximo;
     }
 
     /**
