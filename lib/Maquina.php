@@ -154,10 +154,28 @@ class Maquina
         }
         $this->log('✅ ' . count($fontes) . ' fontes coletadas');
 
+        // og:image — prioriza fonte autêntica (não-stock) sobre Pexels/Unsplash.
+        // Bug #4782 (2026-05-04): primeira fonte do array tinha og:image Pexels-like,
+        // pegava ela em vez da vestibulandoweb que tinha foto real do campus.
         $heroUrl = null;
+        $heroUrlFallback = null;
+        $isStockOg = function (string $url): bool {
+            $low = mb_strtolower($url);
+            return str_contains($low, 'pexels.com')
+                || str_contains($low, 'unsplash.com')
+                || str_contains($low, 'pixabay.com')
+                || str_contains($low, 'shutterstock')
+                || str_contains($low, 'istockphoto')
+                || str_contains($low, 'gettyimages');
+        };
         foreach ($fontes as $f) {
-            if (!empty($f['meta']['og_image'])) { $heroUrl = $f['meta']['og_image']; break; }
+            $og = (string)($f['meta']['og_image'] ?? '');
+            if ($og === '') continue;
+            if ($heroUrlFallback === null) $heroUrlFallback = $og;
+            if (!$isStockOg($og)) { $heroUrl = $og; break; }
         }
+        if ($heroUrl === null) $heroUrl = $heroUrlFallback;
+        if ($heroUrl) $this->log('  🖼️ og:image escolhido: ' . mb_substr($heroUrl, 0, 90));
 
         $mediaCache = [];
         $builder = new LandingBuilder($this->cfg['site_name'] ?? 'Como Comprar', $this->cfg['wp_url'] ?? '', ['number' => $this->cfg['whatsapp_number'] ?? '', 'group_url' => $this->cfg['whatsapp_group_url'] ?? '', 'cta_text' => $this->cfg['whatsapp_cta_text'] ?? '']);
