@@ -2,14 +2,21 @@
 /**
  * DiscoverImagemFeatured — escolhe a imagem destacada do post via cascata.
  *
- *   1. Pexels API (preferido — foto real, grátis, contextual)
- *   2. DALL-E 3 (fallback — geração editorial controlada, ~$0.04/imagem hd)
- *   3. og:image (último recurso — comportamento legado)
+ * DEFAULT atual (2026-05-04, 'og_first'):
+ *   1. og:image (preferido — foto autêntica da matéria-fonte, melhor E-E-A-T/autoridade)
+ *   2. Pexels API (fallback — quando og é inválido: logo, brasão, ícone)
+ *   3. DALL-E 3 (último recurso — geração editorial, ~$0.04/imagem hd)
  *
- * Por que cascata:
- *   - og:image cru (era o único caminho) é frequentemente logo do site/banner genérico
- *   - Pexels grátis cobre 80%+ dos casos com foto natural relevante
- *   - DALL-E garante imagem editorial pra termos sem match Pexels (ex: política BR específica)
+ * Estratégias alternativas via $cfg['imagem_featured_estrategia']:
+ *   - 'og_only'      → SOMENTE og, sem fallback (leaodabarra: foto real do clube)
+ *   - 'pexels_first' → comportamento legado (Pexels → DALL-E → og)
+ *   - 'dalle_first'  → DALL-E direto (caro, raro — A/B test apenas)
+ *
+ * Por que mudou pra og_first em 2026-05-04:
+ *   - og:image da fonte original = foto contextual REAL (alunos, cerimônia, edital, etc)
+ *   - Google Discover/SERP premiam imagem original > stock Pexels > geração IA
+ *   - E-E-A-T: imagem da fonte reforça credibilidade editorial
+ *   - Validação ogImageValido() filtra logos/brasões/ícones (cai pra Pexels nesses)
  *
  * Heurística de query Pexels (extraída do termo + cluster):
  *   - Termos em PT-BR convertidos pra EN (Pexels tem mais resultados)
@@ -60,7 +67,7 @@ class DiscoverImagemFeatured
         $clusterKey  = (string)($contexto['cluster_key'] ?? '');
         $tituloHint  = (string)($contexto['briefing_titulo'] ?? $termo);
         $ogFallback  = (string)($contexto['og_image_fallback'] ?? '');
-        $estrategia  = (string)($this->cfg['imagem_featured_estrategia'] ?? 'pexels_first');
+        $estrategia  = (string)($this->cfg['imagem_featured_estrategia'] ?? 'og_first');
         $dalleFb     = !empty($this->cfg['imagem_featured_dalle_fallback']);
 
         $slugSugerido = self::slugSeo($tituloHint, $termo);

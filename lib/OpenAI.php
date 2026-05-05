@@ -124,10 +124,12 @@ SYS;
         $cb = new CircuitBreaker('openai');
         $cb->guarda();
 
+        // gpt-5+ usa reasoning tokens internos que podem demorar 90-180s; subido pra 300s.
+        $isReasoningModel = preg_match('/^(gpt-[5-9]|o\d)/', $this->model) === 1;
         $r = HttpClient::request('POST', 'https://api.openai.com/v1/chat/completions', [
             'json' => $payload,
             'headers' => ['Authorization: Bearer ' . $this->apiKey],
-            'timeout' => 120,
+            'timeout' => $isReasoningModel ? 300 : 120,
             'tries' => 2,
             'backoff' => [0, 4],
         ]);

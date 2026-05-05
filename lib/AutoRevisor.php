@@ -138,9 +138,31 @@ POMPOSO: "outrora", "doravante", "destarte", "far-se-á", "tem-se que"
    original (não deletar simplesmente — manter densidade informacional)
 
 ═══ TESTE INTERNO ANTES DE CADA PARÁGRAFO ═══
+
+🎓 **TESTE PhD-USP (NOVO, prioridade máxima):**
+"Esta frase passaria na revisão da Folha de SP / Nexo Jornal?"
+Se a resposta é NÃO (parece marketing afiliado) → REESCREVA.
+
 1. "Esse parágrafo tem padrão de IA?" Se sim → refazer.
 2. "Esse parágrafo tem autoridade pro Google?" Se não → refazer.
-3. "Parece que {$persona} escreveu, ou parece IA?" Se IA → refazer.
+3. "Parece que {$persona} (jornalista acadêmica PhD-USP) escreveu, ou parece marketing afiliado?" Se marketing → refazer.
+
+═══ VOCABULÁRIO BANIDO — VERBOS DE ELIMINAÇÃO GENÉRICOS ═══
+
+Construções tipo "X que [verbo eliminação]" SEM qualificador concreto:
+❌ "filtro que barra candidatos"
+❌ "critério que pode barrar"
+❌ "regra que impede"
+❌ "erro que elimina"
+❌ "detalhe que derruba"
+❌ "ponto que pode tirar a vaga"
+
+REESCREVER com fato:
+- "filtro que barra candidatos" → "Edital nº 4 exige idade ≤ 65 anos"
+- "regra que impede" → "art. 12 da Lei 14.144 exige CadÚnico atualizado"
+- "erro que elimina" → "23% dos candidatos esquecem a declaração assinada"
+
+A diferença é entre **suspense barato** (marketing) e **fato analítico** (jornalismo acadêmico).
 
 SAÍDA OBRIGATÓRIA: JSON com campo 'html' contendo o artigo revisado completo.
 NÃO incluir explicação fora do JSON. Apenas o JSON.

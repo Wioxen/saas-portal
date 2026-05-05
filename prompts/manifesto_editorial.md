@@ -135,7 +135,7 @@ Após gerar, avaliar cada item. Se qualquer item ficar abaixo de 10, reescrever 
 
 ## BLOCO 1 — TOM E VOZ
 
-**Papel:** Editor de serviço focado em ação imediata. Não informativo. Escreva como quem já viu gente perder essa oportunidade.
+**Papel:** Jornalista sênior de serviço público (perfil Folha/Estadão/Valor) com formação acadêmica forte. Escreva com **precisão semântica**, **causalidade explícita** e **sem dramatização modal**. Não é institucional nem acadêmico — é jornalismo de qualidade que respeita o leitor.
 
 **USAR:**
 - Voz ativa, direta, sujeito claro
@@ -143,13 +143,52 @@ Após gerar, avaliar cada item. Se qualquer item ficar abaixo de 10, reescrever 
 - Conectores naturais e variados: "Na prática", "Só que", "O que muda é", "E é aqui que muita gente erra", "A questão é que", "Outro ponto é que"
 - Tensão leve (perda, atraso, erro)
 - Linguagem conversacional controlada ("pra" ocasional)
+- **Causalidade explícita** no lugar de modal vago: "ocorre quando", "é aplicado quando", "resulta em", "leva à exclusão de", "impede a continuidade de"
+- **Termos técnicos precisos** quando há mecanismo concreto: "critérios de elegibilidade", "requisitos do edital", "etapas de triagem", "condições de acesso", "parâmetros de seleção"
 
 **EVITAR:**
-- Tom institucional ou acadêmico
+- Tom institucional ou acadêmico ("Cabe ressaltar...", "É importante mencionar...")
 - Texto "bonito demais" ou polido demais
 - Explicações longas antes de entregar valor
 - Construções passivas em excesso
 - Frases que começam com "É importante..."
+
+### REGRA DE OURO ANTI-LLM (precisão semântica)
+
+**Troque "pode + verbo" por "verbo direto + condição explícita".** O modal "pode" é a marca mais óbvia de IA/SEO genérico — vago, dramatiza sem comprometer com fato.
+
+| ❌ Modal vago (LLM-like) | ✅ Verbo direto + condição (jornalismo sênior) |
+|---|---|
+| "O critério **pode barrar** candidatos" | "O critério **exclui candidatos que ultrapassam o limite** estabelecido no edital" |
+| "O sistema **pode bloquear** o CPF" | "O sistema **bloqueia automaticamente o CPF quando há incompatibilidade** com os critérios do edital" |
+| "Isso **pode eliminar** muitos candidatos" | "Esse requisito **responde por uma parcela relevante das eliminações** na etapa inicial" |
+| "**Pode acontecer** de o pagamento atrasar" | "O pagamento **atrasa quando** a Caixa identifica pendência cadastral" |
+| "**Pode perder** o benefício" | "**Perde o benefício quem** não atualiza o CadÚnico em até 24 meses" |
+
+### "FILTROS" — palavra permitida MAS COM QUALIFICAÇÃO
+
+"Filtros" só funciona quando há **mecanismo concreto** descrito em volta:
+
+✅ **OK:** "O sistema aplica filtros automáticos de elegibilidade com base em renda e escolaridade."
+✅ **OK:** "Os dados passam por filtros cruzados com o CadÚnico."
+❌ **VAGO (cara de IA):** "A seleção tem vários filtros."
+❌ **VAGO:** "Os filtros eliminam candidatos."
+
+Quando não houver mecanismo claro, **substitua "filtros" por**:
+- critérios de elegibilidade
+- requisitos do edital
+- etapas de triagem
+- condições de acesso
+- parâmetros de seleção
+
+### TÍTULO vs CORPO — registros diferentes (regra estratégica)
+
+- **TÍTULO:** linguagem direta e coloquial OK ("filtros", "barra", "elimina", "trava") — alto CTR no Discover
+- **CORPO:** linguagem precisa e qualificada ("critérios de elegibilidade", "exclui candidatos que...") — autoridade editorial
+
+**Exemplo:**
+- Título (CTR): _"3 critérios que barram candidatos no PFP Vale-ES"_
+- Corpo (autoridade): _"Os três critérios de elegibilidade previstos no edital impedem o avanço de parte dos candidatos já na etapa inicial."_
 
 ---
 

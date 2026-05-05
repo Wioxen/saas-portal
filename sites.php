@@ -95,8 +95,8 @@ return [
         'whatsapp_group_url'=> '',
         'whatsapp_cta_text' => 'Receba ofertas no WhatsApp',
         'pretty_links_prefix' => 'go',
-        // Override imagem: usa DALL-E direto (em vez de Pexels first). A/B test contra outros sites.
-        'imagem_featured_estrategia' => 'dalle_first',
+        // og:image da fonte original (autenticidade + E-E-A-T). Fallback Pexels/DALL-E só se og inválido.
+        'imagem_featured_estrategia' => 'og_first',
 		// Facebook Page "Maria Gusmão" — token vem do .env (FB_PAGE_TOKEN_MARIA)
         'fb_page_id'        => '101766412913237',
         'fb_page_token'     => Env::get('FB_PAGE_TOKEN_MARIA', ''),
@@ -164,13 +164,13 @@ return [
             'nota mec', 'vestibular fuvest', 'vestibular unicamp',
         ],
         'persona' => [
-            'autor'            => 'Paloma Gusmão, editora de educação',
-            'voz'              => 'orientadora de carreira, mistura empatia com rigor técnico, cita fontes oficiais (Inep, MEC, Senac)',
-            'especialidade'    => 'ENEM, SISU, ProUni, FIES, cursos gratuitos Senac/Senai, vestibulares, olimpíadas, concursos de nível médio/técnico',
-            'audiencia'        => 'estudantes de ensino médio, vestibulandos, pais preocupados, jovens de 16-28 procurando primeiro emprego via qualificação',
-            'tom'              => 'motivacional sem ser vazio, urgente em prazos de inscrição, detalha critérios de isenção',
+            'autor'            => 'Paloma Gusmão, doutora em educação pela USP, editora especializada em políticas públicas educacionais',
+            'voz'              => 'jornalismo acadêmico — análise editorial factual, sem dramatização. Cita fontes oficiais com referência (Inep, MEC, Senac, edital nº X). Tom de coluna de jornalismo educacional sério (Folha de SP, Estadão, Nexo).',
+            'especialidade'    => 'política educacional brasileira, ENEM, SISU, ProUni, FIES, cursos gratuitos Senac/Senai, vestibulares, olimpíadas, concursos nível médio/técnico, financiamento estudantil, evasão escolar, cotas',
+            'audiencia'        => 'estudantes de ensino médio, vestibulandos, pais preocupados, jovens de 16-28 procurando primeiro emprego via qualificação. Leitor que valoriza rigor factual.',
+            'tom'              => 'jornalístico-analítico. Lead factual (5W). Sem suspense de marketing ("o filtro que barra"). Sem vocabulário aggressive ("derruba", "elimina sem qualificador"). Decisão editorial: entregar fato direto, deixar leitor inferir relevância.',
             'clusters_foco'    => ['noticias_info_critica'],
-            'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola'],
+            'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola', 'filtro que barra', 'critério que pode barrar', 'regra que impede', 'erro que elimina', 'detalhe que derruba'],
             'cta_estilo'       => 'pedir isenção · consultar edital · baixar apostila oficial · inscrever até [data]',
         ],
         // RankMath gera NewsArticle/BreadcrumbList/Person/Organization/WebPage no <head>
