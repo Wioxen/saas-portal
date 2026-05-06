@@ -150,6 +150,29 @@ class AntiAIPostProcessor
         $html = preg_replace('#<a\s[^>]*>\s*</a>#i', '', $html) ?? $html;
         if ($citacoes_removidas > 0) $log['citacoes_concorrentes_removidas'] = $citacoes_removidas;
 
+        // Renomeia h2 com prefixo "FAQ:" quando NÃO tem <details> abaixo. Caso real #932:
+        // h2 "FAQ: perguntas frequentes sobre Vitória x Ceará" tinha só <p> narrativos
+        // depois (analise, sem perguntas). Tira o "FAQ:" pra virar h2 normal e evita
+        // duplicação visual com o FAQ real (h2 "Perguntas frequentes" + 6 details).
+        $faq_prefix_removido = 0;
+        $html = preg_replace_callback(
+            '#<h2([^>]*)>\s*(?:FAQ\s*[:\-—]\s*|Perguntas\s+frequentes\s+sobre\s+)([^<]+)</h2>([\s\S]*?)(?=<h[12]|$)#iu',
+            function ($m) use (&$faq_prefix_removido) {
+                $bloco = $m[3];
+                // Se NÃO tem <details> nesse bloco, é FAQ falso — remove prefixo
+                if (!preg_match('#<details\b#i', $bloco)) {
+                    $faq_prefix_removido++;
+                    $tituloLimpo = trim($m[2]);
+                    // Capitaliza 1ª letra
+                    $tituloLimpo = mb_strtoupper(mb_substr($tituloLimpo, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($tituloLimpo, 1, null, 'UTF-8');
+                    return '<h2' . $m[1] . '>' . $tituloLimpo . '</h2>' . $bloco;
+                }
+                return $m[0];
+            },
+            $html
+        ) ?? $html;
+        if ($faq_prefix_removido > 0) $log['faq_prefix_h2_removido'] = $faq_prefix_removido;
+
         // Remove "?" final de H2 do corpo (proibido pelo prompt mas Sonnet ignora às vezes).
         // Caso real #5021: H2 "O que é o Mestrado Profissional em Educação da UFFS?".
         // Estratégia conservadora: tira só o "?" final em H2s do CORPO (preserva H2 do FAQ
