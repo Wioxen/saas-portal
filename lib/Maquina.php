@@ -577,17 +577,23 @@ class Maquina
     private function metaRankMath(array $a): array
     {
         // Combina focus_keyword + secondary_keywords em uma string CSV.
-        // RankMath aceita múltiplas keywords separadas por vírgula no mesmo campo,
-        // melhorando match semântico em queries variadas (vs só 1 frase exata).
-        $kws = [];
-        if (!empty($a['focus_keyword'])) $kws[] = trim((string)$a['focus_keyword']);
-        if (!empty($a['secondary_keywords']) && is_array($a['secondary_keywords'])) {
-            foreach ($a['secondary_keywords'] as $sk) {
-                $sk = trim((string)$sk);
-                if ($sk !== '' && !in_array($sk, $kws, true)) $kws[] = $sk;
-            }
+        // RankMath: focus_keyword DEVE ser SIMPLES (1 termo, 2-5 palavras), não frase.
+        // User feedback 06/05: campo virava string monstro com 8 frases separadas por
+        // vírgula (~23 palavras). Isso quebra o score do RankMath.
+        // Estratégia:
+        //   1. Pega só focus_keyword principal (descarta secondary_keywords)
+        //   2. Se vazio ou muito longo (>5 palavras), deriva do título
+        //   3. Resultado: 1 termo curto e canônico
+        $kwsStr = trim((string)($a['focus_keyword'] ?? ''));
+        if ($kwsStr === '' || str_word_count($kwsStr) > 5 || str_word_count($kwsStr) < 1) {
+            require_once __DIR__ . '/RankMathSeoValidator.php';
+            $derivado = RankMathSeoValidator::derivarKeywordDoTitulo((string)($a['meta_title'] ?? $a['title'] ?? ''));
+            if ($derivado !== '') $kwsStr = $derivado;
         }
-        $kwsStr = implode(', ', $kws);
+        // Garante: sem vírgula (sinal de múltiplas) — pega só o 1º termo se ainda houver
+        if (str_contains($kwsStr, ',')) {
+            $kwsStr = trim(explode(',', $kwsStr)[0]);
+        }
 
         return [
             'rank_math_title'                => $a['meta_title'] ?? $a['title'],

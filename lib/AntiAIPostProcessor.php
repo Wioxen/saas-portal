@@ -100,6 +100,56 @@ class AntiAIPostProcessor
         $html = $resStrong['html'];
         $log['strong_perguntas_movidas_pro_faq'] = $resStrong['movidas'];
 
+        // Remove citações a portais concorrentes do body. Caso real #5047:
+        // "segundo levantamento do portal Click Petróleo e Gás" — Sonnet citou a fonte
+        // scrapeada pelo nome. User feedback 06/05: substituir por "nossa redação".
+        // Cobre padrões: (segundo|conforme|de acordo com|para|via|informa|aponta)
+        //                + (portal|site|veículo|publicação|levantamento|reportagem|matéria)
+        //                + nome do portal
+        // ATENÇÃO: precisa tolerar tags HTML dentro do nome (auto-linker às vezes injeta
+        // <a> no meio do nome do portal — caso #5047: "Click <a>Petróleo e Gás</a>").
+        $portais_blacklist = [
+            'Click Petr[óo]leo e G[áa]s', 'Click Petr[óo]leo', 'CPG ',
+            'Metr[óo]poles', 'CNN Brasil', 'G1\b', 'O Globo\b', 'Globo\.com',
+            'Folha de S\.?\s*Paulo', 'Folha de SP', 'Folha\b(?! Online)',
+            'Estad[ãa]o\b', 'Estado de SP', 'Estado de S\.\s*Paulo',
+            'Catraca Livre', 'Conecta Professores', 'Xataka', 'Canaltech',
+            'Revista Oeste', 'Terra\.com', 'Portal Terra', 'Veja\b(?!ndo)',
+            'Valor Econ[ôo]mico', 'ESPN', 'Correio Braziliense',
+            'UOL\b', 'Lance!?\b', 'Trivela', 'Bahia Not[ií]cias',
+            'Metr[óo] 1\b', 'Metro 1\b', 'Hora Brasil', 'Baguete',
+            'Quero Bolsa', 'querobolsa\.com',
+            'InfoEduca[çc][ãa]o', 'PEB-?SP',
+            'R[ãa]dio Itati[áa]ia', 'Estad[ãa]o\.com',
+            'Jornal Correio', 'Al[ôo] Al[ôo] Bahia',
+        ];
+        $citacoes_removidas = 0;
+        // Estratégia: pra cada portal, transforma whitespace literal em "(?:\s|<tag>)+"
+        // pra tolerar tags HTML que o auto-linker às vezes injeta dentro do nome.
+        // Ex: "Click Petróleo e Gás" → "Click(?:\s|<[^>]*>|</[^>]*>)+Petróleo..."
+        $tagInBetween = '(?:\s|<[^>]+>)+';
+        foreach ($portais_blacklist as $portal) {
+            // Substitui TODO espaço literal no padrão por tagInBetween
+            $portalTolerante = preg_replace('/ +/', $tagInBetween, $portal);
+            // Padrão 1: cláusula completa "(verbo) (do/no/da/pelo) (portal/site/...)? X"
+            // Captura (verbo) e descarta o resto, prefixando com "da" pra ficar natural
+            // ("segundo levantamento da nossa redação", "informou nossa redação", etc).
+            $pat = '#(segundo|conforme|de\s+acordo\s+com|para|via|informa|informou|aponta|apontou|noticia|noticiou|destaca|destacou|analisou|levantamento)(\s+(?:d[oae]|n[oa]|pel[oa])\s+(?:portal|site|ve[íi]culo|publica[çc][ãa]o|reportagem|mat[ée]ria|jornal|revista)\s+|\s+(?:d[oae]|n[oa]|pel[oa])\s+|\s+(?:portal|site|ve[íi]culo)\s+|\s+)' . $portalTolerante . '\b(?:</a>)?(\.\s*com\.br)?#iu';
+            $html = preg_replace_callback($pat, function ($m) use (&$citacoes_removidas) {
+                $citacoes_removidas++;
+                $verbo = strtolower($m[1]);
+                // "levantamento" pede "da": "levantamento da nossa redação"
+                // Outros verbos sem complemento: "informou nossa redação"
+                if ($verbo === 'levantamento' || $verbo === 'segundo' || $verbo === 'conforme' || str_starts_with($verbo, 'de acordo')) {
+                    return $m[1] . ' da nossa redação';
+                }
+                return $m[1] . ' nossa redação';
+            }, $html) ?? $html;
+        }
+        // Cleanup: <a> órfão sem fechamento + texto vazio "<a ...></a>" → remove
+        $html = preg_replace('#<a\s[^>]*>\s*</a>#i', '', $html) ?? $html;
+        if ($citacoes_removidas > 0) $log['citacoes_concorrentes_removidas'] = $citacoes_removidas;
+
         // Remove "?" final de H2 do corpo (proibido pelo prompt mas Sonnet ignora às vezes).
         // Caso real #5021: H2 "O que é o Mestrado Profissional em Educação da UFFS?".
         // Estratégia conservadora: tira só o "?" final em H2s do CORPO (preserva H2 do FAQ
