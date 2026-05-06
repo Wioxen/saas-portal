@@ -118,7 +118,14 @@ class InlineImageInjector
                     $legendaReal = trim((string)($img['legenda'] ?? ''));
                     $altReal = trim((string)($img['alt'] ?? ''));
                     $isDalle = !empty($img['is_dalle']);
-                    if ($legendaReal === '' && (str_word_count($altReal) < 4 || $isDalle) && !empty($cfg['anthropic_api_key'])) {
+                    $isPexels = !empty($img['is_pexels']);
+                    // Pexels SEMPRE retorna alt/legenda em inglês — força Haiku PT-BR.
+                    // Caso real #5091: figcaption "A worker wearing orange uniform maintains
+                    // roadside grass in Londrina, Brazil" (alt longo em EN escapou do filtro
+                    // str_word_count<4). User feedback 06/05: legenda do artigo deve ser PT-BR.
+                    $altEhIngles = self::detectarTextoIngles($altReal) || self::detectarTextoIngles($legendaReal);
+                    $forcarHaiku = $isDalle || $isPexels || $altEhIngles;
+                    if (($legendaReal === '' || $altEhIngles) && ($forcarHaiku || str_word_count($altReal) < 4) && !empty($cfg['anthropic_api_key'])) {
                         $h2Ctx = self::h2AntesPos($html, $pos);
                         $legendaHaiku = self::gerarLegendaContextualHaiku(
                             $titulo,
@@ -343,8 +350,8 @@ class InlineImageInjector
             require_once __DIR__ . '/Claude.php';
             $haiku = new Claude($anthropicKey, 'claude-haiku-4-5');
             $credito = $isDalle ? 'Ilustração editorial' : ('Crédito: ' . self::nomearFonte($fonteUrl));
-            $system = "Você gera legendas factuais pra imagens em artigos de portais educacionais. Tom jornalístico simples (Folha/Nexo). 8-15 palavras. Sem clickbait. Sem suspense. Sem 'descubra'/'confira'. PT-BR. Termina sem ponto (sistema adiciona crédito depois). Apenas a legenda, sem aspas.";
-            $user = "Título do artigo: {$titulo}\nSeção do artigo (h2 mais próximo): {$h2Contexto}\nDescrição alt da imagem (curta): {$alt}\n\nGere a legenda factual contextual.";
+            $system = "Você gera legendas factuais pra imagens em artigos de portais educacionais. Tom jornalístico simples (Folha/Nexo). 8-15 palavras. Sem clickbait. Sem suspense. Sem 'descubra'/'confira'. **OBRIGATÓRIO PORTUGUÊS BRASILEIRO** — mesmo que o alt esteja em inglês ou outro idioma, a legenda DEVE ser em PT-BR. Termina sem ponto (sistema adiciona crédito depois). Apenas a legenda, sem aspas.";
+            $user = "Título do artigo: {$titulo}\nSeção do artigo (h2 mais próximo): {$h2Contexto}\nDescrição alt da imagem (pode estar em inglês — IGNORE o idioma e gere em português): {$alt}\n\nGere a legenda factual contextual em PT-BR.";
             $resp = $haiku->callPublic([['role' => 'user', 'content' => $user]], $system, 80);
             $texto = trim((string)($resp['content'][0]['text'] ?? ''));
             $texto = trim($texto, '"\' ');
@@ -354,6 +361,30 @@ class InlineImageInjector
         } catch (Throwable $e) {
             return '';
         }
+    }
+
+    /**
+     * Detecta se texto está em inglês via palavras-cabeça comuns.
+     * Usado pra forçar Haiku-PT-BR quando alt da fonte vem em EN (Pexels, scrapers gringos).
+     * Heurística simples: 2+ stopwords EN em string curta indica inglês.
+     * Caso real #5091: "A worker wearing orange uniform maintains roadside grass in Londrina, Brazil".
+     */
+    private static function detectarTextoIngles(string $texto): bool
+    {
+        $texto = trim($texto);
+        if ($texto === '' || mb_strlen($texto) < 10) return false;
+        $low = ' ' . mb_strtolower($texto, 'UTF-8') . ' ';
+        $stopwordsEn = [' the ', ' of ', ' in ', ' is ', ' are ', ' was ', ' were ', ' with ',
+                        ' from ', ' on ', ' at ', ' by ', ' an ', ' and ', ' or ', ' for ',
+                        ' to ', ' that ', ' this ', ' these ', ' those ', ' has ', ' have ',
+                        ' had ', ' will ', ' would ', ' could ', ' should ', ' wearing ',
+                        ' working ', ' standing ', ' sitting ', ' running ', ' looking '];
+        $hits = 0;
+        foreach ($stopwordsEn as $sw) {
+            if (str_contains($low, $sw)) $hits++;
+            if ($hits >= 2) return true;
+        }
+        return false;
     }
 
     /**
