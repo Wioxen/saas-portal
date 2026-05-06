@@ -69,17 +69,19 @@ class InlineImageInjector
         // Ordem: Pexels (grátis, sem risco texto-em-outro-idioma) → DALL-E (pago, risco mas
         // contextual). User reportou DALL-E gerando placas com texto em inglês — Pexels é
         // foto stock real, sem esse risco.
+        // Override env IMAGEM_INLINE_FORCE_DALLE=1 → pula Pexels e força DALL-E (pra testes).
+        $forceDalle = (int)getenv('IMAGEM_INLINE_FORCE_DALLE') === 1;
         if (empty($aprovadas) && $titulo !== '' && !empty($cfg)) {
-            // 1. Pexels (preferido pra inline fallback)
-            if (!empty($cfg['pexels_api_key'])) {
+            // 1. Pexels (preferido pra inline fallback) — pula se forceDalle
+            if (!$forceDalle && !empty($cfg['pexels_api_key'])) {
                 $pexImg = self::tentarPexelsInline($titulo, $cfg);
                 if ($pexImg) {
                     $aprovadas = [$pexImg];
                     $log['pexels_fallback'] = 1;
                 }
             }
-            // 2. DALL-E (último recurso, prompt anti-texto reforçado)
-            if (empty($aprovadas) && !empty($cfg['openai_api_key']) && !empty($cfg['imagem_featured_dalle_fallback'])) {
+            // 2. DALL-E (último recurso OU forçado via env)
+            if (empty($aprovadas) && !empty($cfg['openai_api_key']) && ($forceDalle || !empty($cfg['imagem_featured_dalle_fallback']))) {
                 $dalleImg = self::gerarImagemDalle($titulo, $cfg);
                 if ($dalleImg) {
                     $aprovadas = [$dalleImg];
@@ -309,17 +311,26 @@ class InlineImageInjector
         try {
             require_once __DIR__ . '/OpenAI.php';
             $openai = new OpenAI((string)$cfg['openai_api_key'], 'gpt-4o-mini');
-            // Tema: remove números, datas, valores, prazos
+            // Tema: remove números, datas, valores, prazos pra ficar genérico-temático
             $tema = preg_replace('/\b\d{4}\b|\b\d{1,3}[.\s]?\d{3}\b|\bR\$\s*[\d,.]+\b/u', '', $titulo);
             $tema = preg_replace('/\bat[ée]\s+\d+\s+de\s+\w+/iu', '', $tema);
-            $tema = preg_replace('/[:;–—,]+\s*\w+\s+\w+\s+\w+\s*$/u', '', $tema); // remove trailing clauses
+            $tema = preg_replace('/[:;–—,]+\s*\w+\s+\w+\s+\w+\s*$/u', '', $tema);
             $tema = trim(preg_replace('/\s+/u', ' ', $tema));
-            // Prompt MUITO firme contra texto: DALL-E rotineiramente renderiza placas/letreiros
-            // com palavras em inglês ou inventadas. User reportou caso real. Negative reforçado:
-            $prompt = "Editorial photography of {$tema} in Brazilian context. Professional documentary style, natural light, soft tones, realistic. "
-                    . "ABSOLUTELY NO TEXT anywhere in the image: no words, no letters, no signs, no billboards, no street signs, no labels, no banners with text, no readable writing in any language (no English, no Portuguese, no Spanish text). "
-                    . "No logos. No graphics. No infographics. No watermarks. No UI elements. "
-                    . "Pure photographic scene: people, environment, objects only. If buildings or signs appear, they must be blurred or out of focus so no text is readable.";
+            // Prompt: foto JORNALÍSTICA realista (especificação user 06/05).
+            // Aparência DSLR profissional, brasileiros reais, sem cara de IA, mobile-first.
+            // Apoio visual contextual no meio da leitura — emoção leve, retenção mobile.
+            $prompt  = "Create a 16:9 horizontal photograph that looks like a REAL editorial photo taken with a professional DSLR camera by a photojournalist for a trustworthy Brazilian news portal. ABSOLUTELY NOT artificial intelligence aesthetic — no plastic skin, no over-sharpened look, no fantasy composition, no oversaturation.\n\n";
+            $prompt .= "SUBJECT & SCENE:\n";
+            $prompt .= "- Real Brazilian people with natural authentic expressions and genuine emotions (light, not exaggerated).\n";
+            $prompt .= "- Scene context: education, technical courses, enrollment, study or professional training — coherent with the article topic about \"{$tema}\".\n";
+            $prompt .= "- Tight or medium framing. Main focus clearly visible at center. Realistic ambient lighting (window light, classroom light, afternoon light).\n";
+            $prompt .= "- Soft natural depth of field. Clean uncluttered composition.\n\n";
+            $prompt .= "MOBILE-FIRST: easy to read in 1 second on a small screen. NO clutter, NO multiple objects, NO complex graphics, NO small icons, NO floating elements.\n\n";
+            $prompt .= "TEXT POLICY (strict):\n";
+            $prompt .= "- Default: NO text, NO words, NO letters, NO signs, NO labels, NO billboards. Buildings/signs blurred enough so nothing is readable.\n";
+            $prompt .= "- If text appears (rare): max 4 words, large legible at mobile, positioned discreetly, never competing with the main subject's face.\n\n";
+            $prompt .= "AVOID: deformed hands, excess of objects, long text, floating elements, futuristic/artificial aesthetic, exaggerated filters, oversaturation, HDR look, plastic skin, AI-typical eye glow.\n\n";
+            $prompt .= "EMOTIONAL TONE: credibility, opportunity, moderate urgency, immediate identification of the Brazilian reader with the situation shown. Should feel like a Folha de SP / Estadão / Nexo editorial photo.";
             $url = $openai->gerarImagem($prompt, '1792x1024', 'hd', 'natural');
             if (!$url) return null;
             return [

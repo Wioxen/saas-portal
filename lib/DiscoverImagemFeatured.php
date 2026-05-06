@@ -69,6 +69,10 @@ class DiscoverImagemFeatured
         $ogFallback  = (string)($contexto['og_image_fallback'] ?? '');
         $estrategia  = (string)($this->cfg['imagem_featured_estrategia'] ?? 'og_first');
         $dalleFb     = !empty($this->cfg['imagem_featured_dalle_fallback']);
+        // Override via env (testes): IMAGEM_FEATURED_OVERRIDE=dalle_first força DALL-E
+        // mesmo em sites com og_first/pexels_first/og_only.
+        $envOverride = trim((string)getenv('IMAGEM_FEATURED_OVERRIDE'));
+        if ($envOverride !== '') $estrategia = $envOverride;
 
         $slugSugerido = self::slugSeo($tituloHint, $termo);
 
@@ -396,41 +400,46 @@ class DiscoverImagemFeatured
     {
         $tituloHint = trim($tituloHint);
 
-        // Persona/cenário/objeto pelo termo (mesma lógica de gerarpost.php — duplicada aqui pra
-        // não criar dependência circular entre lib e gerarpost)
+        // Persona/cenário pelo termo (mantém variação contextual)
         $persona = self::personaPorTermo($termo, $clusterKey);
 
-        // Sticker text — derivado do título; se vazio, usa termo
+        // Overlay text: máximo 8 palavras complementares ao tema (NÃO o título inteiro).
+        // Pega 4-8 palavras significativas do título já filtrado.
         $base = $tituloHint !== '' ? $tituloHint : $termo;
-        $palavras = preg_split('/\s+/', preg_replace('/[":;|.!?]/u', '', $base) ?? '');
-        $palavras = array_values(array_filter($palavras, fn($p) => $p !== '' && mb_strlen($p) > 2));
-        $palavras = array_slice($palavras, 0, 6);
-        $cut = (int) ceil(count($palavras) / 2);
-        $line1 = mb_strtoupper(implode(' ', array_slice($palavras, 0, $cut)), 'UTF-8') ?: 'CONFIRA AGORA';
-        $line2 = mb_strtoupper(implode(' ', array_slice($palavras, $cut)), 'UTF-8') ?: 'NESTA SEMANA';
+        $base = preg_replace('/[":;|.!?]/u', '', $base) ?? '';
+        $palavras = preg_split('/\s+/', $base);
+        $stop = ['de','da','do','das','dos','o','a','os','as','um','uma','e','ou','que','com','para','por','no','na','nos','nas','em','é','até','sobre','este','esta'];
+        $palavras = array_values(array_filter($palavras, fn($p) => $p !== '' && mb_strlen($p) > 2 && !in_array(mb_strtolower($p), $stop, true)));
+        $palavras = array_slice($palavras, 0, 8);
+        $overlayText = mb_strtoupper(implode(' ', $palavras), 'UTF-8') ?: 'OPORTUNIDADE ABERTA';
 
-        $prompt  = "Create a professional 16:9 wide-angle photograph for a Brazilian news portal cover, optimized for high CTR on the Google Discover feed.\n\n";
+        // Prompt: foto humana realista, sem cara de IA, otimizada pra Discover scroll-stop mobile.
+        // Especificação user 06/05: imagem 16:9 humanizada, retângulo azul superior-esquerdo
+        // com texto branco grande, sem ícones pequenos, mobile-first, sem aspecto de IA.
+        $prompt  = "Create a 16:9 horizontal photograph for the Google Discover feed (Brazilian news portal). The image must look like a REAL photograph taken with a professional DSLR camera by a photojournalist, NOT artificial intelligence. Natural skin texture, realistic lighting, no over-sharpened or fantasy aesthetic.\n\n";
         $prompt .= "COMPOSITION:\n";
-        $prompt .= "- Main subject: {$persona['person']}, looking happy and confident, positioned on the RIGHT side of the frame (60-65% from left). Eye contact with camera.\n";
-        $prompt .= "- Background: {$persona['scenario']}; soft bokeh (blurred) effect for depth.\n";
-        $prompt .= "- Proof element: subject holds a {$persona['object']} angled to camera. Screen shows clean simple icon and visible text: \"{$persona['device_text']}\".\n\n";
-        $prompt .= "DESIGN ELEMENTS (Scroll-Stop Layer):\n";
-        $prompt .= "- Headline Sticker: TOP-LEFT corner, bright YELLOW (#FFD400) rectangular sticker with rounded corners, slightly tilted like a real adhesive label, with soft drop shadow.\n";
-        $prompt .= "- Sticker text in BOLD BLACK sans-serif font, two lines, large legible:\n";
-        $prompt .= "  - Line 1: \"{$line1}\"\n";
-        $prompt .= "  - Line 2: \"{$line2}\"\n\n";
+        $prompt .= "- Main subject: {$persona['person']}, captured in a natural authentic moment with relaxed unposed expression. Centered or slightly right of center (about 55-60% from left).\n";
+        $prompt .= "- Background: {$persona['scenario']}; soft natural depth of field, blurred but coherent with the article topic.\n";
+        $prompt .= "- Frame: 16:9 horizontal, generous breathing room, clean composition. Mobile-first — only large readable elements visible.\n";
+        $prompt .= "- AVOID: small icons, complex graphics, multiple objects, busy scenes, fantasy elements, plastic skin, oversaturated colors.\n\n";
+        $prompt .= "TEXT OVERLAY (mandatory, scroll-stop layer for Discover feed):\n";
+        $prompt .= "- BLUE rectangular badge in the TOP-LEFT corner (about 35-45% of width, 15-20% of height).\n";
+        $prompt .= "- Background color: solid editorial blue (#1E40AF or similar deep blue).\n";
+        $prompt .= "- Text inside the rectangle: \"{$overlayText}\" — in WHITE, bold sans-serif font, large and legible at thumbnail size.\n";
+        $prompt .= "- Maximum 8 words. NO small subtitles, NO numbers below 24pt, NO secondary text. ONLY the headline phrase, large.\n";
+        $prompt .= "- The blue rectangle must NOT cover the subject's face.\n\n";
         $prompt .= "TECHNICAL:\n";
-        $prompt .= "- Lighting: bright natural morning light, vibrant saturated colors, high contrast (readable as 100x56px thumbnail).\n";
-        $prompt .= "- Style: clean editorial photography, realistic, sharp focus on subject, high resolution.\n";
-        $prompt .= "- Aspect ratio: 16:9 landscape.\n";
-        $prompt .= "- Safe margin: 10% breathing space on all edges; no element touches borders.\n\n";
+        $prompt .= "- Lighting: natural ambient light (window light, morning/afternoon), realistic shadows, no studio plastic look.\n";
+        $prompt .= "- Color palette: neutral, true-to-life, slight warmth. Avoid HDR/oversaturated.\n";
+        $prompt .= "- Style: photojournalism — like a Folha de SP or Estadão front-page photo.\n";
+        $prompt .= "- Aspect ratio: 16:9 landscape strict.\n\n";
 
         if ($tituloHint !== '') {
-            $prompt .= "EDITORIAL CONTEXT: article titled \"{$tituloHint}\" about {$termo}.\n\n";
+            $prompt .= "EDITORIAL CONTEXT: news article titled \"{$tituloHint}\" about {$termo}. The image must visually anchor a Brazilian reader scrolling through Discover.\n\n";
         } else {
-            $prompt .= "EDITORIAL CONTEXT: article about {$termo}.\n\n";
+            $prompt .= "EDITORIAL CONTEXT: news article about {$termo}.\n\n";
         }
-        $prompt .= "SAFETY: regular Brazilian adult only, no real celebrities, no minors under 18, no violence/sexual/discriminatory content, no partisan symbols, no logos of private companies.";
+        $prompt .= "SAFETY: regular anonymous Brazilian adult; no real celebrities; no minors under 18; no violence/sexual/discriminatory content; no partisan political symbols; no private company logos.";
 
         return $prompt;
     }
