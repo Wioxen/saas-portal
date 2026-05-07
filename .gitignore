@@ -26,6 +26,12 @@ data/**
 # Config (não-runtime) — devem versionar:
 !data/jogos_vitoria.json
 !data/hubs_vitoria.php
+# Configs llm-wiki — aliases das entity/concept pages (mantido pelo EntityHubBuilder)
+# + lotes de hubs (configs JSON pra criação em batch)
+!data/entity_pages_cache/
+!data/entity_pages_cache/*_aliases.json
+!data/hubs_lote/
+!data/hubs_lote/*.json
 pages/**
 !pages/.gitkeep
 *.log

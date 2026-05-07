@@ -1,0 +1,134 @@
+{
+  "_lote_id": "vagasebeneficios_lote1",
+  "_descricao": "Lote 1 vagasebeneficios — 7 entity (órgãos federais que pagam benefícios + concursos populares) + 8 concept (benefícios e processos)",
+  "parent_entidade_slug": "entidade",
+  "parent_conceito_slug": "conceito",
+  "hubs": [
+    {
+      "tipo": "entity",
+      "nome": "INSS",
+      "fullname": "Instituto Nacional do Seguro Social",
+      "tipo_org": "GovernmentOrganization (autarquia federal)",
+      "slug": "inss",
+      "url_oficial": "https://www.gov.br/inss",
+      "aliases": ["INSS", "Previdência Social", "Instituto Nacional Seguro Social"],
+      "descricao_seed": "Autarquia federal vinculada ao Ministério da Previdência Social, criada em 1990 pela Lei 8.029. Responsável por operacionalizar pagamento de benefícios previdenciários (aposentadoria, pensão, auxílio-doença, auxílio-acidente, salário-maternidade, BPC/LOAS) a mais de 35 milhões de brasileiros. Atende presencialmente em mais de 1.500 agências e digitalmente via Meu INSS. Sede em Brasília."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Caixa",
+      "fullname": "Caixa Econômica Federal",
+      "tipo_org": "GovernmentOrganization (banco público federal)",
+      "slug": "caixa",
+      "url_oficial": "https://www.caixa.gov.br",
+      "aliases": ["Caixa", "CEF", "Caixa Econômica", "Banco da Caixa"],
+      "descricao_seed": "Empresa pública federal criada em 1861 (atual configuração 1986), maior banco público da América Latina. Operadora exclusiva de FGTS, Bolsa Família, Auxílio Brasil/Pé-de-Meia, PIS, seguro-desemprego, Minha Casa Minha Vida e loterias federais. Pagadora de benefícios previdenciários e sociais a milhões de brasileiros via Caixa Tem (app), agências físicas e correspondentes."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Receita Federal",
+      "fullname": "Secretaria Especial da Receita Federal do Brasil",
+      "tipo_org": "GovernmentOrganization (órgão federal)",
+      "slug": "receita-federal",
+      "url_oficial": "https://www.gov.br/receitafederal",
+      "aliases": ["Receita Federal", "RFB", "Receita", "Fisco Federal"],
+      "descricao_seed": "Órgão da administração pública federal vinculado ao Ministério da Fazenda. Responsável por administrar tributos federais (IR, IPI, COFINS, CSLL, contribuições previdenciárias), aduana, CPF, CNPJ, MEI e fiscalização. Estrutura nacional com 10 Superintendências Regionais e centenas de unidades. Sede em Brasília."
+    },
+    {
+      "tipo": "entity",
+      "nome": "IBGE",
+      "fullname": "Instituto Brasileiro de Geografia e Estatística",
+      "tipo_org": "GovernmentOrganization (fundação pública federal)",
+      "slug": "ibge",
+      "url_oficial": "https://www.ibge.gov.br",
+      "aliases": ["IBGE", "Fundação IBGE"],
+      "descricao_seed": "Fundação pública federal criada em 1936, principal provedor de dados e informações estatísticas, geográficas e cartográficas do Brasil. Responsável pelo Censo Demográfico decenal, Censo Agropecuário, Pesquisa Nacional por Amostra de Domicílios (PNAD), IPCA (inflação oficial). Realiza concursos populares de Recenseador (concurso temporário com milhares de vagas) durante anos de Censo. Sede no Rio de Janeiro."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Detran",
+      "fullname": "Departamento Estadual de Trânsito",
+      "tipo_org": "GovernmentOrganization (autarquia estadual)",
+      "slug": "detran",
+      "url_oficial": "https://www.detran.gov.br",
+      "aliases": ["Detran", "DETRAN", "Departamento de Trânsito"],
+      "descricao_seed": "Autarquias estaduais responsáveis por fiscalizar trânsito, emitir CNH, registrar veículos e aplicar legislação do Código de Trânsito Brasileiro. Cada estado tem seu próprio Detran (Detran-SP, Detran-RJ, Detran-MG, etc.) vinculado ao governo estadual e SENATRAN federal. Realizam concursos públicos para Examinador, Agente de Trânsito, Analista, com vagas atrativas e estabilidade."
+    },
+    {
+      "tipo": "entity",
+      "nome": "PF",
+      "fullname": "Polícia Federal",
+      "tipo_org": "GovernmentOrganization (órgão federal de segurança)",
+      "slug": "policia-federal",
+      "url_oficial": "https://www.gov.br/pf",
+      "aliases": ["Polícia Federal", "PF", "Departamento de Polícia Federal", "DPF"],
+      "descricao_seed": "Órgão permanente da União vinculado ao Ministério da Justiça e Segurança Pública, instituído pela Constituição Federal art. 144. Responsável por apurar infrações penais contra a ordem política, social ou bens da União, prevenir tráfico ilícito de entorpecentes, fiscalizar fronteiras, exercer polícia marítima/aérea/de fronteiras. Concursos para Delegado, Agente, Escrivão e Papiloscopista são extremamente concorridos. Sede em Brasília."
+    },
+    {
+      "tipo": "entity",
+      "nome": "PRF",
+      "fullname": "Polícia Rodoviária Federal",
+      "tipo_org": "GovernmentOrganization (órgão federal de segurança)",
+      "slug": "prf",
+      "url_oficial": "https://www.gov.br/prf",
+      "aliases": ["Polícia Rodoviária Federal", "PRF", "Polícia Rodoviária"],
+      "descricao_seed": "Órgão permanente da União vinculado ao Ministério da Justiça e Segurança Pública, regulamentado pelo Decreto 1.655/1995. Atua no patrulhamento ostensivo das rodovias federais (mais de 70 mil km), combate ao crime, segurança viária e fiscalização. Concursos para Policial Rodoviário Federal são populares pela estabilidade e remuneração inicial competitiva. Sede em Brasília."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Concurso Público",
+      "slug": "concurso-publico",
+      "aliases": ["concurso público", "concurso", "concurso federal", "concurso estadual", "concurso municipal", "edital de concurso"],
+      "descricao_seed": "Processo seletivo para ingresso em cargos públicos efetivos previsto na Constituição Federal (art. 37, II). Garante isonomia, ampla concorrência e mérito. Pode ser federal, estadual ou municipal, com etapas como prova objetiva, discursiva, redação, prova de títulos, exame psicotécnico e investigação social. Resultados gerais publicados em diários oficiais. Cargos populares: PF, PRF, INSS, Receita Federal, IBGE, Caixa, Banco do Brasil, Polícia Civil, magistratura."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Bolsa Família",
+      "slug": "bolsa-familia",
+      "aliases": ["Bolsa Família", "Programa Bolsa Família", "PBF", "Auxílio Brasil"],
+      "descricao_seed": "Programa de transferência direta de renda do Governo Federal a famílias em situação de pobreza e extrema pobreza, regulamentado pela Lei 14.601/2023 (substituiu o Auxílio Brasil em 2023). Beneficia mais de 21 milhões de famílias inscritas no CadÚnico com renda per capita de até R$ 218. Pagamentos mensais via Caixa Econômica/Caixa Tem com calendário pelo NIS final. Inclui adicionais por gestante, criança e adolescente."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "FGTS",
+      "slug": "fgts",
+      "aliases": ["FGTS", "Fundo de Garantia", "Fundo de Garantia do Tempo de Serviço", "saque FGTS", "FGTS aniversário"],
+      "descricao_seed": "Fundo trabalhista criado pela Lei 5.107/1966 e regido pela Lei 8.036/1990. Empregadores depositam mensalmente 8% da remuneração bruta do trabalhador CLT em conta vinculada na Caixa. Pode ser sacado em casos previstos: demissão sem justa causa, aposentadoria, doença grave, compra de imóvel, falecimento, modalidade aniversário (anual). Saldo rende TR + 3% ao ano + lucros do fundo. Operador exclusivo: Caixa Econômica."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Auxílio-Gás",
+      "slug": "auxilio-gas",
+      "aliases": ["Auxílio-Gás", "Auxílio Gás", "Vale-Gás", "Programa Auxílio Gás dos Brasileiros"],
+      "descricao_seed": "Programa de transferência de renda criado pela Lei 14.237/2021 que paga até 100% do valor médio nacional do botijão de gás de 13kg, a cada 2 meses, a famílias inscritas no CadÚnico com renda per capita de até meio salário mínimo. Operacionalizado pelo Ministério do Desenvolvimento Social e pago pela Caixa via Caixa Tem ou agências. Calendário próprio com pagamentos bimestrais."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "CadÚnico",
+      "slug": "cadunico",
+      "aliases": ["CadÚnico", "Cadastro Único", "Cadastro Único para Programas Sociais"],
+      "descricao_seed": "Sistema federal que identifica e caracteriza famílias de baixa renda no Brasil, regulamentado pelo Decreto 6.135/2007. Porta de entrada para Bolsa Família, BPC, Auxílio-Gás, Pé-de-Meia, Tarifa Social de Energia, ID Jovem e mais de 30 programas sociais. Famílias com renda per capita até meio salário mínimo se cadastram em CRAS municipais. Atualização obrigatória a cada 24 meses."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "BPC (Benefício de Prestação Continuada)",
+      "slug": "bpc",
+      "aliases": ["BPC", "BPC LOAS", "Benefício de Prestação Continuada", "amparo assistencial"],
+      "descricao_seed": "Benefício assistencial mensal de 1 salário mínimo previsto pela Constituição Federal (art. 203, V) e Lei 8.742/1993 (LOAS). Garante renda a idosos com 65+ anos e pessoas com deficiência incapazes para vida independente, com renda familiar per capita inferior a 1/4 do salário mínimo. Não exige contribuição prévia (assistência social, não previdência). Operado pelo INSS via Meu INSS, sem direito a 13º salário. Avaliação social e médica periódica."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "INSS Auxílio-Doença",
+      "slug": "inss-auxilio-doenca",
+      "aliases": ["auxílio-doença", "auxílio doença", "benefício por incapacidade temporária", "INSS auxílio"],
+      "descricao_seed": "Benefício previdenciário do INSS pago ao segurado incapacitado temporariamente para o trabalho por doença ou acidente, regulamentado pela Lei 8.213/1991 (renomeado Benefício por Incapacidade Temporária pela Lei 13.846/2019). Exige carência de 12 meses (exceto acidentes), perícia médica obrigatória e afastamento mínimo de 15 dias (empresa paga primeiros 15, INSS paga a partir do 16º). Valor calculado pela média de 80% maiores salários de contribuição."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Aposentadoria",
+      "slug": "aposentadoria",
+      "aliases": ["aposentadoria", "aposentar", "aposentadoria por tempo de contribuição", "aposentadoria por idade", "aposentadoria especial", "aposentadoria por invalidez"],
+      "descricao_seed": "Benefício previdenciário pago pelo INSS após cumprimento de requisitos de idade e/ou tempo de contribuição, regulamentado pela Lei 8.213/1991 e Emenda Constitucional 103/2019 (Reforma da Previdência). Modalidades: por idade (65H/62M com 15 anos contribuição), tempo de contribuição com pedágio, por invalidez (incapacidade permanente), especial (atividade insalubre). Valor calculado pela média dos salários de contribuição com fatores de ajuste."
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "_lote_id": "leaodabarra_lote1",
+  "_descricao": "Lote 1 leaodabarra — 3 entity (clube + federações) + 7 concept (competições, clássico, mercado, estádio)",
+  "parent_entidade_slug": "entidade",
+  "parent_conceito_slug": "conceito",
+  "hubs": [
+    {
+      "tipo": "entity",
+      "nome": "EC Vitória",
+      "fullname": "Esporte Clube Vitória",
+      "tipo_org": "SportsOrganization (clube de futebol profissional)",
+      "slug": "ec-vitoria",
+      "url_oficial": "https://www.ecvitoria.com.br",
+      "aliases": ["EC Vitória", "Esporte Clube Vitória", "Vitória da Bahia", "Vitória"],
+      "descricao_seed": "Clube de futebol brasileiro fundado em 13 de maio de 1899 na cidade de Salvador, Bahia. Suas cores são vermelho e preto (rubro-negro). Manda seus jogos no Estádio Manoel Barradas (Barradão), em Salvador. Disputa atualmente a Série A do Campeonato Brasileiro, a Copa do Brasil, a Copa do Nordeste e o Campeonato Baiano. Tem como maior rival o Esporte Clube Bahia, em clássico conhecido como Ba-Vi. Categorias de base reconhecidamente fortes (sub-15, sub-17, sub-20). Mascote: Leão da Barra."
+    },
+    {
+      "tipo": "entity",
+      "nome": "CBF",
+      "fullname": "Confederação Brasileira de Futebol",
+      "tipo_org": "SportsOrganization (entidade nacional de futebol)",
+      "slug": "cbf",
+      "url_oficial": "https://www.cbf.com.br",
+      "aliases": ["CBF", "Confederação Brasileira de Futebol"],
+      "descricao_seed": "Entidade máxima do futebol brasileiro, fundada em 1914, sediada no Rio de Janeiro. Filiada à FIFA e à Conmebol. Organiza o Campeonato Brasileiro (Série A, B, C, D), a Copa do Brasil, a Supercopa, a Seleção Brasileira masculina e feminina (todas categorias) e o Campeonato Brasileiro Feminino. Define calendário, arbitragem e regulamentos de competições nacionais. Vinculada ao FIFA Club World Ranking através de pontuação dos clubes filiados."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Conmebol",
+      "fullname": "Confederação Sul-Americana de Futebol",
+      "tipo_org": "SportsOrganization (confederação continental)",
+      "slug": "conmebol",
+      "url_oficial": "https://www.conmebol.com",
+      "aliases": ["Conmebol", "CONMEBOL", "Confederação Sul-Americana de Futebol"],
+      "descricao_seed": "Confederação continental que rege o futebol nas Américas do Sul, fundada em 1916 (a mais antiga do mundo). Sediada em Luque, Paraguai. Filiada à FIFA. Organiza a Copa Libertadores, a Copa Sul-Americana, a Recopa, a Copa América (seleções) e competições de base (Sul-Americana Sub-20, Sub-17). Reúne 10 federações nacionais (Brasil, Argentina, Uruguai, Paraguai, Chile, Peru, Bolívia, Equador, Colômbia, Venezuela)."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Brasileirão Série A",
+      "slug": "brasileirao-serie-a",
+      "aliases": ["Brasileirão", "Brasileirão Série A", "Campeonato Brasileiro", "Série A", "Brasileirão 2026"],
+      "descricao_seed": "Campeonato nacional de pontos corridos da primeira divisão do futebol brasileiro, organizado pela CBF desde 1971. Disputado por 20 clubes em sistema de turno e returno (38 rodadas). O campeão recebe a Taça das Bolinhas (réplica) e título oficial. Os 4 primeiros se classificam direto à fase de grupos da Copa Libertadores; os 4 últimos são rebaixados à Série B. Considerado um dos campeonatos nacionais mais competitivos e disputados do mundo."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Copa do Nordeste",
+      "slug": "copa-do-nordeste",
+      "aliases": ["Copa do Nordeste", "Lampions League", "Nordestão", "Copa Nordeste"],
+      "descricao_seed": "Competição regional anual organizada pela CBF que reúne os principais clubes dos 9 estados do Nordeste brasileiro. Criada em 1976 como Taça Norte-Nordeste, retomada em 2013 após hiato. 16 clubes na fase de grupos (4 grupos de 4), seguindo eliminatórias até a final em jogos ida e volta. O campeão recebe vaga na Copa do Brasil do ano seguinte. Cobertura midiática crescente, especialmente nos clássicos rubro-negros do Nordeste."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Copa do Brasil",
+      "slug": "copa-do-brasil",
+      "aliases": ["Copa do Brasil", "Copa Brasil", "torneio mata-mata CBF"],
+      "descricao_seed": "Principal copa nacional brasileira, organizada pela CBF desde 1989. Sistema mata-mata do início ao fim, com 92 clubes na primeira fase e jogos eliminatórios em ida e volta nas fases finais. O campeão recebe vaga na Libertadores do ano seguinte (caso ainda não esteja classificado) e premiação financeira que pode passar de R$ 80 milhões. Inclui clubes da Série A, B, C, D, e estaduais convidados. Tradicional palco de zebras."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Campeonato Baiano",
+      "slug": "campeonato-baiano",
+      "aliases": ["Campeonato Baiano", "Baianão", "Estadual da Bahia", "Campeonato Estadual Bahia"],
+      "descricao_seed": "Campeonato estadual de futebol da Bahia organizado pela Federação Bahiana de Futebol (FBF) desde 1905, um dos mais antigos do Brasil. Disputado anualmente entre janeiro e abril por 10 clubes em sistema de turno único + quartas/semis/final. O campeão recebe vaga na Copa do Brasil. Maiores campeões históricos: Bahia e Vitória (rivalidade que define o Ba-Vi). Tradicional palco de revelação de jovens promessas e disputas regionais."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Ba-Vi (Clássico Bahia × Vitória)",
+      "slug": "ba-vi",
+      "aliases": ["Ba-Vi", "BaVi", "clássico Ba-Vi", "Bahia x Vitória", "Vitória x Bahia", "clássico baiano"],
+      "descricao_seed": "Clássico do futebol brasileiro entre Esporte Clube Bahia e Esporte Clube Vitória, considerado um dos mais tradicionais e antigos do país (primeira edição em 1932). Disputado em todas as competições onde os 2 clubes se enfrentam: Campeonato Baiano, Copa do Nordeste, Copa do Brasil e Brasileirão. Mais de 480 partidas oficiais ao longo da história. Estádios mandantes: Arena Fonte Nova (Bahia) e Manoel Barradas (Vitória). Rivalidade marcada por episódios como brigas de torcida, decisões dramáticas e momentos icônicos."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Mercado da Bola",
+      "slug": "mercado-da-bola",
+      "aliases": ["mercado da bola", "janela de transferências", "contratações", "vendas de jogador", "negociação", "transfer market"],
+      "descricao_seed": "Período em que clubes podem registrar contratações e transferências de jogadores junto à CBF e FIFA. No Brasil há duas janelas anuais: a primeira de janeiro a abril (pré-Brasileirão) e a segunda de julho a setembro (meio do Brasileirão). Movimentações incluem compras, vendas, empréstimos, renovações de contrato e dispensas. Mercado interno aquecido especialmente em junho-julho com saída de jogadores pra Europa, EUA, Arábia Saudita."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Estádio Manoel Barradas (Barradão)",
+      "slug": "barradao",
+      "aliases": ["Barradão", "Estádio Manoel Barradas", "Estádio do Barradão", "estádio do Vitória"],
+      "descricao_seed": "Estádio de futebol propriedade do Esporte Clube Vitória, localizado no bairro Canabrava, em Salvador, Bahia. Inaugurado em 1986 com o nome oficial Manoel Barradas (homenagem a antigo presidente). Capacidade atual aproximada de 30 mil torcedores. Sede de Ba-Vis históricos, jogos da Copa do Nordeste, Copa do Brasil e Brasileirão. Reformado parcialmente em 2014 e atualizado para os critérios mínimos da CBF/Conmebol. Conhecido pela atmosfera intensa quando o clube atua mandante."
+    }
+  ]
+}

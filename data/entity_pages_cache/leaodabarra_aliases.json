@@ -1,0 +1,133 @@
+{
+    "944": {
+        "tipo": "entity",
+        "nome": "EC Vitória",
+        "fullname": "Esporte Clube Vitória",
+        "slug": "ec-vitoria",
+        "aliases": [
+            "EC Vitória",
+            "Esporte Clube Vitória",
+            "Vitória da Bahia",
+            "Vitória"
+        ],
+        "updated_at": "2026-05-07T09:54:08-03:00"
+    },
+    "945": {
+        "tipo": "entity",
+        "nome": "CBF",
+        "fullname": "Confederação Brasileira de Futebol",
+        "slug": "cbf",
+        "aliases": [
+            "CBF",
+            "Confederação Brasileira de Futebol"
+        ],
+        "updated_at": "2026-05-07T09:54:30-03:00"
+    },
+    "946": {
+        "tipo": "entity",
+        "nome": "Conmebol",
+        "fullname": "Confederação Sul-Americana de Futebol",
+        "slug": "conmebol",
+        "aliases": [
+            "Conmebol",
+            "CONMEBOL",
+            "Confederação Sul-Americana de Futebol"
+        ],
+        "updated_at": "2026-05-07T09:54:44-03:00"
+    },
+    "947": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Brasileirão Série A",
+        "slug": "brasileirao-serie-a",
+        "aliases": [
+            "Brasileirão",
+            "Brasileirão Série A",
+            "Campeonato Brasileiro",
+            "Série A",
+            "Brasileirão 2026"
+        ],
+        "updated_at": "2026-05-07T09:55:08-03:00"
+    },
+    "948": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Copa do Nordeste",
+        "slug": "copa-do-nordeste",
+        "aliases": [
+            "Copa do Nordeste",
+            "Lampions League",
+            "Nordestão",
+            "Copa Nordeste"
+        ],
+        "updated_at": "2026-05-07T09:55:34-03:00"
+    },
+    "949": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Copa do Brasil",
+        "slug": "copa-do-brasil",
+        "aliases": [
+            "Copa do Brasil",
+            "Copa Brasil",
+            "torneio mata-mata CBF"
+        ],
+        "updated_at": "2026-05-07T09:56:02-03:00"
+    },
+    "950": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Campeonato Baiano",
+        "slug": "campeonato-baiano",
+        "aliases": [
+            "Campeonato Baiano",
+            "Baianão",
+            "Estadual da Bahia",
+            "Campeonato Estadual Bahia"
+        ],
+        "updated_at": "2026-05-07T09:56:26-03:00"
+    },
+    "951": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Ba-Vi (Clássico Bahia × Vitória)",
+        "slug": "ba-vi",
+        "aliases": [
+            "Ba-Vi",
+            "BaVi",
+            "clássico Ba-Vi",
+            "Bahia x Vitória",
+            "Vitória x Bahia",
+            "clássico baiano"
+        ],
+        "updated_at": "2026-05-07T09:56:48-03:00"
+    },
+    "952": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Mercado da Bola",
+        "slug": "mercado-da-bola",
+        "aliases": [
+            "mercado da bola",
+            "janela de transferências",
+            "contratações",
+            "vendas de jogador",
+            "negociação",
+            "transfer market"
+        ],
+        "updated_at": "2026-05-07T09:57:11-03:00"
+    },
+    "953": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Estádio Manoel Barradas (Barradão)",
+        "slug": "barradao",
+        "aliases": [
+            "Barradão",
+            "Estádio Manoel Barradas",
+            "Estádio do Barradão",
+            "estádio do Vitória"
+        ],
+        "updated_at": "2026-05-07T09:57:51-03:00"
+    }
+}

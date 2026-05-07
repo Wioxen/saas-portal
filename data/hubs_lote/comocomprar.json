@@ -1,0 +1,97 @@
+{
+  "_lote_id": "comocomprar_lote1",
+  "_descricao": "Lote 1 comocomprar — 4 entity (marketplaces) + 7 concept (mecanismos de compra inteligente)",
+  "parent_entidade_slug": "entidade",
+  "parent_conceito_slug": "conceito",
+  "hubs": [
+    {
+      "tipo": "entity",
+      "nome": "Amazon",
+      "fullname": "Amazon Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "amazon",
+      "url_oficial": "https://www.amazon.com.br",
+      "aliases": ["Amazon", "Amazon BR", "Amazon Brasil"],
+      "descricao_seed": "Maior marketplace de e-commerce do mundo, com operação no Brasil desde 2012. Vende livros, eletrônicos, eletrodomésticos, casa, beleza, fashion, ferramentas e milhões de outros produtos via marketplace próprio (vendido pela Amazon) e por sellers parceiros. Programa Prime oferece frete grátis em milhões de itens, Prime Video, Prime Music, Prime Reading. Sistema Amazon Associates permite comissionamento de afiliados em links de produto."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Mercado Livre",
+      "fullname": "Mercado Livre Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "mercado-livre",
+      "url_oficial": "https://www.mercadolivre.com.br",
+      "aliases": ["Mercado Livre", "ML", "MercadoLivre", "Meli"],
+      "descricao_seed": "Maior marketplace da América Latina, fundado em 1999 na Argentina e líder no Brasil. Plataforma C2C/B2C que reúne sellers profissionais e usuários comuns vendendo eletrônicos, casa, moda, automotivo, ferramentas, beleza. Possui programa de fidelidade Mercado Livre Nível 6 (frete grátis ilimitado), serviço de logística Mercado Envios e fintech Mercado Pago (pagamentos, crédito, investimentos). Programa de afiliados via Mercado Livre Partners."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Shopee",
+      "fullname": "Shopee Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "shopee",
+      "url_oficial": "https://shopee.com.br",
+      "aliases": ["Shopee", "Shopee BR"],
+      "descricao_seed": "Marketplace asiático de e-commerce do grupo Sea (Singapura), com operação no Brasil desde 2019. Forte em moda, casa, beleza, eletrônicos, baby, decoração, com perfil de preço baixo e cupons agressivos. Programa Shopee Affiliates paga comissão em links de produtos. Frete grátis recorrente via cupons (R$ 9, R$ 19) e logística própria Shopee Xpress. Cresceu rapidamente no Brasil, alcançando posição entre top 3 marketplaces nacionais."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Magalu",
+      "fullname": "Magazine Luiza",
+      "tipo_org": "Organization (varejista brasileiro)",
+      "slug": "magalu",
+      "url_oficial": "https://www.magazineluiza.com.br",
+      "aliases": ["Magalu", "Magazine Luiza", "Magalu BR"],
+      "descricao_seed": "Varejista brasileira fundada em 1957 em Franca (SP), hoje com mais de 1.300 lojas físicas e operação digital robusta. Pioneira na transformação digital do varejo brasileiro, integrando lojas físicas + e-commerce + marketplace + fintech (Magalu Pagamentos, MagaluPay). Forte em eletroportáteis, eletrodomésticos, móveis, eletrônicos. Programa Magalu Mais (assinatura) oferece descontos exclusivos. Programa de afiliados Parceiro Magalu paga comissão em links."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Cashback",
+      "slug": "cashback",
+      "aliases": ["cashback", "dinheiro de volta", "reembolso de compra", "rebate"],
+      "descricao_seed": "Mecanismo de fidelização em que o consumidor recebe parte do valor da compra de volta, em dinheiro ou crédito, após confirmação. No Brasil, oferecido por aplicativos como Méliuz, Picpay, Inter, AME, programas próprios de bancos e marketplaces. Percentual varia tipicamente de 1% a 30% conforme campanhas e categorias. Não confunde com desconto direto: cashback é creditado depois (prazo 30-60 dias geralmente). Categoria mais alta: viagens, restaurantes, moda."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Cupom de Desconto",
+      "slug": "cupom-de-desconto",
+      "aliases": ["cupom", "cupom de desconto", "código promocional", "voucher", "código de desconto"],
+      "descricao_seed": "Código alfanumérico ou link que aplica desconto na finalização do pedido. Pode ser percentual (10%, 15%, 20% off), valor fixo (R$ 30, R$ 50, R$ 100 off) ou benefício (frete grátis, brinde, parcelamento sem juros). Validade limitada e regra de uso (mínimo de compra, primeira compra, categoria específica). Distribuído via newsletter, push, sites cupom-aggregator (Cuponomia, Cuponeria, Pelando), influenciadores, programas afiliados e campanhas pontuais."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "PIX",
+      "slug": "pix",
+      "aliases": ["PIX", "Pix", "pagamento instantâneo", "transferência PIX"],
+      "descricao_seed": "Sistema brasileiro de pagamento instantâneo lançado em novembro de 2020 pelo Banco Central do Brasil. Permite transferências e pagamentos em segundos, 24/7, gratuitos para pessoa física, integrando todos os bancos e fintechs autorizados. Identificação por chave (CPF, CNPJ, email, telefone, chave aleatória) ou QR Code. Substituiu boleto e cartão em compras de e-commerce com PIX QR. Limites diários e anti-fraude regulamentados pelo BC."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Frete Grátis",
+      "slug": "frete-gratis",
+      "aliases": ["frete grátis", "frete gratis", "envio grátis", "free shipping"],
+      "descricao_seed": "Política comercial em que a loja absorve o custo de envio do produto ao consumidor. Pode ser oferecido via valor mínimo de compra (acima de R$ 79, R$ 99, R$ 199), produto específico, primeira compra, programa de assinatura (Prime, Mercado Livre Nível 6, Magalu Mais) ou cupom promocional. Critério importante de decisão de compra no e-commerce brasileiro, especialmente em produtos de baixa margem. Regiões Norte/Nordeste tipicamente têm valores mais altos."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Comparador de Preços",
+      "slug": "comparador-de-precos",
+      "aliases": ["comparador de preços", "comparador de preço", "buscador de preço", "monitor de preço", "histórico de preço"],
+      "descricao_seed": "Ferramenta online que pesquisa o mesmo produto em várias lojas simultaneamente e exibe preços comparados, histórico de variação e alertas de queda. No Brasil os mais conhecidos: Buscapé, Zoom, Compraqui, JáCotei, Promobit, Pelando, Promobit (afiliado), Cuponomia (afiliado). Útil pra decidir momento da compra (Black Friday histórico) e comparar marketplaces. Extensões de browser e apps automatizam comparação na própria página da loja."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Cartão de Crédito sem Anuidade",
+      "slug": "cartao-de-credito-sem-anuidade",
+      "aliases": ["cartão sem anuidade", "cartão de crédito sem anuidade", "cartão zero anuidade", "cartão grátis"],
+      "descricao_seed": "Modalidade de cartão de crédito em que o emissor (banco ou fintech) não cobra taxa anual de manutenção. Comum em fintechs digitais (Nubank, Inter, C6, Itaú Cartão Próximo) e cartões com programa próprio (Mercado Pago, AME, Méliuz, Picpay). Pode ter contrapartida: gasto mínimo mensal, vinculação a conta, programa de pontos limitado. Modalidade dominante no Brasil pós-2010 com crescimento de fintechs digitais."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Garantia Estendida",
+      "slug": "garantia-estendida",
+      "aliases": ["garantia estendida", "extensão de garantia", "garantia adicional", "seguro de produto"],
+      "descricao_seed": "Serviço pago que estende a garantia do fabricante (geralmente 12 meses) por mais 12, 24 ou 36 meses. Cobre defeitos de fabricação após o período padrão. No Brasil é regulamentada pela SUSEP (operada por seguradoras) ou oferecida diretamente pela loja. Custo varia de 5% a 15% do valor do produto. Muito vendida em eletrônicos (smartphone, TV, notebook). Análise crítica: nem sempre vale a pena, especialmente em produtos baratos ou com baixa taxa de defeito."
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+    "5141": {
+        "tipo": "entity",
+        "nome": "IFSP",
+        "fullname": "Instituto Federal de São Paulo",
+        "slug": "ifsp",
+        "aliases": [
+            "Instituto Federal São Paulo",
+            "IF SP",
+            "Instituto Federal de SP"
+        ],
+        "updated_at": "2026-05-06T21:53:57-03:00"
+    },
+    "5142": {
+        "tipo": "entity",
+        "nome": "Senac",
+        "fullname": "Serviço Nacional de Aprendizagem Comercial",
+        "slug": "senac",
+        "aliases": [
+            "SENAC",
+            "Senac Brasil",
+            "Senac EAD"
+        ],
+        "updated_at": "2026-05-06T21:54:25-03:00"
+    },
+    "5143": {
+        "tipo": "entity",
+        "nome": "MEC",
+        "fullname": "Ministério da Educação",
+        "slug": "mec",
+        "aliases": [
+            "Ministério Educação"
+        ],
+        "updated_at": "2026-05-06T21:54:45-03:00"
+    },
+    "5144": {
+        "tipo": "entity",
+        "nome": "Fundeb",
+        "fullname": "Fundo de Manutenção e Desenvolvimento da Educação Básica",
+        "slug": "fundeb",
+        "aliases": [
+            "FUNDEB",
+            "Fundo da Educação Básica"
+        ],
+        "updated_at": "2026-05-06T21:55:03-03:00"
+    },
+    "5145": {
+        "tipo": "entity",
+        "nome": "Inep",
+        "fullname": "Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira",
+        "slug": "inep",
+        "aliases": [
+            "INEP",
+            "Instituto Anísio Teixeira"
+        ],
+        "updated_at": "2026-05-06T21:55:23-03:00"
+    },
+    "5152": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Curso Técnico",
+        "slug": "curso-tecnico",
+        "aliases": [
+            "cursos técnicos",
+            "técnico",
+            "ensino técnico",
+            "formação técnica",
+            "qualificação profissional",
+            "curso profissionalizante"
+        ],
+        "updated_at": "2026-05-06T21:56:07-03:00"
+    },
+    "5153": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "EAD (Educação a Distância)",
+        "slug": "ead",
+        "aliases": [
+            "EAD",
+            "ensino a distância",
+            "educação a distância",
+            "educação à distância",
+            "curso online",
+            "curso a distância",
+            "à distância"
+        ],
+        "updated_at": "2026-05-06T21:56:43-03:00"
+    },
+    "5167": {
+        "tipo": "entity",
+        "nome": "UFFS",
+        "fullname": "Universidade Federal da Fronteira Sul",
+        "slug": "uffs",
+        "aliases": [
+            "UFFS",
+            "Universidade Federal Fronteira Sul"
+        ],
+        "updated_at": "2026-05-06T22:38:20-03:00"
+    },
+    "5168": {
+        "tipo": "entity",
+        "nome": "Fatec",
+        "fullname": "Faculdades de Tecnologia do Estado de São Paulo",
+        "slug": "fatec",
+        "aliases": [
+            "FATEC",
+            "Faculdade de Tecnologia",
+            "Fatec SP"
+        ],
+        "updated_at": "2026-05-06T22:38:41-03:00"
+    },
+    "5169": {
+        "tipo": "entity",
+        "nome": "IFSULDEMINAS",
+        "fullname": "Instituto Federal de Educação, Ciência e Tecnologia do Sul de Minas Gerais",
+        "slug": "ifsuldeminas",
+        "aliases": [
+            "IF Sul de Minas",
+            "IFSudMinas",
+            "IF Sul de Minas Gerais"
+        ],
+        "updated_at": "2026-05-06T22:39:04-03:00"
+    },
+    "5170": {
+        "tipo": "entity",
+        "nome": "Capes",
+        "fullname": "Coordenação de Aperfeiçoamento de Pessoal de Nível Superior",
+        "slug": "capes",
+        "aliases": [
+            "CAPES",
+            "Fundação Capes"
+        ],
+        "updated_at": "2026-05-06T22:39:24-03:00"
+    },
+    "5171": {
+        "tipo": "entity",
+        "nome": "FNDE",
+        "fullname": "Fundo Nacional de Desenvolvimento da Educação",
+        "slug": "fnde",
+        "aliases": [
+            "FNDE",
+            "Fundo da Educação"
+        ],
+        "updated_at": "2026-05-06T22:39:43-03:00"
+    },
+    "5172": {
+        "tipo": "entity",
+        "nome": "Senai",
+        "fullname": "Serviço Nacional de Aprendizagem Industrial",
+        "slug": "senai",
+        "aliases": [
+            "SENAI",
+            "Senai Brasil"
+        ],
+        "updated_at": "2026-05-06T22:40:17-03:00"
+    },
+    "5176": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Pé-de-Meia",
+        "slug": "pe-de-meia",
+        "aliases": [
+            "Pé-de-Meia",
+            "Pe-de-Meia",
+            "Programa Pé-de-Meia"
+        ],
+        "updated_at": "2026-05-06T22:41:46-03:00"
+    },
+    "5178": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Encceja (Exame Nacional para Certificação de Competências de Jovens e Adultos)",
+        "slug": "encceja",
+        "aliases": [
+            "Encceja",
+            "ENCCEJA",
+            "certificação ensino médio",
+            "certificação ensino fundamental"
+        ],
+        "updated_at": "2026-05-06T22:42:39-03:00"
+    },
+    "5179": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Enade (Exame Nacional de Desempenho dos Estudantes)",
+        "slug": "enade",
+        "aliases": [
+            "Enade",
+            "ENADE",
+            "Exame Nacional Desempenho Estudantes"
+        ],
+        "updated_at": "2026-05-06T22:43:03-03:00"
+    },
+    "5180": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Bolsa de Estudo",
+        "slug": "bolsa-de-estudo",
+        "aliases": [
+            "bolsa de estudos",
+            "bolsa estudantil",
+            "bolsa universitária",
+            "bolsa integral",
+            "bolsa parcial"
+        ],
+        "updated_at": "2026-05-06T22:43:35-03:00"
+    }
+}

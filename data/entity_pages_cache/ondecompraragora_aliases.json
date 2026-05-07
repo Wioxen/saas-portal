@@ -1,0 +1,118 @@
+{
+    "89": {
+        "tipo": "entity",
+        "nome": "Amazon",
+        "fullname": "Amazon Brasil",
+        "slug": "amazon",
+        "aliases": [
+            "Amazon",
+            "Amazon BR",
+            "Amazon Brasil"
+        ],
+        "updated_at": "2026-05-07T10:41:27-03:00"
+    },
+    "90": {
+        "tipo": "entity",
+        "nome": "Mercado Livre",
+        "fullname": "Mercado Livre Brasil",
+        "slug": "mercado-livre",
+        "aliases": [
+            "Mercado Livre",
+            "ML",
+            "MercadoLivre",
+            "Meli"
+        ],
+        "updated_at": "2026-05-07T10:41:40-03:00"
+    },
+    "91": {
+        "tipo": "entity",
+        "nome": "Shopee",
+        "fullname": "Shopee Brasil",
+        "slug": "shopee",
+        "aliases": [
+            "Shopee",
+            "Shopee BR"
+        ],
+        "updated_at": "2026-05-07T10:41:51-03:00"
+    },
+    "92": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Black Friday",
+        "slug": "black-friday",
+        "aliases": [
+            "Black Friday",
+            "BlackFriday",
+            "Black Friday Brasil",
+            "Black Friday 2026"
+        ],
+        "updated_at": "2026-05-07T10:42:01-03:00"
+    },
+    "93": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Cyber Monday",
+        "slug": "cyber-monday",
+        "aliases": [
+            "Cyber Monday",
+            "CyberMonday",
+            "Segunda Cibernética"
+        ],
+        "updated_at": "2026-05-07T10:42:15-03:00"
+    },
+    "94": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Oferta Relâmpago",
+        "slug": "oferta-relampago",
+        "aliases": [
+            "oferta relâmpago",
+            "lightning deal",
+            "flash sale",
+            "oferta limitada",
+            "oferta express"
+        ],
+        "updated_at": "2026-05-07T10:42:29-03:00"
+    },
+    "95": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Liquidação",
+        "slug": "liquidacao",
+        "aliases": [
+            "liquidação",
+            "liquidação total",
+            "queima de estoque",
+            "saldão",
+            "outlet"
+        ],
+        "updated_at": "2026-05-07T10:42:42-03:00"
+    },
+    "96": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Estoque Limitado",
+        "slug": "estoque-limitado",
+        "aliases": [
+            "estoque limitado",
+            "últimas unidades",
+            "poucas unidades",
+            "esgotando",
+            "estoque restante"
+        ],
+        "updated_at": "2026-05-07T10:42:49-03:00"
+    },
+    "97": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Cupom Expira",
+        "slug": "cupom-expira",
+        "aliases": [
+            "cupom expira",
+            "validade do cupom",
+            "cupom com prazo",
+            "cupom limitado"
+        ],
+        "updated_at": "2026-05-07T10:43:02-03:00"
+    }
+}

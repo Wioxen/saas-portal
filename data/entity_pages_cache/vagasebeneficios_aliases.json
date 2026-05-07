@@ -1,0 +1,196 @@
+{
+    "1870": {
+        "tipo": "entity",
+        "nome": "INSS",
+        "fullname": "Instituto Nacional do Seguro Social",
+        "slug": "inss",
+        "aliases": [
+            "INSS",
+            "Previdência Social",
+            "Instituto Nacional Seguro Social"
+        ],
+        "updated_at": "2026-05-06T23:24:32-03:00"
+    },
+    "1871": {
+        "tipo": "entity",
+        "nome": "Caixa",
+        "fullname": "Caixa Econômica Federal",
+        "slug": "caixa",
+        "aliases": [
+            "Caixa",
+            "CEF",
+            "Caixa Econômica",
+            "Banco da Caixa"
+        ],
+        "updated_at": "2026-05-06T23:24:55-03:00"
+    },
+    "1872": {
+        "tipo": "entity",
+        "nome": "Receita Federal",
+        "fullname": "Secretaria Especial da Receita Federal do Brasil",
+        "slug": "receita-federal",
+        "aliases": [
+            "Receita Federal",
+            "RFB",
+            "Receita",
+            "Fisco Federal"
+        ],
+        "updated_at": "2026-05-06T23:25:17-03:00"
+    },
+    "1873": {
+        "tipo": "entity",
+        "nome": "IBGE",
+        "fullname": "Instituto Brasileiro de Geografia e Estatística",
+        "slug": "ibge",
+        "aliases": [
+            "IBGE",
+            "Fundação IBGE"
+        ],
+        "updated_at": "2026-05-06T23:25:31-03:00"
+    },
+    "1874": {
+        "tipo": "entity",
+        "nome": "Detran",
+        "fullname": "Departamento Estadual de Trânsito",
+        "slug": "detran",
+        "aliases": [
+            "Detran",
+            "DETRAN",
+            "Departamento de Trânsito"
+        ],
+        "updated_at": "2026-05-06T23:25:54-03:00"
+    },
+    "1875": {
+        "tipo": "entity",
+        "nome": "PF",
+        "fullname": "Polícia Federal",
+        "slug": "policia-federal",
+        "aliases": [
+            "Polícia Federal",
+            "PF",
+            "Departamento de Polícia Federal",
+            "DPF"
+        ],
+        "updated_at": "2026-05-06T23:26:13-03:00"
+    },
+    "1876": {
+        "tipo": "entity",
+        "nome": "PRF",
+        "fullname": "Polícia Rodoviária Federal",
+        "slug": "prf",
+        "aliases": [
+            "Polícia Rodoviária Federal",
+            "PRF",
+            "Polícia Rodoviária"
+        ],
+        "updated_at": "2026-05-06T23:26:27-03:00"
+    },
+    "1877": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Concurso Público",
+        "slug": "concurso-publico",
+        "aliases": [
+            "concurso público",
+            "concurso",
+            "concurso federal",
+            "concurso estadual",
+            "concurso municipal",
+            "edital de concurso"
+        ],
+        "updated_at": "2026-05-06T23:26:56-03:00"
+    },
+    "1878": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Bolsa Família",
+        "slug": "bolsa-familia",
+        "aliases": [
+            "Bolsa Família",
+            "Programa Bolsa Família",
+            "PBF",
+            "Auxílio Brasil"
+        ],
+        "updated_at": "2026-05-06T23:27:20-03:00"
+    },
+    "1879": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "FGTS",
+        "slug": "fgts",
+        "aliases": [
+            "FGTS",
+            "Fundo de Garantia",
+            "Fundo de Garantia do Tempo de Serviço",
+            "saque FGTS",
+            "FGTS aniversário"
+        ],
+        "updated_at": "2026-05-06T23:27:58-03:00"
+    },
+    "1880": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Auxílio-Gás",
+        "slug": "auxilio-gas",
+        "aliases": [
+            "Auxílio-Gás",
+            "Auxílio Gás",
+            "Vale-Gás",
+            "Programa Auxílio Gás dos Brasileiros"
+        ],
+        "updated_at": "2026-05-06T23:28:24-03:00"
+    },
+    "1881": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "CadÚnico",
+        "slug": "cadunico",
+        "aliases": [
+            "CadÚnico",
+            "Cadastro Único",
+            "Cadastro Único para Programas Sociais"
+        ],
+        "updated_at": "2026-05-06T23:28:50-03:00"
+    },
+    "1882": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "BPC (Benefício de Prestação Continuada)",
+        "slug": "bpc",
+        "aliases": [
+            "BPC",
+            "BPC LOAS",
+            "Benefício de Prestação Continuada",
+            "amparo assistencial"
+        ],
+        "updated_at": "2026-05-06T23:29:11-03:00"
+    },
+    "1883": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "INSS Auxílio-Doença",
+        "slug": "inss-auxilio-doenca",
+        "aliases": [
+            "auxílio-doença",
+            "auxílio doença",
+            "benefício por incapacidade temporária",
+            "INSS auxílio"
+        ],
+        "updated_at": "2026-05-06T23:29:44-03:00"
+    },
+    "1884": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Aposentadoria",
+        "slug": "aposentadoria",
+        "aliases": [
+            "aposentadoria",
+            "aposentar",
+            "aposentadoria por tempo de contribuição",
+            "aposentadoria por idade",
+            "aposentadoria especial",
+            "aposentadoria por invalidez"
+        ],
+        "updated_at": "2026-05-06T23:30:12-03:00"
+    }
+}

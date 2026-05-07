@@ -1,0 +1,143 @@
+{
+    "2887": {
+        "tipo": "entity",
+        "nome": "Amazon",
+        "fullname": "Amazon Brasil",
+        "slug": "amazon",
+        "aliases": [
+            "Amazon",
+            "Amazon BR",
+            "Amazon Brasil"
+        ],
+        "updated_at": "2026-05-07T10:35:44-03:00"
+    },
+    "2888": {
+        "tipo": "entity",
+        "nome": "Mercado Livre",
+        "fullname": "Mercado Livre Brasil",
+        "slug": "mercado-livre",
+        "aliases": [
+            "Mercado Livre",
+            "ML",
+            "MercadoLivre",
+            "Meli"
+        ],
+        "updated_at": "2026-05-07T10:36:07-03:00"
+    },
+    "2889": {
+        "tipo": "entity",
+        "nome": "Shopee",
+        "fullname": "Shopee Brasil",
+        "slug": "shopee",
+        "aliases": [
+            "Shopee",
+            "Shopee BR"
+        ],
+        "updated_at": "2026-05-07T10:36:29-03:00"
+    },
+    "2890": {
+        "tipo": "entity",
+        "nome": "Magalu",
+        "fullname": "Magazine Luiza",
+        "slug": "magalu",
+        "aliases": [
+            "Magalu",
+            "Magazine Luiza",
+            "Magalu BR"
+        ],
+        "updated_at": "2026-05-07T10:36:42-03:00"
+    },
+    "2891": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Cashback",
+        "slug": "cashback",
+        "aliases": [
+            "cashback",
+            "dinheiro de volta",
+            "reembolso de compra",
+            "rebate"
+        ],
+        "updated_at": "2026-05-07T10:37:05-03:00"
+    },
+    "2892": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Cupom de Desconto",
+        "slug": "cupom-de-desconto",
+        "aliases": [
+            "cupom",
+            "cupom de desconto",
+            "código promocional",
+            "voucher",
+            "código de desconto"
+        ],
+        "updated_at": "2026-05-07T10:37:32-03:00"
+    },
+    "2893": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "PIX",
+        "slug": "pix",
+        "aliases": [
+            "PIX",
+            "Pix",
+            "pagamento instantâneo",
+            "transferência PIX"
+        ],
+        "updated_at": "2026-05-07T10:37:53-03:00"
+    },
+    "2894": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Frete Grátis",
+        "slug": "frete-gratis",
+        "aliases": [
+            "frete grátis",
+            "frete gratis",
+            "envio grátis",
+            "free shipping"
+        ],
+        "updated_at": "2026-05-07T10:38:12-03:00"
+    },
+    "2895": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Comparador de Preços",
+        "slug": "comparador-de-precos",
+        "aliases": [
+            "comparador de preços",
+            "comparador de preço",
+            "buscador de preço",
+            "monitor de preço",
+            "histórico de preço"
+        ],
+        "updated_at": "2026-05-07T10:38:36-03:00"
+    },
+    "2896": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Cartão de Crédito sem Anuidade",
+        "slug": "cartao-de-credito-sem-anuidade",
+        "aliases": [
+            "cartão sem anuidade",
+            "cartão de crédito sem anuidade",
+            "cartão zero anuidade",
+            "cartão grátis"
+        ],
+        "updated_at": "2026-05-07T10:38:55-03:00"
+    },
+    "2897": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Garantia Estendida",
+        "slug": "garantia-estendida",
+        "aliases": [
+            "garantia estendida",
+            "extensão de garantia",
+            "garantia adicional",
+            "seguro de produto"
+        ],
+        "updated_at": "2026-05-07T10:39:15-03:00"
+    }
+}

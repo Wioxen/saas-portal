@@ -1,0 +1,80 @@
+{
+  "_lote_id": "ondecompraragora_lote1",
+  "_descricao": "Lote 1 ondecompraragora — 3 entity (marketplaces de oferta) + 6 concept (eventos de oferta urgente)",
+  "parent_entidade_slug": "entidade",
+  "parent_conceito_slug": "conceito",
+  "hubs": [
+    {
+      "tipo": "entity",
+      "nome": "Amazon",
+      "fullname": "Amazon Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "amazon",
+      "url_oficial": "https://www.amazon.com.br",
+      "aliases": ["Amazon", "Amazon BR", "Amazon Brasil"],
+      "descricao_seed": "Maior marketplace mundial, opera no Brasil desde 2012 com forte presença em ofertas relâmpago e Lightning Deals. Eventos sazonais marcantes: Prime Day (julho — exclusivo assinantes Prime), Black Friday (novembro), Esquenta Black Friday, Cyber Monday, Boxing Day, ofertas de Natal e dia das mães. Painel de Ofertas Amazon (amazon.com.br/ofertas) atualiza estoque limitado em tempo real, com cronômetro e estoque restante visível."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Mercado Livre",
+      "fullname": "Mercado Livre Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "mercado-livre",
+      "url_oficial": "https://www.mercadolivre.com.br",
+      "aliases": ["Mercado Livre", "ML", "MercadoLivre", "Meli"],
+      "descricao_seed": "Maior marketplace da América Latina, com eventos de oferta sazonais altamente segmentados: Mega Promoção (várias por ano), Hot Sale (junho), Black Friday (novembro), Cyber Monday, Liquida Liquida, Mega Semana. Plataforma destaca produtos com selo 'Oferta Relâmpago', 'MercadoLíderPlatinum' e desconto progressivo. Frete grátis recorrente em valor mínimo. Mercado Pago oferece parcelamento sem juros e cashback exclusivos durante eventos."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Shopee",
+      "fullname": "Shopee Brasil",
+      "tipo_org": "Organization (marketplace de e-commerce)",
+      "slug": "shopee",
+      "url_oficial": "https://shopee.com.br",
+      "aliases": ["Shopee", "Shopee BR"],
+      "descricao_seed": "Marketplace asiático com perfil agressivo de cupons e ofertas relâmpago. Eventos típicos: Mega Saldão Shopee, 9.9 Super Shopping Day, 11.11 Mega Sale, 12.12 Super Sale, Black Friday, Boxing Day, mensais (5.5, 6.6, 7.7, 8.8). Cupons de R$ 5, R$ 10, R$ 15, R$ 30, R$ 50 sob valor mínimo agregado. Ofertas relâmpago de 1 hora e Flash Sale duração curta. Cashback ShopeePay aplicado no checkout."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Black Friday",
+      "slug": "black-friday",
+      "aliases": ["Black Friday", "BlackFriday", "Black Friday Brasil", "Black Friday 2026"],
+      "descricao_seed": "Maior evento de descontos do varejo brasileiro, importado dos EUA e popularizado no Brasil desde 2010. Acontece tradicionalmente na última sexta-feira de novembro (após Thanksgiving americano). Estendido pra Black Week (toda semana) e Black November (mês inteiro) na maioria dos varejistas. Categoria mais buscada: eletrônicos (smartphone, TV, notebook), eletrodomésticos, moda. Procon e Reclame Aqui fiscalizam preços inflacionados pré-evento (prática 'metade do dobro')."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Cyber Monday",
+      "slug": "cyber-monday",
+      "aliases": ["Cyber Monday", "CyberMonday", "Segunda Cibernética"],
+      "descricao_seed": "Evento de ofertas online realizado na segunda-feira após a Black Friday, focado em produtos digitais e eletrônicos. Originário dos EUA em 2005 quando varejistas perceberam pico de buscas online no retorno ao trabalho pós-feriado de Thanksgiving. No Brasil ocorre paralelamente à Black Friday extendida, com descontos em smartphones, notebooks, smartwatches, smart TVs, periféricos e games. Geralmente conhecido por descontos exclusivos online (sem versão presencial)."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Oferta Relâmpago",
+      "slug": "oferta-relampago",
+      "aliases": ["oferta relâmpago", "lightning deal", "flash sale", "oferta limitada", "oferta express"],
+      "descricao_seed": "Modalidade de oferta com janela de tempo MUITO curta (1 a 24 horas) e estoque limitado, geralmente com cronômetro visível na página. Comum em Amazon (Lightning Deals com 8h ou até esgotar), Shopee (1h ou estoque), Mercado Livre (Mega Promoção com data fim). Gera senso de urgência via gatilhos psicológicos (escassez + prazo). Crítico avaliar: o desconto é real (compare histórico) ou inflado pré-evento."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Liquidação",
+      "slug": "liquidacao",
+      "aliases": ["liquidação", "liquidação total", "queima de estoque", "saldão", "outlet"],
+      "descricao_seed": "Evento de desconto agressivo (acima de 50%, frequentemente 70%-80%) usado pra desovar estoque encalhado, peças de coleção anterior ou produtos com pequenos defeitos estéticos. Comum no fim de cada estação (verão→outono, inverno→primavera) em moda; em eletrônicos quando lançamentos novos chegam (smartphone Y substitui modelo X). Outlets físicos (Aeroporto Premium Outlet, JK Iguatemi Outlet) e online (Outlet Magalu, Outlet Amazon) operam liquidação contínua."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Estoque Limitado",
+      "slug": "estoque-limitado",
+      "aliases": ["estoque limitado", "últimas unidades", "poucas unidades", "esgotando", "estoque restante"],
+      "descricao_seed": "Sinalização que o produto tem poucas unidades disponíveis, criando gatilho psicológico de escassez. Comum em ofertas relâmpago e Black Friday. Pode ser exibido como número exato ('3 unidades restantes', 'apenas 5 em estoque'), barra de progresso ('70% vendido') ou alerta genérico ('últimas peças'). Ferramenta legítima de marketing quando real, mas regulamentada pelo CDC: estoque inflacionado falsamente é considerado prática enganosa (Procon)."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Cupom Expira",
+      "slug": "cupom-expira",
+      "aliases": ["cupom expira", "validade do cupom", "cupom com prazo", "cupom limitado"],
+      "descricao_seed": "Característica de cupons promocionais com data e hora de validade definidas, frequentemente com cronômetro visível. Pode ser de 24h (cupom diário), final de semana, durante evento (Black Friday, Hot Sale) ou primeira compra do usuário. Após expirar, código não funciona mais. Estratégia de marketing pra criar urgência. Plataformas como Cuponomia, Cuponeria, Pelando e Promobit listam cupons com data/hora restantes em tempo real."
+    }
+  ]
+}

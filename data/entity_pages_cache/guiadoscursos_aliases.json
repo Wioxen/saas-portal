@@ -1,0 +1,188 @@
+{
+    "2322": {
+        "tipo": "entity",
+        "nome": "USP",
+        "fullname": "Universidade de São Paulo",
+        "slug": "usp",
+        "aliases": [
+            "USP",
+            "Universidade de São Paulo"
+        ],
+        "updated_at": "2026-05-06T23:32:02-03:00"
+    },
+    "2323": {
+        "tipo": "entity",
+        "nome": "Unicamp",
+        "fullname": "Universidade Estadual de Campinas",
+        "slug": "unicamp",
+        "aliases": [
+            "Unicamp",
+            "UNICAMP",
+            "Universidade Estadual Campinas"
+        ],
+        "updated_at": "2026-05-06T23:32:17-03:00"
+    },
+    "2324": {
+        "tipo": "entity",
+        "nome": "UFRJ",
+        "fullname": "Universidade Federal do Rio de Janeiro",
+        "slug": "ufrj",
+        "aliases": [
+            "UFRJ",
+            "Universidade Federal Rio de Janeiro",
+            "UFRJ Rio"
+        ],
+        "updated_at": "2026-05-06T23:32:35-03:00"
+    },
+    "2325": {
+        "tipo": "entity",
+        "nome": "UFMG",
+        "fullname": "Universidade Federal de Minas Gerais",
+        "slug": "ufmg",
+        "aliases": [
+            "UFMG",
+            "Universidade Federal Minas Gerais"
+        ],
+        "updated_at": "2026-05-06T23:32:49-03:00"
+    },
+    "2326": {
+        "tipo": "entity",
+        "nome": "UnB",
+        "fullname": "Universidade de Brasília",
+        "slug": "unb",
+        "aliases": [
+            "UnB",
+            "UNB",
+            "Universidade de Brasília"
+        ],
+        "updated_at": "2026-05-06T23:33:04-03:00"
+    },
+    "2327": {
+        "tipo": "entity",
+        "nome": "UFSC",
+        "fullname": "Universidade Federal de Santa Catarina",
+        "slug": "ufsc",
+        "aliases": [
+            "UFSC",
+            "Universidade Federal Santa Catarina"
+        ],
+        "updated_at": "2026-05-06T23:33:18-03:00"
+    },
+    "2328": {
+        "tipo": "entity",
+        "nome": "Estácio",
+        "fullname": "Universidade Estácio de Sá",
+        "slug": "estacio",
+        "aliases": [
+            "Estácio",
+            "Estácio de Sá",
+            "Universidade Estácio"
+        ],
+        "updated_at": "2026-05-06T23:33:38-03:00"
+    },
+    "2329": {
+        "tipo": "entity",
+        "nome": "Anhembi Morumbi",
+        "fullname": "Universidade Anhembi Morumbi",
+        "slug": "anhembi-morumbi",
+        "aliases": [
+            "Anhembi",
+            "Anhembi Morumbi",
+            "Universidade Anhembi"
+        ],
+        "updated_at": "2026-05-06T23:33:56-03:00"
+    },
+    "2330": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Vestibular",
+        "slug": "vestibular",
+        "aliases": [
+            "vestibular",
+            "processo seletivo",
+            "ingresso na faculdade",
+            "prova de vestibular",
+            "vestibular tradicional",
+            "vestibular agendado"
+        ],
+        "updated_at": "2026-05-06T23:34:29-03:00"
+    },
+    "2331": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Enem (Exame Nacional do Ensino Médio)",
+        "slug": "enem",
+        "aliases": [
+            "Enem",
+            "ENEM",
+            "Exame Nacional do Ensino Médio",
+            "prova do Enem"
+        ],
+        "updated_at": "2026-05-06T23:35:02-03:00"
+    },
+    "2332": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Sisu (Sistema de Seleção Unificada)",
+        "slug": "sisu",
+        "aliases": [
+            "Sisu",
+            "SiSU",
+            "Sistema de Seleção Unificada"
+        ],
+        "updated_at": "2026-05-06T23:35:27-03:00"
+    },
+    "2333": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "ProUni (Programa Universidade para Todos)",
+        "slug": "prouni",
+        "aliases": [
+            "ProUni",
+            "Programa Universidade para Todos",
+            "bolsa ProUni"
+        ],
+        "updated_at": "2026-05-06T23:35:57-03:00"
+    },
+    "2334": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Fies (Fundo de Financiamento Estudantil)",
+        "slug": "fies",
+        "aliases": [
+            "Fies",
+            "FIES",
+            "Fundo Financiamento Estudantil",
+            "novo Fies"
+        ],
+        "updated_at": "2026-05-06T23:36:29-03:00"
+    },
+    "2335": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "Pós-graduação",
+        "slug": "pos-graduacao",
+        "aliases": [
+            "pós-graduação",
+            "pós graduação",
+            "lato sensu",
+            "stricto sensu",
+            "especialização"
+        ],
+        "updated_at": "2026-05-06T23:36:53-03:00"
+    },
+    "2336": {
+        "tipo": "concept",
+        "nome": "",
+        "fullname": "MBA (Master in Business Administration)",
+        "slug": "mba",
+        "aliases": [
+            "MBA",
+            "Master in Business Administration",
+            "MBA executivo",
+            "MBA online",
+            "MBA EAD"
+        ],
+        "updated_at": "2026-05-06T23:37:19-03:00"
+    }
+}

@@ -1,0 +1,137 @@
+{
+  "_lote_id": "guiadoscursos_lote1",
+  "_descricao": "Lote 1 guiadoscursos — 8 entity (universidades populares brasileiras) + 7 concept (processos e modalidades de ensino superior)",
+  "parent_entidade_slug": "entidade",
+  "parent_conceito_slug": "conceito",
+  "hubs": [
+    {
+      "tipo": "entity",
+      "nome": "USP",
+      "fullname": "Universidade de São Paulo",
+      "tipo_org": "EducationalOrganization (universidade pública estadual)",
+      "slug": "usp",
+      "url_oficial": "https://www.usp.br",
+      "aliases": ["USP", "Universidade de São Paulo"],
+      "descricao_seed": "Maior universidade pública brasileira, criada em 1934. Mantida pelo Governo do Estado de São Paulo. Possui 8 campi (capital, ribeirão Preto, São Carlos, Bauru, Piracicaba, Pirassununga, Lorena, São Sebastião) com mais de 600 cursos de graduação, mestrado, doutorado e pós-doutorado. Ranking internacional consistente entre as 100 melhores do mundo. Vestibular próprio: Fuvest. Considerada a universidade mais prestigiada da América Latina."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Unicamp",
+      "fullname": "Universidade Estadual de Campinas",
+      "tipo_org": "EducationalOrganization (universidade pública estadual)",
+      "slug": "unicamp",
+      "url_oficial": "https://www.unicamp.br",
+      "aliases": ["Unicamp", "UNICAMP", "Universidade Estadual Campinas"],
+      "descricao_seed": "Universidade pública estadual paulista criada em 1962 e instalada em 1966, mantida pelo Governo do Estado de São Paulo. Sede em Campinas, com unidades em Limeira (FCA) e Piracicaba. Cerca de 70 cursos de graduação, mais de 150 programas de pós-graduação. Forte produção científica em pesquisa, ranking entre as melhores do Brasil. Vestibular próprio (Comvest) e via Enem (Pase, Pasusp)."
+    },
+    {
+      "tipo": "entity",
+      "nome": "UFRJ",
+      "fullname": "Universidade Federal do Rio de Janeiro",
+      "tipo_org": "EducationalOrganization (universidade pública federal)",
+      "slug": "ufrj",
+      "url_oficial": "https://www.ufrj.br",
+      "aliases": ["UFRJ", "Universidade Federal Rio de Janeiro", "UFRJ Rio"],
+      "descricao_seed": "Maior universidade federal do Brasil, criada em 1920 e federalizada em 1937. Sede no Rio de Janeiro com campi na Ilha do Fundão (cidade universitária), Praia Vermelha, Macaé, Duque de Caxias. Cerca de 180 cursos de graduação, mais de 130 programas de pós-graduação. Vinculada ao MEC. Ingresso via Sisu (Enem). Tradição em medicina, engenharia, letras, comunicação, ciências sociais."
+    },
+    {
+      "tipo": "entity",
+      "nome": "UFMG",
+      "fullname": "Universidade Federal de Minas Gerais",
+      "tipo_org": "EducationalOrganization (universidade pública federal)",
+      "slug": "ufmg",
+      "url_oficial": "https://www.ufmg.br",
+      "aliases": ["UFMG", "Universidade Federal Minas Gerais"],
+      "descricao_seed": "Universidade pública federal mineira, criada em 1927 e federalizada em 1949. Sede em Belo Horizonte (campus Pampulha) com unidades em Montes Claros e Tiradentes. Mais de 90 cursos de graduação, 130 programas de pós-graduação. Top 5 do Brasil em rankings nacionais. Vinculada ao MEC. Ingresso via Sisu/Enem. Forte em engenharias, medicina, letras, ciências sociais aplicadas."
+    },
+    {
+      "tipo": "entity",
+      "nome": "UnB",
+      "fullname": "Universidade de Brasília",
+      "tipo_org": "EducationalOrganization (universidade pública federal)",
+      "slug": "unb",
+      "url_oficial": "https://www.unb.br",
+      "aliases": ["UnB", "UNB", "Universidade de Brasília"],
+      "descricao_seed": "Universidade pública federal criada em 1962 com projeto pedagógico de Darcy Ribeiro e arquitetônico de Oscar Niemeyer. Sede em Brasília (Campus Darcy Ribeiro) com unidades em Planaltina, Gama, Ceilândia. Mais de 100 cursos de graduação, 90 programas de pós-graduação. Vinculada ao MEC. Vestibular próprio (PAS) e ingresso via Sisu/Enem. Reconhecida por arquitetura, relações internacionais, ciência política, comunicação."
+    },
+    {
+      "tipo": "entity",
+      "nome": "UFSC",
+      "fullname": "Universidade Federal de Santa Catarina",
+      "tipo_org": "EducationalOrganization (universidade pública federal)",
+      "slug": "ufsc",
+      "url_oficial": "https://www.ufsc.br",
+      "aliases": ["UFSC", "Universidade Federal Santa Catarina"],
+      "descricao_seed": "Universidade pública federal catarinense, criada em 1960. Sede em Florianópolis (Trindade) com campi em Araranguá, Curitibanos, Joinville e Blumenau. Mais de 100 cursos de graduação, 130 programas de pós-graduação. Vinculada ao MEC. Ingresso via vestibular próprio (Coperve) e Sisu/Enem. Forte em engenharia, agronomia, oceanografia, design, letras, sociologia."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Estácio",
+      "fullname": "Universidade Estácio de Sá",
+      "tipo_org": "EducationalOrganization (instituição privada de ensino superior)",
+      "slug": "estacio",
+      "url_oficial": "https://www.estacio.br",
+      "aliases": ["Estácio", "Estácio de Sá", "Universidade Estácio"],
+      "descricao_seed": "Maior universidade privada com fins lucrativos do Brasil, criada em 1970 como Faculdade de Direito Estácio de Sá no Rio de Janeiro. Hoje pertence ao grupo Yduqs (controlador) e tem mais de 100 unidades em todos os estados brasileiros. Oferece graduação presencial e EAD, pós-graduação lato e stricto sensu. Aceita ProUni, Fies e bolsas próprias. Mensalidades acessíveis e flexibilidade de horários atraem trabalhadores."
+    },
+    {
+      "tipo": "entity",
+      "nome": "Anhembi Morumbi",
+      "fullname": "Universidade Anhembi Morumbi",
+      "tipo_org": "EducationalOrganization (instituição privada de ensino superior)",
+      "slug": "anhembi-morumbi",
+      "url_oficial": "https://www.anhembi.br",
+      "aliases": ["Anhembi", "Anhembi Morumbi", "Universidade Anhembi"],
+      "descricao_seed": "Universidade privada criada em 1970 e adquirida em 2005 pela Laureate International Universities, hoje parte do grupo Ânima Educação. Sede em São Paulo com campi distribuídos pela cidade. Cerca de 90 cursos presenciais e EAD. Forte em moda, gastronomia, hotelaria, design, comunicação, arquitetura, jogos digitais, animação. Aceita ProUni, Fies e bolsas próprias. Mensalidades de médio porte."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Vestibular",
+      "slug": "vestibular",
+      "aliases": ["vestibular", "processo seletivo", "ingresso na faculdade", "prova de vestibular", "vestibular tradicional", "vestibular agendado"],
+      "descricao_seed": "Processo seletivo para ingresso no ensino superior brasileiro, regulamentado pelo MEC. Pode ser tradicional (provas próprias da instituição como Fuvest, Comvest, PAS-UnB, Coperve) ou unificado pelo Enem (Sisu, ProUni, Fies). Avalia conhecimentos do ensino médio em prova objetiva, redação e, em alguns casos, prova específica. Resultado define classificação para vagas em cursos de graduação. Calendário concentrado entre outubro e fevereiro."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Enem (Exame Nacional do Ensino Médio)",
+      "slug": "enem",
+      "aliases": ["Enem", "ENEM", "Exame Nacional do Ensino Médio", "prova do Enem"],
+      "descricao_seed": "Avaliação anual aplicada pelo Inep desde 1998. Mede competências e habilidades dos concluintes do ensino médio em 4 áreas (Linguagens, Ciências Humanas, Ciências da Natureza, Matemática) + redação. Porta de entrada para Sisu, ProUni, Fies, programas de instituições privadas e universidades portuguesas. Inscrições em maio-junho, prova em novembro. Resultado em janeiro."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Sisu (Sistema de Seleção Unificada)",
+      "slug": "sisu",
+      "aliases": ["Sisu", "SiSU", "Sistema de Seleção Unificada"],
+      "descricao_seed": "Sistema informatizado do MEC criado em 2010 para selecionar estudantes a vagas em cursos de graduação de instituições públicas brasileiras. Usa exclusivamente a nota do Enem do ano anterior. Inscrições gratuitas, geralmente em janeiro/junho. Oferece cerca de 200 mil vagas em mais de 130 instituições públicas (universidades federais, estaduais, IFs)."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "ProUni (Programa Universidade para Todos)",
+      "slug": "prouni",
+      "aliases": ["ProUni", "Programa Universidade para Todos", "bolsa ProUni"],
+      "descricao_seed": "Programa do MEC criado pela Lei 11.096/2005 que concede bolsas de estudo integrais e parciais (50%) em instituições privadas de ensino superior a estudantes brasileiros sem diploma de nível superior, com renda familiar per capita de até 1,5 salário mínimo (integrais) ou 3 salários (parciais). Seleção via nota do Enem do ano anterior. Inscrições gratuitas em janeiro e julho."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Fies (Fundo de Financiamento Estudantil)",
+      "slug": "fies",
+      "aliases": ["Fies", "FIES", "Fundo Financiamento Estudantil", "novo Fies"],
+      "descricao_seed": "Programa do MEC instituído pela Lei 10.260/2001 que financia cursos de graduação em instituições privadas a estudantes com renda familiar per capita de até 3 salários mínimos. Seleção via nota do Enem (≥450 e nota >0 na redação). Pagamento começa após formação. Operacionalizado pelo FNDE e bancos federais. Inscrições anuais."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "Pós-graduação",
+      "slug": "pos-graduacao",
+      "aliases": ["pós-graduação", "pós graduação", "lato sensu", "stricto sensu", "especialização"],
+      "descricao_seed": "Nível educacional posterior à graduação, regulamentado pela Resolução CNE/CES 1/2018 e avaliado pela Capes. Divide-se em lato sensu (especialização, MBA, com ≥360 horas, foco profissional) e stricto sensu (mestrado e doutorado, com produção de dissertação/tese, foco acadêmico-científico). Oferecida por universidades públicas e privadas, modalidades presencial, EAD e híbrida."
+    },
+    {
+      "tipo": "concept",
+      "fullname": "MBA (Master in Business Administration)",
+      "slug": "mba",
+      "aliases": ["MBA", "Master in Business Administration", "MBA executivo", "MBA online", "MBA EAD"],
+      "descricao_seed": "Curso de pós-graduação lato sensu com foco em gestão de negócios e desenvolvimento executivo, originalmente concebido nas escolas norte-americanas. No Brasil, regulamentado como especialização pela Resolução CNE/CES 1/2018 (≥360 horas), reconhecido pelo MEC quando ofertado por instituições credenciadas. Áreas comuns: Gestão Empresarial, Finanças, Marketing, Recursos Humanos, Logística, Tecnologia. Modalidades presencial, EAD e híbrida."
+    }
+  ]
+}
