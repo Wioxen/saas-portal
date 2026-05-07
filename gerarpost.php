@@ -17,6 +17,17 @@
  *  4. WP criarPost() como draft
  *  5. Indexação automática (opcional)
  */
+// 2026-05-07: invalida cache opcache do PIPELINE crítico antes de cada request.
+// Bug observado: edits em gerarpost.php / autoFix*.php às vezes ficam em opcache stale,
+// causando autoFixForcarP3 não dividir intro 2P→3P apesar do código estar correto no disco.
+// Custo: ~1ms por request. Apenas em CLI/web com opcache ativo.
+if (function_exists('opcache_invalidate')) {
+    @opcache_invalidate(__FILE__, true);
+    foreach (['lib/AntiAIValidator.php','lib/RankMathSeoValidator.php','lib/DebateBuilder.php','lib/Scraper.php','lib/AngulosH2Final.php','lib/PostHtmlSanitizers.php'] as $f) {
+        @opcache_invalidate(__DIR__ . '/' . $f, true);
+    }
+}
+
 require_once __DIR__ . '/lib/Serper.php';
 require_once __DIR__ . '/lib/Scraper.php';
 require_once __DIR__ . '/lib/Claude.php';
@@ -34,6 +45,29 @@ require_once __DIR__ . '/lib/PadroesTitulo.php';
 require_once __DIR__ . '/lib/ClusterAngleAllocator.php';
 require_once __DIR__ . '/lib/DataCoerenciaValidator.php';
 require_once __DIR__ . '/lib/RankMathSeoValidator.php';
+require_once __DIR__ . '/lib/OpenAILlm.php';
+
+/**
+ * Factory: retorna instância LLM (Claude ou OpenAILlm) conforme config.
+ * Seleção (em ordem): $cfg['llm_provider'] (per-site) → Env::get('LLM_PROVIDER') → 'claude' (default).
+ * Pra usar GPT-5: setar `LLM_PROVIDER=openai` no .env OU `'llm_provider' => 'openai'` no sites.php.
+ *
+ * Decisão 2026-05-05: GPT-5 segue ORDEM FIXA (3p+snippet+H2+RD-fechamento) MUITO melhor
+ * que Sonnet 4.6 mesmo após DNA OVERRIDE removido + bloco INVIOLÁVEIS + autoFix programático.
+ * Comparativo #2201/#2202 (GPT-5 severity=ok/warn) vs #2204/#2206 (Claude severity=fail).
+ */
+function clonais_make_llm(array $cfg, string $providerOverride = '')
+{
+    // Prioridade: POST (UI) > sites.php > .env > 'claude' (default)
+    $provider = $providerOverride !== ''
+        ? strtolower($providerOverride)
+        : strtolower((string)($cfg['llm_provider'] ?? Env::get('LLM_PROVIDER', 'claude')));
+    if ($provider === 'openai' || $provider === 'gpt' || $provider === 'gpt-5') {
+        $model = (string)($cfg['llm_model'] ?? Env::get('OPENAI_MODEL_PRIMARY', 'gpt-5'));
+        return new OpenAILlm((string)($cfg['openai_api_key'] ?? Env::get('OPENAI_API_KEY', '')), $model);
+    }
+    return new Claude((string)$cfg['anthropic_api_key'], (string)$cfg['anthropic_model']);
+}
 
 /** Extrai slides do content_html a partir de H2s + primeiro parágrafo de cada seção. */
 function extrairSlidesDeHtml(string $html, int $max = 4): array
@@ -122,7 +156,7 @@ function extrairTermosPrincipais(string $texto, int $max = 6): array
  * Safety net: o prompt já instrui Claude a respeitar 40 palavras/p, mas quando escorrega, esse helper corrige.
  * Pula <p> que contêm estrutura complexa interna (tabela, lista, imagem, blockquote) pra não quebrar layout.
  */
-function quebrarParagrafosLongos(string $html, int $maxPalavras = 40): string
+function quebrarParagrafosLongos(string $html, int $maxPalavras = 70): string
 {
     $out = preg_replace_callback('#<p(\s[^>]*)?>(.*?)</p>#is', function($m) use ($maxPalavras) {
         $attrs = $m[1] ?? '';
@@ -476,10 +510,427 @@ function sanitizarTravessoes(string $html): string
             // Em-dash e en-dash com espaços ao redor → vírgula
             $txt = preg_replace('/\s*—\s*/u', ', ', $txt) ?? $txt;
             $txt = preg_replace('/\s*–\s*/u', ', ', $txt) ?? $txt;
+            // 2026-05-06 #1839: caso residual sem espaço (palavra—palavra) — também remove
+            $txt = preg_replace('/[—–]/u', ', ', $txt) ?? $txt;
             // Normaliza possíveis vírgulas consecutivas geradas pela substituição
             $txt = preg_replace('/,\s*,+/', ',', $txt) ?? $txt;
             // Normaliza espaço duplo
             $txt = preg_replace('/ {2,}/', ' ', $txt) ?? $txt;
+            return $txt;
+        },
+        $html
+    );
+    return $out ?? $html;
+}
+
+/**
+ * Auto-fix programático: reduz a INTRO pra exatos 3 parágrafos sem class antes do 1º <h2>.
+ * Parágrafos extras (P4+) são realocados pra DEPOIS do 1º <h2>. Snippet (<ul class='snippet-resumo'>)
+ * é preservado na intro. Disparado quando Sonnet 4.6 ignora regen mesmo com instruções literais.
+ */
+function autoFixIntroInflada(string $html): string
+{
+    $posH2 = stripos($html, '<h2');
+    if ($posH2 === false) return $html;
+
+    $intro = substr($html, 0, $posH2);
+    $resto = substr($html, $posH2);
+
+    // Captura todos os <p> da intro com offsets
+    if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $intro, $ps, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+        return $html;
+    }
+
+    // Conta apenas P sem class especial (intro real, não snippet/RD/leia-mais)
+    $intros = []; // [['full' => str, 'offset' => int, 'len' => int], ...]
+    foreach ($ps as $row) {
+        $atribs = $row[1][0];
+        $temClassEspecial = preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico|fonte-rodape)[^\'"]*[\'"]/i', $atribs);
+        if ($temClassEspecial) continue;
+        $intros[] = [
+            'full' => $row[0][0],
+            'offset' => $row[0][1],
+            'len' => strlen($row[0][0]),
+        ];
+    }
+
+    if (count($intros) <= 3) return $html; // já tá ok
+
+    // Pega P4+ (do 4º em diante) e move pra depois do 1º <h2>
+    $extras = array_slice($intros, 3);
+    $movidos = '';
+    // Remove os extras da intro (de trás pra frente pra não bagunçar offsets)
+    foreach (array_reverse($extras) as $ex) {
+        $movidos = $ex['full'] . "\n" . $movidos;
+        $intro = substr($intro, 0, $ex['offset']) . substr($intro, $ex['offset'] + $ex['len']);
+    }
+
+    // Acha o fim da tag <h2>...</h2> no resto e injeta os movidos depois
+    if (preg_match('/<h2\b[^>]*>.*?<\/h2>/is', $resto, $h2m, PREG_OFFSET_CAPTURE)) {
+        $endH2 = $h2m[0][1] + strlen($h2m[0][0]);
+        $resto = substr($resto, 0, $endH2) . "\n" . trim($movidos) . "\n" . substr($resto, $endH2);
+    }
+
+    return $intro . $resto;
+}
+
+/**
+ * 2026-05-07: Extrai TODOS os scripts JSON-LD do HTML, valida, retorna array de JSON
+ * pronto pra salvar em post meta. Remove os scripts do HTML.
+ *
+ * Resposta ao bug GSC "Tipo de valor incorreto": schemas no corpo são vulneráveis
+ * ao wpautop e editores visuais. Schemas no `<head>` (via mu-plugin que lê post meta)
+ * são imunes — exatamente como RankMath e Yoast fazem.
+ *
+ * @return array{0: string, 1: array<int, string>} [htmlLimpo, [json1, json2, ...]]
+ */
+function autoFixExtrairSchemasParaMeta(string $html): array
+{
+    $schemas = [];
+    $htmlLimpo = preg_replace_callback(
+        '#(?:<p>\s*)?<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>(?:\s*</p>)?#is',
+        function ($m) use (&$schemas) {
+            $conteudo = $m[1];
+
+            // Mesmas limpezas do autoFixSanitizarJsonLd
+            $conteudo = preg_replace('#<br\s*/?>#i', '', $conteudo) ?? $conteudo;
+            $conteudo = preg_replace('#</?p\s*[^>]*>#i', '', $conteudo) ?? $conteudo;
+            $conteudo = preg_replace('#<!--.*?-->#s', '', $conteudo) ?? $conteudo;
+            $conteudo = html_entity_decode($conteudo, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $conteudo = str_replace(
+                ["\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}", "\u{00AB}", "\u{00BB}"],
+                ['"', '"', "'", "'", '"', '"'],
+                $conteudo
+            );
+            $conteudo = preg_replace('/[\x{FEFF}\x{200B}\x{200C}\x{200D}\x{00A0}]/u', ' ', $conteudo) ?? $conteudo;
+            $conteudo = trim($conteudo);
+
+            // Valida JSON. Se inválido, descarta.
+            $obj = json_decode($conteudo, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($obj)) {
+                return ''; // remove sem registrar
+            }
+
+            // Re-encode pra garantir formato compacto e limpo
+            $jsonLimpo = json_encode($obj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($jsonLimpo === false) return '';
+
+            $schemas[] = $jsonLimpo;
+            return ''; // remove do HTML
+        },
+        $html
+    ) ?? $html;
+
+    // Limpa quebras de linha vazias deixadas pela remoção
+    $htmlLimpo = preg_replace('/\n{3,}/', "\n\n", $htmlLimpo) ?? $htmlLimpo;
+
+    return [$htmlLimpo, $schemas];
+}
+
+/**
+ * Auto-fix programático: sanitiza scripts <script type="application/ld+json">.
+ *
+ * 2026-05-07: GSC reporta "Tipo de valor incorreto" porque WordPress (Gutenberg/wpautop)
+ * injeta <br />, <p>, </p> automaticamente DENTRO ou ENTRE os <script> JSON-LD.
+ * O Google parser falha em ler o JSON quando encontra HTML tags.
+ *
+ * Operações:
+ *   1. Remove <br>, <br/>, <br />, <p>, </p> DENTRO do conteúdo do <script>
+ *   2. Normaliza aspas inteligentes (curvas) → retas
+ *   3. Remove caracteres invisíveis (BOM, ZWSP, NBSP)
+ *   4. Valida com json_decode — se inválido após limpeza, REMOVE o bloco inteiro
+ *      (melhor sem schema do que com schema quebrado contando como erro no GSC)
+ *   5. Remove <p> e <br> IMEDIATAMENTE antes ou depois do <script>
+ */
+function autoFixSanitizarJsonLd(string $html): string
+{
+    // 1. Remove <p> e <br> que envolvem o <script> (wpautop injection)
+    $html = preg_replace('#<p>\s*(<script\s+type=["\']application/ld\+json["\'][^>]*>.*?</script>)\s*</p>#is', '$1', $html) ?? $html;
+    $html = preg_replace('#<br\s*/?>\s*(<script\s+type=["\']application/ld\+json["\'][^>]*>)#is', '$1', $html) ?? $html;
+    $html = preg_replace('#(</script>)\s*<br\s*/?>#is', '$1', $html) ?? $html;
+
+    // 2. Limpa o conteúdo de cada <script> JSON-LD
+    return preg_replace_callback(
+        '#(<script\s+type=["\']application/ld\+json["\'][^>]*>)(.*?)(</script>)#is',
+        function ($m) {
+            $abertura = $m[1];
+            $conteudo = $m[2];
+            $fechamento = $m[3];
+
+            // Remove HTML injetado pelo wpautop
+            $conteudo = preg_replace('#<br\s*/?>#i', '', $conteudo) ?? $conteudo;
+            $conteudo = preg_replace('#</?p\s*[^>]*>#i', '', $conteudo) ?? $conteudo;
+            $conteudo = preg_replace('#<!--.*?-->#s', '', $conteudo) ?? $conteudo;
+            // Decodifica entidades HTML (&quot; → ", &amp; → &)
+            $conteudo = html_entity_decode($conteudo, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Normaliza aspas inteligentes → retas (JSON exige " e ')
+            $conteudo = str_replace(
+                ["\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}", "\u{00AB}", "\u{00BB}"],
+                ['"', '"', "'", "'", '"', '"'],
+                $conteudo
+            );
+            // Remove caracteres invisíveis (BOM, ZWSP, NBSP)
+            $conteudo = preg_replace('/[\x{FEFF}\x{200B}\x{200C}\x{200D}\x{00A0}]/u', ' ', $conteudo) ?? $conteudo;
+            $conteudo = trim($conteudo);
+
+            // Valida JSON. Se inválido, remove o bloco inteiro (não polui GSC com erro)
+            json_decode($conteudo);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return ''; // Schema corrompido — melhor remover
+            }
+
+            return $abertura . $conteudo . $fechamento;
+        },
+        $html
+    ) ?? $html;
+}
+
+/**
+ * Auto-fix programático: substitui "nesta/neste {dia_semana}" desatualizado pelo
+ * referencial correto (ontem / no dia X / amanhã) baseado em date('w') do servidor.
+ *
+ * 2026-05-07 #1862: Sonnet copia "nesta quarta-feira" da fonte publicada ontem,
+ * mesmo com REGRA TEMPORAL ABSOLUTA + sentinel forca-regen. Detector AntiAI flagga
+ * mas Sonnet teima — autoFix corrige determinístico aqui.
+ *
+ * Não toca em "nesta segunda" se hoje É segunda. Só atua quando há divergência.
+ */
+function autoFixDiaSemanaInconsistente(string $html): string
+{
+    $hojeW = (int)date('w'); // 0=dom, 1=seg, ..., 6=sab
+    $mapaDias = [
+        'domingo' => 0,
+        'segunda' => 1, 'segunda-feira' => 1,
+        'terça'   => 2, 'terça-feira'   => 2, 'terca' => 2, 'terca-feira' => 2,
+        'quarta'  => 3, 'quarta-feira'  => 3,
+        'quinta'  => 4, 'quinta-feira'  => 4,
+        'sexta'   => 5, 'sexta-feira'   => 5,
+        'sábado'  => 6, 'sabado' => 6,
+    ];
+    return preg_replace_callback(
+        '/\b(nest[ae])\s+(domingo|segunda(?:[\s-]feira)?|terça(?:[\s-]feira)?|terca(?:[\s-]feira)?|quarta(?:[\s-]feira)?|quinta(?:[\s-]feira)?|sexta(?:[\s-]feira)?|sábado|sabado)\b/iu',
+        function ($m) use ($hojeW, $mapaDias) {
+            $dia = mb_strtolower(trim(str_replace(['-feira',' feira'], '', $m[2])), 'UTF-8');
+            $diaNum = $mapaDias[$dia] ?? null;
+            if ($diaNum === null) return $m[0];
+            if ($diaNum === $hojeW) return $m[0]; // tá certo
+            // Diferença em dias (mod 7)
+            $diff = ($diaNum - $hojeW + 7) % 7;
+            if ($diff === 6) return 'ontem';                                                           // 1 dia atrás
+            if ($diff === 1) return 'amanhã';                                                          // 1 dia à frente
+            // 2-6 dias: usa "no dia DD" baseado na data atual + offset (negativo se diff>3, positivo senão)
+            $offsetDias = ($diff <= 3) ? $diff : ($diff - 7); // -1,-2,-3 = passado | 1,2,3 = futuro
+            $ts = strtotime("{$offsetDias} day");
+            if ($ts === false) return $m[0];
+            $dia = (int)date('j', $ts);
+            $mes = (int)date('n', $ts);
+            $meses = ['','janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+            return "no dia {$dia} de {$meses[$mes]}";
+        },
+        $html
+    ) ?? $html;
+}
+
+/**
+ * Auto-fix programático: força INTRO ter 3 parágrafos quando Sonnet emitiu apenas 2.
+ * 2026-05-06 #1839: mesmo após 2 regens com forca-regen, Sonnet teima em 2P.
+ * Estratégia conservadora: se intro tem 2P sem class semântica, divide o MAIOR
+ * dos 2 em duas partes na primeira fronteira de frase (ponto seguido de Maiúscula).
+ * Não inventa conteúdo — só reorganiza o que Sonnet já gerou.
+ */
+function autoFixForcarP3(string $html): string
+{
+    $posH2 = stripos($html, '<h2');
+    if ($posH2 === false) return $html;
+
+    $intro = substr($html, 0, $posH2);
+    $resto = substr($html, $posH2);
+
+    if (!preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $intro, $ps, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+        return $html;
+    }
+
+    // P sem class semântica (intro real)
+    $intros = [];
+    foreach ($ps as $row) {
+        $atribs = $row[1][0];
+        if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico|fonte-rodape)[^\'"]*[\'"]/i', $atribs)) continue;
+        $clean = trim(strip_tags($row[2][0]));
+        if (str_word_count($clean) < 6) continue;
+        $intros[] = [
+            'full'   => $row[0][0],
+            'inner'  => $row[2][0],
+            'offset' => $row[0][1],
+            'len'    => strlen($row[0][0]),
+            'words'  => str_word_count($clean),
+        ];
+    }
+
+    // Atua só quando há exatamente 2 P textuais
+    if (count($intros) !== 2) return $html;
+
+    // Escolhe o P com mais frases pra dividir; se empate, o maior em palavras
+    $idxAlvo = -1; $melhorScore = 0;
+    foreach ($intros as $i => $info) {
+        $frases = preg_match_all('/[\.\!\?]\s+[A-ZÀ-Ú]/u', $info['inner']);
+        $score = $frases * 1000 + $info['words'];
+        if ($frases >= 1 && $score > $melhorScore) {
+            $melhorScore = $score;
+            $idxAlvo = $i;
+        }
+    }
+    if ($idxAlvo < 0) return $html; // nenhum P tem 2+ frases pra dividir
+
+    $alvo = $intros[$idxAlvo];
+    // Divide na PRIMEIRA fronteira de frase (preserva HTML inline)
+    $innerNorm = preg_replace('/\s+/u', ' ', $alvo['inner']) ?? $alvo['inner'];
+    if (!preg_match('/^(.+?[\.\!\?])\s+([A-ZÀ-Ú].+)$/u', $innerNorm, $sm)) return $html;
+
+    $parte1 = trim($sm[1]);
+    $parte2 = trim($sm[2]);
+    // Não divide se parte 1 ficar muito curta (<8 palavras) ou parte 2 muito curta (<6)
+    if (str_word_count(strip_tags($parte1)) < 8 || str_word_count(strip_tags($parte2)) < 6) return $html;
+
+    $novoBloco = "<p>{$parte1}</p>\n<p>{$parte2}</p>";
+    $intro = substr($intro, 0, $alvo['offset'])
+           . $novoBloco
+           . substr($intro, $alvo['offset'] + $alvo['len']);
+
+    return $intro . $resto;
+}
+
+/**
+ * Auto-fix programático: garante EXATAMENTE 1 <p class='resposta-direta'> no HTML, posicionada
+ * ANTES do <p>Fonte:</p>. Se Sonnet emitir múltiplas (intro + fechamento, ou variações), mantém
+ * apenas a ÚLTIMA do documento (mais próxima do fechamento — geralmente a mais polida) e remove
+ * as outras. Bug observado #2187 (2 RDs duplicadas com texto similar).
+ */
+function autoFixRdParaFechamento(string $html): string
+{
+    // 1) Coleta todas RDs com offsets
+    if (!preg_match_all('/<p\b[^>]*class\s*=\s*[\'"][^\'"]*resposta-direta[^\'"]*[\'"][^>]*>.*?<\/p>/is', $html, $rds, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+        return $html;
+    }
+
+    // 2) Decide qual manter: a ÚLTIMA do documento (mais próxima do fechamento)
+    $manter = end($rds)[0][0];
+
+    // 3) Remove TODAS as RDs (de trás pra frente pra preservar offsets)
+    foreach (array_reverse($rds) as $rd) {
+        $offset = $rd[0][1];
+        $len = strlen($rd[0][0]);
+        $html = substr($html, 0, $offset) . substr($html, $offset + $len);
+    }
+
+    // 4) Reinsere a única RD ANTES do rodapé autoral (ou "<p>Fonte:" legado, ou no fim se não houver)
+    // Regex pega: rodapé novo "Conteúdo elaborado" OU rodapé antigo "Fonte:"
+    // FLAG `u` OBRIGATÓRIO pra Unicode (ú/é/ó multi-byte). Sem `u`, [úu] não casa em UTF-8.
+    if (preg_match('/<p\b[^>]*>\s*(?:Conte[úu]do\s+elaborado|Fonte\s*:)/isu', $html, $fm, PREG_OFFSET_CAPTURE)) {
+        $insertAt = $fm[0][1];
+        $html = substr($html, 0, $insertAt) . trim($manter) . "\n\n" . substr($html, $insertAt);
+    } else {
+        $html = rtrim($html) . "\n\n" . trim($manter) . "\n";
+    }
+
+    return $html;
+}
+
+/**
+ * Auto-fix programático: remove atribuições a veículos de imprensa do CORPO do post.
+ * Mantém atribuições a INSTITUIÇÕES/ÓRGÃOS/EMPRESAS (Senai, INEP, Caixa, Fundação X).
+ *
+ * Estratégia conservadora — apenas remove SUFIXOS e PREFIXOS atribuitivos sem reescrever
+ * sintaxe complexa. Caso real #2261: "Segundo o portal G1 Bahia, a iniciativa..." →
+ * "A iniciativa..." (recapitalizando primeira letra).
+ */
+function autoFixRemoverAtribuicaoVeiculo(string $html): string
+{
+    $veiculosImprensa = '\b(?:G1(?:\s+Bahia|\s+SP|\s+RJ|\s+AM|\s+\w+)?|UOL|Folha\s+de\s+S\.?\s*Paulo|Folha|Estad[ãa]o|R7|BBC(?:\s+Brasil)?|CNN(?:\s+Brasil)?|Globo|GloboNews|Veja|Exame|Valor|O\s+Globo|Metr[óo]poles|Terra|IG|Extra|Jovem\s+Pan|Band|SBT|Record|TNH1|Portal\s+Tempo\s+Novo|A\s+Gazeta|Jornal\s+Nacional|Carta\s+Capital|Gazeta\s+do\s+Povo)';
+
+    // Substitutos sem aspas pra texto puro (não dentro de tags) — usa preg_replace_callback
+    $out = preg_replace_callback(
+        '#(<pre\b[^>]*>.*?</pre>)|(<code\b[^>]*>.*?</code>)|(<[^>]+>)|([^<]+)#is',
+        function ($m) use ($veiculosImprensa) {
+            if (!empty($m[1])) return $m[1];
+            if (!empty($m[2])) return $m[2];
+            if (!empty($m[3])) return $m[3];
+            $txt = $m[4] ?? '';
+
+            // 1. Início de frase: "Segundo o portal G1 Bahia, " → ""
+            $txt = preg_replace('/(?<=[.!?]\s|^)(?:Segundo|De acordo com|Conforme|Publicado pelo|Divulgado pelo|Noticiado pelo)\s+(?:o|a|os|as)?\s*(?:portal|site|s[íi]tio|jornal|blog|publicaç[ãa]o|reportagem|veículo|veiculo|matéria|materia|notícia|noticia)\s+' . $veiculosImprensa . '\s*[,;]\s*/iu', '', $txt) ?? $txt;
+
+            // 2. Início de frase: "Segundo o G1 Bahia, " → ""
+            $txt = preg_replace('/(?<=[.!?]\s|^)(?:Segundo|De acordo com|Conforme|Publicado pelo|Divulgado pelo|Noticiado pelo)\s+(?:o|a|os|as)?\s*' . $veiculosImprensa . '\s*[,;]\s*/iu', '', $txt) ?? $txt;
+
+            // 3. Voz passiva no MEIO ou início: "foi divulgada pelo G1 Bahia em 27 de abril e abrange..."
+            //    → remove "foi divulgada pelo G1 Bahia" mas preserva "em 27 de abril"
+            $txt = preg_replace('/\b(?:foi|foram|sera|será|serão|estava)\s+(?:divulgad|publicad|noticiad|anunciad|informad|reportad)[ao]s?\s+(?:pelo|pela|no|na)\s+' . $veiculosImprensa . '\s*/iu', '', $txt) ?? $txt;
+
+            // 4. Vírgula intermediária: ", segundo o portal G1 Bahia," → ","
+            $txt = preg_replace('/[,;]\s*(?:segundo|de acordo com|conforme)\s+(?:o|a|os|as)?\s*(?:portal|site|s[íi]tio|jornal|blog|publicaç[ãa]o|reportagem|veículo|veiculo)?\s*' . $veiculosImprensa . '[^,.;]*?(?=[,.;])/iu', '', $txt) ?? $txt;
+
+            // 5. "publicado em DD de MMMM pelo G1 Bahia" → "publicado em DD de MMMM"
+            $txt = preg_replace('/\s+(?:pelo|pela)\s+' . $veiculosImprensa . '/iu', '', $txt) ?? $txt;
+
+            // 6. "O G1 Bahia informou que..." / "A Folha publicou que..." → "" (remove até "que ")
+            $txt = preg_replace('/(?<=^|[.!?]\s)(?:O|A)\s+' . $veiculosImprensa . '\s+(?:informou|informa|publicou|publica|noticiou|noticia|divulgou|divulga|reportou|reporta|anunciou|anuncia|destacou|destaca|abordou|aborda|mostrou|mostra)\s+que\s+/iu', '', $txt) ?? $txt;
+
+            // 8. GENÉRICO INÍCIO DE FRASE — "Segundo o portal EstágioTrainee," → ""
+            //    Caso #2277: pattern 1 só pegava veículo conhecido; agora pega QUALQUER nome próprio capitalizado.
+            //    Filtra "Segundo o portal de inscrição/oficial" pra não dar falso positivo.
+            $txt = preg_replace('/(?<=[.!?]\s|^)(?:Segundo|De acordo com|Conforme|Publicado pelo|Divulgado pelo|Noticiado pelo)\s+(?:o|a|os|as)?\s*(?:portal|site|s[íi]tio|jornal|blog|publicaç[ãa]o|reportagem|veículo|veiculo|matéria|materia|notícia|noticia|reda[çc][ãa]o)\s+(?!(?:de|do|da|dos|das|oficial|nacional|principal|interno|brasileiro)\b)[A-Z][\w\.\-]{2,40}(?:\s+[A-Z][\w\.\-]{2,40}){0,3}\s*[,;]?\s*/u', '', $txt) ?? $txt;
+
+            // 9. GENÉRICO MEIO DE FRASE — ", segundo o portal EstágioTrainee," → ","
+            $txt = preg_replace('/[,;]\s*(?:segundo|de acordo com|conforme)\s+(?:o|a|os|as)?\s*(?:portal|site|s[íi]tio|jornal|blog|publicaç[ãa]o|reportagem|veículo|veiculo|reda[çc][ãa]o)\s+(?!(?:de|do|da|dos|das|oficial|nacional|principal|interno|brasileiro)\b)[A-Z][\w\.\-]{2,40}(?:\s+[A-Z][\w\.\-]{2,40}){0,3}/u', '', $txt) ?? $txt;
+
+            // 7. GENÉRICO — "O portal EstágioTrainee.com analisou 4 opções" → "Foram analisadas 4 opções"
+            //    Pega "O/A {portal|site|redação|blog|veículo} {Nome próprio com .com/.br opcional} {verbo}" e substitui pelo verbo no infinitivo.
+            //    Exclui "O portal de/do/da" + "site oficial/nacional".
+            $verbosCanonicos = ['analisou' => 'analisadas', 'analisa' => 'analisadas', 'informou' => 'informadas', 'publicou' => 'publicadas', 'noticiou' => 'noticiadas', 'divulgou' => 'divulgadas', 'reportou' => 'reportadas', 'destacou' => 'destacadas', 'mostrou' => 'apresentadas', 'menciona' => 'mencionadas', 'cita' => 'citadas', 'registra' => 'registradas', 'registrou' => 'registradas'];
+            $txt = preg_replace_callback(
+                '/(?<=^|[.!?]\s)(?:O|A)\s+(?:portal|site|jornal|blog|ve[íi]culo|reda[çc][ãa]o|publica[çc][ãa]o|im?prensa)\s+(?!(?:de|do|da|dos|das|oficial|nacional|principal|interno|brasileiro)\b)[A-Z][\w\.\-]{2,40}(?:\s+[A-Z][\w\.\-]{2,40}){0,3}\s+(analisou|analisa|informou|informa|publicou|publica|noticiou|noticia|divulgou|divulga|reportou|reporta|destacou|destaca|mostrou|mostra|menciona|cita|registra|registrou)\s+/iu',
+                function ($m) use ($verbosCanonicos) {
+                    $verbo = mb_strtolower($m[1]);
+                    $foramX = $verbosCanonicos[$verbo] ?? 'analisadas';
+                    return 'Foram ' . $foramX . ' ';
+                },
+                $txt
+            ) ?? $txt;
+
+            // Limpa pontuação dupla criada pelas remoções
+            $txt = preg_replace('/[ ]+/', ' ', $txt) ?? $txt;
+            $txt = preg_replace('/\s+([,.;:!?])/', '$1', $txt) ?? $txt;
+            $txt = preg_replace('/([,;])\s*([,.;])/', '$2', $txt) ?? $txt;
+            // Recapitaliza primeira letra de frase quando perdeu maiúscula no início (após remover prefixo)
+            $txt = preg_replace_callback('/(?<=^|[.!?]\s)([a-záéíóúâêôãõç])/u', fn($mm) => mb_strtoupper($mm[1], 'UTF-8'), $txt) ?? $txt;
+
+            return $txt;
+        },
+        $html
+    );
+    return $out ?? $html;
+}
+
+/**
+ * Auto-fix programático: limita reticências (...) a no máximo 1 ocorrência no HTML.
+ * Reticências em excesso são assinatura de IA (tom dramático/edital). Substitui por ponto.
+ */
+function autoFixReticenciasExcessivas(string $html): string
+{
+    // Conta ocorrências de "..." OU "…" no texto
+    $count = 0;
+    $out = preg_replace_callback(
+        '#(<pre\b[^>]*>.*?</pre>)|(<code\b[^>]*>.*?</code>)|(<[^>]+>)|([^<]+)#is',
+        function ($m) use (&$count) {
+            if (!empty($m[1])) return $m[1];
+            if (!empty($m[2])) return $m[2];
+            if (!empty($m[3])) return $m[3];
+            $txt = $m[4] ?? '';
+            // Substitui "..." e "…" por ponto se já passou de 1 ocorrência
+            $txt = preg_replace_callback('/(\.{3}|…)/u', function ($mm) use (&$count) {
+                $count++;
+                return $count <= 1 ? $mm[0] : '.';
+            }, $txt) ?? $txt;
             return $txt;
         },
         $html
@@ -866,7 +1317,7 @@ if (($_POST['action'] ?? '') === 'gerar_titulo') {
         if ($tituloAnterior === '' && $keyword === '') throw new RuntimeException('Keyword ou título anterior obrigatório');
 
         $scraper = new Scraper($cfg['user_agent'], $cfg['scrape_timeout']);
-        $claude  = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model']);
+        $claude  = clonais_make_llm($cfg, (string)($_POST['llm_provider'] ?? '')); // POST > config > env > claude
 
         // Scrapeia pra ter conteúdo completo
         $conteudo = '';
@@ -1088,9 +1539,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
         // (evita redundância entre irmãos no cluster E entre runs sucessivos de RSS/single)
         $padroesUsadosCluster = [];
         $padroesStore = new PadroesTitulo(__DIR__ . '/data/padroes_titulo', 24, 5);
+        // 2026-05-07 #1862: rastreia ângulos do H2 final (1-16) usados recentemente por site
+        require_once __DIR__ . '/lib/AngulosH2Final.php';
+        $angulosStore = new AngulosH2Final(__DIR__ . '/data/angulos_h2_final', 48, 3);
         try {
             $scraper = new Scraper($cfg['user_agent'], $cfg['scrape_timeout']);
-            $claude  = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model']);
+            $claude  = clonais_make_llm($cfg, (string)($_POST['llm_provider'] ?? '')); // POST > config > env > claude
             $wp      = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
             $builder = new LandingBuilder($cfg['site_name'] ?? 'Como Comprar', $cfg['wp_url'] ?? '', [
                 'number'    => $cfg['whatsapp_number'] ?? '',
@@ -1138,9 +1592,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
 
                     // Safety net mobile-first: quebra parágrafos > 40 palavras (Sonnet ocasionalmente
                     // ignora regra de "max 3 linhas" — função do gerarpost.php garante)
-                    $pillarGerado['content_html'] = quebrarParagrafosLongos((string)$pillarGerado['content_html'], 40);
+                    $pillarGerado['content_html'] = quebrarParagrafosLongos((string)$pillarGerado['content_html'], 999);
                     // Sanitiza travessões (—/–) — assinatura de IA, vira vírgula
                     $pillarGerado['content_html'] = sanitizarTravessoes((string)$pillarGerado['content_html']);
+                    // Auto-fix programático: estrutura intro + RD única + reticências
+                    $pillarGerado['content_html'] = autoFixIntroInflada((string)$pillarGerado['content_html']);
+                    $pillarGerado['content_html'] = autoFixRdParaFechamento((string)$pillarGerado['content_html']);
+                    $pillarGerado['content_html'] = autoFixReticenciasExcessivas((string)$pillarGerado['content_html']);
                     $payloadPillar = [
                         'title'   => $pillarGerado['title'],
                         'slug'    => $pillarGerado['slug'],
@@ -1251,8 +1709,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         if ($novoHtml === '') throw new RuntimeException('Claude::atualizarPost retornou HTML vazio');
 
                         // Sanitiza travessões + quebra parágrafos longos (mesmo padrão do fluxo normal)
-                        $novoHtml = quebrarParagrafosLongos($novoHtml, 40);
+                        $novoHtml = quebrarParagrafosLongos($novoHtml, 999);
                         $novoHtml = sanitizarTravessoes($novoHtml);
+                        // Auto-fix programático: estrutura intro + RD única + reticências
+                        $novoHtml = autoFixIntroInflada($novoHtml);
+                        $novoHtml = autoFixRdParaFechamento($novoHtml);
+                        $novoHtml = autoFixReticenciasExcessivas($novoHtml);
 
                         $payloadUpd = [
                             'title'   => $novoTitulo,
@@ -1442,9 +1904,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                     try {
                         $debate = new DebateBuilder($claude);
                         $debate->setOwnDomain((string)($cfg['wp_url'] ?? ''));
+                        // Nome da redação pro rodapé autoral (decisão editorial 2026-05-05)
+                        $cfgSiteAtual = ($modoCluster && isset($cfgItem)) ? $cfgItem : $cfg;
+                        $debate->setSiteName((string)($cfgSiteAtual['name'] ?? $cfgSiteAtual['site_name'] ?? ''));
 
-                        // Monta conteúdo scrapeado como texto limpo
+                        // Monta conteúdo scrapeado como texto limpo + links inline
                         $conteudoScrapeado = '';
+                        $linksFonte = [];
                         foreach ($fontes as $f) {
                             $conteudoScrapeado .= ($f['meta']['title'] ?? '') . "\n";
                             if (!empty($f['content']['headings'])) {
@@ -1455,6 +1921,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                                 foreach ($f['content']['lists'] as $list) {
                                     foreach ($list as $li) $conteudoScrapeado .= "- {$li}\n";
                                 }
+                            }
+                            if (!empty($f['content']['links'])) {
+                                foreach ($f['content']['links'] as $lk) $linksFonte[] = $lk;
+                            }
+                        }
+                        // Anexa LINKS DA FONTE (URLs extraídas dos <a href> dos parágrafos)
+                        // pra LLM usar em frases tipo "Inscrição em [link]" em vez de "acesse o portal genérico".
+                        if (!empty($linksFonte)) {
+                            $unicosLinks = [];
+                            foreach ($linksFonte as $lk) {
+                                $unicosLinks[$lk['href']] = $lk;
+                            }
+                            $linksFonte = array_values(array_slice($unicosLinks, 0, 8));
+                            $conteudoScrapeado .= "\n═══ LINKS OFICIAIS DA FONTE (use como href EXATO em frases de ação como 'Inscreva-se em [link]', 'Edital em [link]'. NÃO mencione 'site oficial' sem incluir o link real abaixo) ═══\n";
+                            foreach ($linksFonte as $lk) {
+                                $conteudoScrapeado .= "- ANCHOR: \"{$lk['anchor']}\" | HREF: {$lk['href']} | HOST: {$lk['host']}\n";
+                            }
+                        }
+
+                        // CITAÇÕES DIRETAS — falas de autoridade extraídas das aspas da fonte
+                        $quotesFonte = [];
+                        foreach ($fontes as $f) {
+                            if (!empty($f['content']['quotes'])) {
+                                foreach ($f['content']['quotes'] as $q) $quotesFonte[] = $q;
+                            }
+                        }
+                        if (!empty($quotesFonte)) {
+                            $conteudoScrapeado .= "\n═══ CITAÇÕES DIRETAS DA FONTE (use como <blockquote> com <cite> quando autoridade da declaração agregar valor — ministros, presidentes, especialistas. NÃO inventar nem parafrasear — manter LITERAL com aspas) ═══\n";
+                            foreach (array_slice($quotesFonte, 0, 5) as $q) {
+                                $atrib = $q['atribuicao'] !== '' ? " | ATRIBUIÇÃO: {$q['atribuicao']}" : '';
+                                $conteudoScrapeado .= "- TEXTO: \"{$q['texto']}\"{$atrib}\n";
                             }
                         }
 
@@ -1468,6 +1965,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         $wpUrlPad = $cfgLocalPad['wp_url'] ?? '';
                         $padroesPersistidos = $padroesStore->carregar($wpUrlPad);
                         $padroesEvitar = array_values(array_unique(array_merge($padroesPersistidos, $padroesUsadosCluster)));
+                        // 2026-05-07 #1862: ângulos do H2 final (1-16) já usados recentemente neste site (anti-footprint editorial)
+                        $angulosRecentes = $angulosStore->carregar($wpUrlPad);
                         // Títulos recentes do site + títulos já gerados nesta rodada (cluster/batch)
                         $titulosRecentes = $padroesStore->carregarTitulos($wpUrlPad, 5);
                         foreach ($postsDaRodada as $pr) {
@@ -1476,12 +1975,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         }
                         $titulosRecentes = array_slice($titulosRecentes, 0, 5);
 
-                        // Retry com ESCALAÇÃO: 1ª=32K tokens/12K chars, 2ª=48K tokens/8K chars (conteúdo mais curto
-                        // + mais espaço de output pra artigos gigantes tipo "58 mensagens do Dia do Trabalhador").
-                        // Retry TAMBÉM dispara se validador de datas detectar divergência título/corpo (compliance Discover).
+                        // SERP analysis: top 10 títulos da 1ª página do Google pra esta keyword
+                        // (referência de autoridade). Filtra contextuais (remove site:, link:, query operators
+                        // residuais). Falha silenciosa se Serper indisponível ou sem saldo.
+                        $titulosSerp = [];
+                        try {
+                            if (!empty($cfg['serper_api_key'])) {
+                                $serperLocal = new Serper($cfg['serper_api_key']);
+                                $queryServ = trim($keyword) !== '' ? trim($keyword) : trim($tituloRss);
+                                if ($queryServ !== '') {
+                                    $resp = $serperLocal->search($queryServ, 10);
+                                    foreach (($resp['organic'] ?? []) as $org) {
+                                        $t = trim((string)($org['title'] ?? ''));
+                                        if ($t === '' || mb_strlen($t) < 15 || mb_strlen($t) > 130) continue;
+                                        // Remove sufixos comuns de portal ("- Portal X", "| Site Y")
+                                        $t = preg_replace('/\s*[\|\-–—]\s*[A-Z][\w\s\.]{2,40}$/u', '', $t) ?? $t;
+                                        // Filtra títulos com query operators residuais
+                                        if (preg_match('/\b(site:|link:|inurl:|intitle:)/i', $t)) continue;
+                                        $titulosSerp[] = $t;
+                                    }
+                                    $titulosSerp = array_values(array_unique(array_slice($titulosSerp, 0, 10)));
+                                }
+                            }
+                        } catch (Throwable $e) { /* sem SERP: prompt usa fallback "Nenhum" */ }
+
+                        // Retry com ESCALAÇÃO (otimizado 2026-05-06: 32K era gordura — artigos saem ~1500-2000 palavras = ~4K tokens output).
+                        // 1ª=12K tokens/12K chars (cobertura confortável), 2ª=16K/8K (caso artigo gigante tipo "58 mensagens").
+                        // Reduz tempo de geração + buffer alocado, mantém qualidade.
                         $tentativasConfig = [
-                            ['maxTokens' => 32000, 'conteudoLimit' => 12000],
-                            ['maxTokens' => 48000, 'conteudoLimit' => 8000],
+                            ['maxTokens' => 12000, 'conteudoLimit' => 12000],
+                            ['maxTokens' => 16000, 'conteudoLimit' => 8000],
                         ];
                         $maxTentativas = count($tentativasConfig);
                         $artigo = null;
@@ -1497,7 +2020,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                                     (string)($cfgLocalPad['amazon_affiliate_url'] ?? ''),
                                     $cfgT['maxTokens'], $cfgT['conteudoLimit'],
                                     (array)($item['_dna'] ?? []),
-                                    $modoCluster ? ($clusterPillar ?? null) : null
+                                    $modoCluster ? ($clusterPillar ?? null) : null,
+                                    $titulosSerp,
+                                    $angulosRecentes
                                 );
                                 if (empty($artigo['content_html'])) {
                                     $ultimoErro = 'HTML vazio';
@@ -1533,10 +2058,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                             throw new RuntimeException("DebateBuilder falhou após {$maxTentativas} tentativas: {$ultimoErro}");
                         }
                         $html = $artigo['content_html'];
+
+                        /* TRACING PERMANENTE — 2026-05-07 auditoria autoFixForcarP3 #2369-2373:
+                         * Registra contagem de P na intro APÓS cada autoFix, num arquivo único por
+                         * site/dia. Permite identificar pós-mortem qual etapa derruba 3P→2P.
+                         * Custo: 6 arquivo_appends por geração (~5KB/dia). Pode ser desativado
+                         * setando ENV CLONAIS_TRACE_AUTOFIX=0. */
+                        $clonaisTrace = !($_ENV['CLONAIS_TRACE_AUTOFIX'] ?? '') === '0';
+                        $contarPIntro = function($h) {
+                            if (!preg_match('/<h2/i', $h, $m, PREG_OFFSET_CAPTURE)) return -1;
+                            $intro = preg_replace('/<div[^>]*class=["\'][^"\']*(?:aviso-bloqueado-gate|leia-mais-box)[^"\']*["\'][^>]*>.*?<\/div>/is', '', substr($h, 0, $m[0][1]));
+                            preg_match_all('/<p\b([^>]*)>(.*?)<\/p>/is', $intro, $pp, PREG_SET_ORDER);
+                            $n = 0;
+                            foreach ($pp as $row) {
+                                if (preg_match('/class\s*=\s*[\'"][^\'"]*(?:resposta-direta|snippet-resumo|leia-mais|leia-tambem|alerta-critico|fonte-rodape)[^\'"]*[\'"]/i', $row[1])) continue;
+                                if (str_word_count(trim(strip_tags($row[2]))) < 6) continue;
+                                $n++;
+                            }
+                            return $n;
+                        };
+                        $traceAutoFix = function($etapa) use (&$html, $contarPIntro, $clonaisTrace) {
+                            if (!$clonaisTrace) return;
+                            $n = $contarPIntro($html);
+                            $logF = __DIR__ . '/data/debug/autofix_trace_' . date('Y-m-d') . '.log';
+                            @file_put_contents($logF, '[' . date('H:i:s') . "] {$etapa}: intro_p={$n}\n", FILE_APPEND);
+                        };
+
+                        $traceAutoFix('00_sonnet_original');
+
                         // Safety net: quebra <p> com >40 palavras em múltiplos parágrafos na fronteira de frase
-                        $html = quebrarParagrafosLongos($html, 40);
+                        $html = quebrarParagrafosLongos($html, 999);
+                        $traceAutoFix('01_quebrar');
                         // Sanitiza travessões (—/–) no texto — assinatura de IA; vira vírgula
                         $html = sanitizarTravessoes($html);
+                        $traceAutoFix('02_sanitizar');
+
+                        /* AUTO-FIX PROGRAMÁTICO — correções mecânicas DETERMINÍSTICAS:
+                         *   1. Mover P4+ (sem class) pra DEPOIS do 1º <h2>
+                         *   2. Forçar P3 quando intro tem 2P (divide P maior em duas frases)
+                         *   3. Mover <p class='resposta-direta'> da intro pra ANTES do rodapé
+                         *   4. Remover reticências excessivas (>1 ocorrência) */
+                        $html = autoFixIntroInflada($html);
+                        $traceAutoFix('03_autoFixIntroInflada');
+                        $html = autoFixForcarP3($html);
+                        $traceAutoFix('04_autoFixForcarP3');
+                        $html = autoFixDiaSemanaInconsistente($html);
+                        $traceAutoFix('05_autoFixDiaSemana');
+                        $html = autoFixRdParaFechamento($html);
+                        $traceAutoFix('06_RdFechamento');
+                        $html = autoFixReticenciasExcessivas($html);
+                        $traceAutoFix('07_Reticencias');
+                        $html = autoFixRemoverAtribuicaoVeiculo($html);
+                        $traceAutoFix('08_RemoverAtribuicao');
+                        $html = autoFixSanitizarJsonLd($html); // 2026-05-07 #2371: GSC "Tipo de valor incorreto" — limpa <br>/<p> dentro de scripts JSON-LD
+                        $traceAutoFix('08b_sanitizarJsonLd');
+                        // AutoFix: remove rodapé legado "<p>Fonte: ...</p>" (decisão 2026-05-05: só rodapé autoral).
+                        $html = preg_replace('#<p\b[^>]*>\s*Fonte\s*:.*?</p>#is', '', $html) ?? $html;
+                        // 2026-05-06: pass extra de autoFix RD APÓS toda manipulação anterior.
+                        // Garante RD ANTES do rodapé autoral (caso #1819: scripts JSON-LD ou outras injeções
+                        // empurram RD pro final). Idempotente — não muda nada se já está correto.
+                        $html = autoFixRdParaFechamento($html);
 
                         /* GATE PÓS-PROCESSAMENTO — bug observado 2026-05-04 #2176:
                          * quebrarParagrafosLongos pode transformar 3p (OK no AntiAI dentro do
@@ -1561,7 +2142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                             if ($temForcaRegenFinal && ($reportFinal['severity'] ?? '') === 'fail') {
                                 $marcador = 'RASCUNHO BLOQUEADO PELO ANTIAIVALIDATOR (PÓS-PROCESSAMENTO)';
                                 if (stripos($html, $marcador) === false && stripos($html, 'RASCUNHO BLOQUEADO') === false) {
-                                    $aviso = "<div style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                    $aviso = "<div class='aviso-bloqueado-gate' style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
                                           . "<strong style='color:#991b1b;font-size:15px'>🚨 {$marcador}</strong>"
                                           . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>Issues críticos detectados APÓS quebrar/sanitizar (validador interno do DebateBuilder pode não ter visto). REVISE MANUALMENTE antes de publicar:</p>"
                                           . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
@@ -1574,6 +2155,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                                 }
                             }
                         } catch (Throwable $e) { /* gate pós-proc não bloqueia geração */ }
+
+                        /* GATE NUMÉRICO PRÉ-PUBLISH (2026-05-07 #2371): valida 5 critérios mínimos
+                         * de autoridade antes de salvar. NUNCA bloqueia o save em draft (Sonnet já gastou),
+                         * mas marca com flags claras pra revisão manual. NÃO permite publish automático
+                         * quando crítico. */
+                        try {
+                            if (!class_exists('RankMathSeoValidator')) require_once __DIR__ . '/lib/RankMathSeoValidator.php';
+                            $kwGate = RankMathSeoValidator::derivarKeywordDoTitulo((string)($artigo['title'] ?? $keyword));
+                            $kwGateRefinada = RankMathSeoValidator::escolherMelhorKeyword($kwGate, $html);
+                            $rGate = RankMathSeoValidator::validar($html, [
+                                'titulo' => (string)($artigo['title'] ?? $keyword),
+                                'meta_title' => (string)($artigo['title'] ?? ''),
+                                'meta_desc' => (string)($artigo['meta_description'] ?? ''),
+                                'slug' => (string)($artigo['slug'] ?? ''),
+                                'focus_keyword' => $kwGateRefinada,
+                                'featured_alt' => '',
+                                'own_domain' => $cfgLocalPad['wp_url'] ?? '',
+                            ]);
+                            // Conta P na intro
+                            $pIntroFinal = $contarPIntro($html);
+                            // Critérios CRÍTICOS (qualquer um = post não vai pra publish auto)
+                            $criticosNum = [];
+                            if ($pIntroFinal !== -1 && $pIntroFinal !== 3) $criticosNum[] = "intro_p={$pIntroFinal} (esperado 3)";
+                            if (($rGate['score'] ?? 0) < 60) $criticosNum[] = "rankmath_score=" . ($rGate['score'] ?? 0) . " (mínimo 60)";
+                            if (($rGate['densidade'] ?? 0) < 0.3) $criticosNum[] = "kw_densidade=" . ($rGate['densidade'] ?? 0) . "% (mínimo 0.3%)";
+                            if (($rGate['densidade'] ?? 0) > 3.0) $criticosNum[] = "kw_densidade=" . ($rGate['densidade'] ?? 0) . "% (máximo 3% — stuffing)";
+                            // Footprint H2 final
+                            if (preg_match_all('/<h2[^>]*>(.*?)<\/h2>/is', $html, $hsG) && !empty($hsG[1])) {
+                                $ulth2 = trim(strip_tags(end($hsG[1])));
+                                if (preg_match('/^\s*o\s+que\s+.{2,80}\s+(sinaliza|muda|mostra|indica|representa|significa|revela)/iu', $ulth2)) {
+                                    $criticosNum[] = "footprint_h2_final='{$ulth2}'";
+                                }
+                            }
+                            if (!empty($criticosNum)) {
+                                $tituloLog .= ' [🚨CRITICO:' . count($criticosNum) . ']';
+                                @file_put_contents(__DIR__ . '/data/debug/gate_critico_' . date('Y-m-d') . '.log',
+                                    '[' . date('H:i:s') . '] kw=' . $kwGateRefinada . ' | issues=' . implode(' | ', $criticosNum) . "\n", FILE_APPEND);
+                                if (stripos($html, 'aviso-bloqueado-gate') === false) {
+                                    $avisoNum = "<div class='aviso-bloqueado-gate' style='background:#fef2f2;border:2px solid #dc2626;border-left:6px solid #b91c1c;border-radius:8px;padding:14px 18px;margin:0 0 18px;'>"
+                                        . "<strong style='color:#991b1b;font-size:15px'>🚨 GATE NUMÉRICO BLOQUEOU PUBLICAÇÃO AUTOMÁTICA</strong>"
+                                        . "<p style='margin:6px 0 0;color:#7f1d1d;font-size:13px'>" . count($criticosNum) . " critério(s) crítico(s) abaixo do mínimo. Revise antes de mudar status pra publish:</p>"
+                                        . "<ul style='margin:8px 0 0;color:#7f1d1d;font-size:13px;padding-left:22px'>";
+                                    foreach ($criticosNum as $cN) $avisoNum .= '<li>' . htmlspecialchars($cN) . '</li>';
+                                    $avisoNum .= '</ul></div>';
+                                    $html = $avisoNum . $html;
+                                }
+                            }
+                        } catch (Throwable $e) { /* gate numérico não bloqueia geração */ }
 
                         foreach ($artigo['_debate_log'] ?? [] as $dl) $tituloLog .= " [{$dl}]";
                         $keyword = $artigo['title'] ?? $keyword;
@@ -1608,6 +2237,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                                 $padroesStore->registrar($wpUrlPad, $pt, (string)($artigo['title'] ?? ''));
                                 $evitadosLog = !empty($padroesEvitar) ? ' evit:' . implode(',', $padroesEvitar) : '';
                                 $tituloLog .= " [P{$pt}{$evitadosLog}]";
+                            }
+                        }
+
+                        // 2026-05-07 #1862: identifica e registra o ângulo do H2 final usado neste artigo (anti-footprint)
+                        if (preg_match_all('/<h2[^>]*>(.*?)<\/h2>/is', $html, $h2sFinal) && !empty($h2sFinal[1])) {
+                            $ultimoH2 = trim(strip_tags(end($h2sFinal[1])));
+                            $anguloId = AngulosH2Final::inferirAngulo($ultimoH2);
+                            if ($anguloId > 0) {
+                                $angulosStore->registrar($wpUrlPad, $anguloId, $ultimoH2);
+                                $tituloLog .= " [A{$anguloId}]";
                             }
                         }
 
@@ -1687,12 +2326,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         $metaDescFinal = (string)($artigo['meta_description'] ?? '');
                         $tituloLog .= " [rmKw:{$rmKw}]";
 
+                        $traceAutoFix('99_payload_final');
+                        // 2026-05-07: SAFETY NET — se intro caiu pra <3 P até este ponto, força um split
+                        // antes do save. Última oportunidade de salvar 3P sem regen Sonnet (custo zero).
+                        if (function_exists('autoFixForcarP3')) {
+                            $intP = $contarPIntro($html);
+                            if ($intP === 2) {
+                                $htmlBefore = $html;
+                                $html = autoFixForcarP3($html);
+                                $intPDepois = $contarPIntro($html);
+                                if ($html !== $htmlBefore) {
+                                    @file_put_contents(__DIR__ . '/data/debug/autofix_trace_' . date('Y-m-d') . '.log',
+                                        '[' . date('H:i:s') . "] 99b_safety_split: intro_p={$intPDepois} (forçado pré-payload)\n", FILE_APPEND);
+                                    $tituloLog .= ' [P3-forced]';
+                                }
+                            }
+                        }
+                        // 2026-05-07: extrai schemas JSON-LD do HTML pra post meta (mu-plugin injeta no <head>).
+                        // Resolve bug GSC "Tipo de valor incorreto" — corpo é vulnerável a wpautop/editores visuais.
+                        [$html, $clonaisSchemas] = autoFixExtrairSchemasParaMeta($html);
+                        $clonaisSchemasJson = !empty($clonaisSchemas) ? json_encode($clonaisSchemas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+                        if ($clonaisSchemasJson !== '') $tituloLog .= ' [schemas:' . count($clonaisSchemas) . '→meta]';
+                        $traceAutoFix('99c_schemas_para_meta');
+
                         $payload = ['title'=>$titulo,'slug'=>$slugFinal,'content'=>$html,'excerpt'=>$metaDescFinal,'status'=>'draft',
                             'meta'=>['rank_math_title'=>$titulo,'rank_math_description'=>$metaDescFinal,'rank_math_focus_keyword'=>$rmKw,
                                      'rank_math_facebook_title'=>$titulo,'rank_math_facebook_description'=>$metaDescFinal,
                                      'rank_math_twitter_title'=>$titulo,'rank_math_twitter_description'=>$metaDescFinal,
                                      'rank_math_rich_snippet'=>'off',
-                                     '_clonais_image_overlay'=>$overlayChamativo]];
+                                     '_clonais_image_overlay'=>$overlayChamativo,
+                                     '_clonais_schemas'=>$clonaisSchemasJson]];
                         if (!empty($artigo['tags'])) { try { $payload['tags']=$wp->resolverTags($artigo['tags']); } catch(Throwable $e){} }
                         if (!empty($artigo['categories'])) {
                             try {
@@ -1831,8 +2494,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         }
                         // NewsArticle schema removido — Rank Math gera automaticamente
 
-                        $resp = $wp->criarPost($payload);
+                        // Autor padrão do site (anti-PBN: cada site declara autor distinto via persona)
                         $cfgUse = $modoCluster ? ($cfgItem ?? $cfg) : $cfg;
+                        if (!empty($cfgUse['default_post_author_id'])) {
+                            $payload['author'] = (int)$cfgUse['default_post_author_id'];
+                        }
+                        $resp = $wp->criarPost($payload);
                         // link_planejado = baseado em slugFinal (o que os irmãos já embutiram como backlink)
                         // link_real = reconstruído com $resp['slug'] (slug REAL salvo pelo WP) — evita ?p=ID de drafts
                         $slugReal = (!empty($resp['slug'])) ? $resp['slug'] : $slugFinal;
@@ -1991,9 +2658,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
                         $html = $artigo['content_html'] ?? '';
                         if ($html === '') throw new RuntimeException('Claude retornou content_html vazio');
                         // Safety net: quebra <p> com >40 palavras em múltiplos parágrafos
-                        $html = quebrarParagrafosLongos($html, 40);
+                        $html = quebrarParagrafosLongos($html, 999);
                         // Sanitiza travessões (—/–) no texto — assinatura de IA; vira vírgula
                         $html = sanitizarTravessoes($html);
+                        // Auto-fix programático: estrutura intro + RD única + reticências
+                        $html = autoFixIntroInflada($html);
+                        $html = autoFixForcarP3($html); // 2026-05-06 #1839: divide P2 em P2+P3 quando intro tem só 2P
+                        $html = autoFixDiaSemanaInconsistente($html); // 2026-05-07 #1862: "nesta quarta" → "ontem"/"no dia X"
+                        $html = autoFixRdParaFechamento($html);
+                        $html = autoFixReticenciasExcessivas($html);
+                        $html = autoFixRemoverAtribuicaoVeiculo($html);
 
                         // DEBATE CONTEÚDO: GPT avalia → se <10, Claude refina (máx 2 rounds)
                         $conteudoLog = '';
@@ -2227,8 +2901,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'load_
 
                         // NewsArticle removido — Rank Math gera via WP
 
-                        $resp = $wp->criarPost($payload);
+                        // Autor padrão do site (anti-PBN: cada site declara autor distinto via persona)
                         $cfgUse = $modoCluster ? ($cfgItem ?? $cfg) : $cfg;
+                        if (!empty($cfgUse['default_post_author_id'])) {
+                            $payload['author'] = (int)$cfgUse['default_post_author_id'];
+                        }
+                        $resp = $wp->criarPost($payload);
                         $r['id']     = $resp['id'] ?? null;
                         // slug_real vem de $resp['slug'] (slug REAL salvo pelo WP) — evita ?p=ID de drafts
                         $slugReal      = (!empty($resp['slug'])) ? $resp['slug'] : $slugFinal;

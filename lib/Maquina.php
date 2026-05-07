@@ -447,6 +447,10 @@ class Maquina
                     'meta'       => $this->metaRankMath($artigo),
                 ];
                 if ($featuredId) $payload['featured_media'] = $featuredId;
+                // Autor padrão do site (anti-PBN: cada site declara autor distinto via persona)
+                if (!empty($this->cfg['default_post_author_id'])) {
+                    $payload['author'] = (int)$this->cfg['default_post_author_id'];
+                }
 
                 $this->log("📤 Criando draft [$fmtNome] no WordPress...");
                 $post = $this->wp->criarPost($payload);
