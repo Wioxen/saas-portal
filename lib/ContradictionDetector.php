@@ -17,6 +17,19 @@ class ContradictionDetector
 {
     private const ALIASES_DIR = __DIR__ . '/../data/entity_pages_cache';
 
+    /**
+     * Termos de "programa/evento" GENÉRICOS — não bastam pra estabelecer contexto comum.
+     * Sem qualificador específico (sigla institucional, número de edital), 2 posts sobre
+     * "edital" podem ser editais COMPLETAMENTE diferentes. Falso positivo em #4770/#5010.
+     */
+    private const CONTEXTOS_GENERICOS = [
+        'edital', 'edital oficial', 'edital publicado', 'edital aberto', 'edital nacional',
+        'concurso', 'concurso público', 'processo seletivo',
+        'programa federal', 'programa nacional', 'programa de governo',
+        'curso', 'cursos', 'curso técnico', 'curso gratuito', 'curso ead',
+        'inscrição', 'inscrições',
+    ];
+
     private Wordpress $wp;
     private string $siteSlug;
     private int $janelaDias;
@@ -50,9 +63,12 @@ class ContradictionDetector
 
         foreach ($aliasesMap as $pageId => $info) {
             $tipo = (string)($info['tipo'] ?? 'entity');
-            $primaryTerm = $tipo === 'entity'
-                ? (string)($info['nome'] ?? $info['fullname'] ?? '')
-                : (string)($info['fullname'] ?? '');
+            // Concepts (Bolsa de Estudo, EAD, Vestibular) são abrangentes por natureza.
+            // Posts diferentes mencionam "Bolsa de Estudo" como tópico tangencial sem ser
+            // sobre o mesmo edital. Calibração 07/05: pular concepts. Falso positivo #4770/#5010.
+            if ($tipo !== 'entity') continue;
+
+            $primaryTerm = (string)($info['nome'] ?? $info['fullname'] ?? '');
             if ($primaryTerm === '') continue;
 
             $aliases = (array)($info['aliases'] ?? []);
@@ -165,14 +181,28 @@ class ContradictionDetector
     }
 
     /**
-     * Contexto comum = sobreposição de programas_eventos (mesmo edital citado).
-     * Lowercase + trim pra match difuso.
+     * Contexto comum = sobreposição de programas_eventos com qualificador específico
+     * (sigla institucional, número de edital, ano). Termos genéricos como "edital" sozinhos
+     * NÃO contam — 2 posts sobre "edital" podem ser editais completamente distintos.
+     * Calibrado 07/05 após falso positivo #4770/#5010 ("edital oficial" como overlap).
      */
     private function contextoComum(array $fatosA, array $fatosB): array
     {
         $a = array_map(fn($s) => mb_strtolower(trim($s)), $fatosA['programas_eventos'] ?? []);
         $b = array_map(fn($s) => mb_strtolower(trim($s)), $fatosB['programas_eventos'] ?? []);
-        return array_values(array_intersect($a, $b));
+        $overlap = array_intersect($a, $b);
+        // Filtra termos genéricos
+        $especifico = array_filter($overlap, function ($t) {
+            $t = trim($t);
+            if (in_array($t, self::CONTEXTOS_GENERICOS, true)) return false;
+            // Aceita se tem número (ex: "edital 12/2026") OU sigla maiúscula 3+ letras (IFSP, MEC)
+            if (preg_match('/\d/', $t)) return true;
+            if (preg_match('/\b[A-Z]{3,}\b/', $t)) return true;
+            // Aceita expressões compostas com ≥3 palavras (provavelmente específicas)
+            if (count(preg_split('/\s+/', $t)) >= 3) return true;
+            return false;
+        });
+        return array_values($especifico);
     }
 
     /**
