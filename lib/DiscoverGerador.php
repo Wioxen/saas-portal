@@ -1823,6 +1823,7 @@ class DiscoverGerador
         }
         if ($trendId > 0) {
             $extras = [
+                'post_id'         => $postId,
                 'url_post'        => $editUrl,
                 'titulo'          => $titulo,
                 'publicado_em'    => date('Y-m-d H:i:s'),

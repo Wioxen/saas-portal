@@ -534,6 +534,7 @@ class DiscoverGeradorGPT
         }
         if ($trendId > 0) {
             $this->db->updateStatus($trendId, $statusFinal, [
+                'post_id'         => $postId,
                 'url_post'        => $editUrl,
                 'titulo'          => $titulo,
                 'publicado_em'    => date('Y-m-d H:i:s'),
