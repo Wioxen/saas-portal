@@ -84,6 +84,13 @@ return [
         // FRESHNESS: só trends capturados nas últimas N horas viram post.
         // Default 24h pra evitar gerar matérias com base em fontes velhas.
         'trend_max_idade_horas' => 24,
+        // Wiki-Aware Internal Linking (Onda 2 llm-wiki) — entity/concept pages /entidade/X/, /conceito/X/
+        'entity_pages_enabled'     => true,
+        'entity_pages_parent_slugs' => ['entidade', 'conceito'],
+        'entity_pages_max_links'   => 2,
+        // Autor padrão pros posts NOVOS (07/05): Equipe Como Comprar (user_id=4, role editor).
+        // Substitui author=admin (#1) nos posts novos. Genérico anti-PBN.
+        'default_post_author_id'   => 4,
     ],
 	'vagasebeneficios' => [
         'name'              => 'Vagas e Beneficios',
@@ -118,7 +125,9 @@ return [
             'vestibular fuvest', 'vestibular unicamp', 'nota mec',
         ],
         'persona' => [
-            'autor'            => 'Redação Vagas & Benefícios',
+            'autor'            => 'Igor Gusmão',
+            'autor_url'        => 'https://www.linkedin.com/in/igor-gusmão-1a0155409',
+            'autor_sameas'     => ['https://www.linkedin.com/in/igor-gusmão-1a0155409'],
             'voz'              => 'jornalismo de serviço público, didática sem paternalismo, foca no passo-a-passo acionável',
             'especialidade'    => 'INSS, Bolsa Família, BPC, FGTS, PIS/PASEP, Auxílio Gás, calendários de pagamento, concursos, vagas CLT',
             'audiencia'        => 'trabalhadores CLT, autônomos, aposentados, famílias de baixa renda que dependem de benefícios',
@@ -127,10 +136,17 @@ return [
             'termos_proibidos' => ['milagre', 'receba sem burocracia', 'golpe do governo', 'vai perder se não correr'],
             'cta_estilo'       => 'consultar calendário · pedir no Meu INSS · simular benefício · ver edital',
         ],
+        // Autor padrão pros posts NOVOS (07/05: Igor Gusmão user_id=3).
+        // Posts antigos mantêm Paloma (#2) preservando autoridade histórica.
+        'default_post_author_id'   => 3,
         'author_box_inline'        => false,
         'breadcrumb_inline'        => false,
         'rankmath_handles_schemas' => true,
         'trend_max_idade_horas'    => 24,
+        // Wiki-Aware Internal Linking (Onda 2 llm-wiki) — entity/concept pages /entidade/X/, /conceito/X/
+        'entity_pages_enabled'     => true,
+        'entity_pages_parent_slugs' => ['entidade', 'conceito'],
+        'entity_pages_max_links'   => 2,
      ],
 	 // -------- cursosenacgratuito (educação técnica/profissionalizante) --------
 	 'cursosenac' => [
@@ -165,6 +181,8 @@ return [
         ],
         'persona' => [
             'autor'            => 'Paloma Gusmão, doutora em educação pela USP, editora especializada em políticas públicas educacionais',
+            'autor_url'        => 'https://www.linkedin.com/in/paloma-gusm%C3%A3o-0aa56a189',
+            'autor_sameas'     => ['https://www.linkedin.com/in/paloma-gusm%C3%A3o-0aa56a189'],
             'wp_user_id'       => 2,
             'voz'              => 'jornalismo acadêmico — análise editorial factual, sem dramatização. Cita fontes oficiais com referência (Inep, MEC, Senac, edital nº X). Tom de coluna de jornalismo educacional sério (Folha de SP, Estadão, Nexo).',
             'especialidade'    => 'política educacional brasileira, ENEM, SISU, ProUni, FIES, cursos gratuitos Senac/Senai, vestibulares, olimpíadas, concursos nível médio/técnico, financiamento estudantil, evasão escolar, cotas',
@@ -174,6 +192,9 @@ return [
             'termos_proibidos' => ['fácil passar', 'vagas sobrando', 'sem estudo você entra', 'cola', 'filtro que barra', 'critério que pode barrar', 'regra que impede', 'erro que elimina', 'detalhe que derruba'],
             'cta_estilo'       => 'pedir isenção · consultar edital · baixar apostila oficial · inscrever até [data]',
         ],
+        // Autor padrão pros posts NOVOS (07/05: Paloma Gusmão user_id=2).
+        // Mesmo padrão que guiadoscursos/vagasebeneficios. Substitui author=admin (#1).
+        'default_post_author_id'   => 2,
         // RankMath gera NewsArticle/BreadcrumbList/Person/Organization/WebPage no <head>
         // E o tema renderiza author box + breadcrumb na sidebar/topo do post.
         // Se gerarmos esses elementos inline no content = duplicação visual + DOM bagunçado.
@@ -190,6 +211,12 @@ return [
         // de "title casa com keyword âncora" elimina links bons (caso #4995: Fatec EAD não
         // tinha siblings com "Fatec" mas tinha 5 sobre EAD/Senac/IFSertão — todos relevantes).
         'internal_links_strict_anchor' => false,
+        // Wiki-Aware Internal Linking (Onda 2 llm-wiki): liga posts a entity/concept pages
+        // (/entidade/X/, /conceito/X/) ANTES do linker contextual rodar. Concentra PageRank
+        // nos hubs (IFSP, Senac, MEC, EAD, Vestibular, Curso Técnico).
+        'entity_pages_enabled'        => true,
+        'entity_pages_parent_slugs'   => ['entidade', 'conceito'],
+        'entity_pages_max_links'      => 2,
         // Threshold mais baixo pra educação — nicho informativo/crítico tem score natural menor
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,
@@ -251,7 +278,9 @@ return [
             'enem inep', 'inscrição enem',
         ],
         'persona' => [
-            'autor'            => 'Redação Guia dos Cursos',
+            'autor'            => 'Ivan Alves',
+            'autor_url'        => 'https://www.linkedin.com/in/ivan-alves-05a185176/',
+            'autor_sameas'     => ['https://www.linkedin.com/in/ivan-alves-05a185176/'],
             'voz'              => 'mentor de carreira, pragmático sobre ROI de cada formação, sem romantizar diploma',
             'especialidade'    => 'graduação EAD/presencial, pós e MBA, certificações profissionais, bolsas e descontos, comparativos de universidades',
             'audiencia'        => 'adultos 20-45 pensando em graduação/pós, profissionais em transição, quem busca qualificação paga',
@@ -260,10 +289,17 @@ return [
             'termos_proibidos' => ['basta ter o diploma', 'faculdade fácil', 'salário garantido', 'sucesso certo'],
             'cta_estilo'       => 'comparar faculdades · simular financiamento · pedir desconto · ver nota MEC',
         ],
+        // Autor padrão pros posts NOVOS (07/05 swap: Paloma → Ivan Alves user_id=3).
+        // Posts antigos mantêm Paloma (#2) preservando autoridade histórica.
+        'default_post_author_id'   => 3,
         'author_box_inline'        => false,
         'breadcrumb_inline'        => false,
         'rankmath_handles_schemas' => true,
         'trend_max_idade_horas'    => 24,
+        // Wiki-Aware Internal Linking (Onda 2 llm-wiki) — entity/concept pages /entidade/X/, /conceito/X/
+        'entity_pages_enabled'     => true,
+        'entity_pages_parent_slugs' => ['entidade', 'conceito'],
+        'entity_pages_max_links'   => 2,
      ],
      'leaodabarra' => [
          'name'              => 'Leão da Barra',
@@ -470,6 +506,15 @@ return [
              'Ronald'                => '/jogador-ronald/',
              // (jogadores menos icônicos não no glossary pra evitar spam de links)
          ],
+         // Wiki-Aware Internal Linking (Onda 2 llm-wiki) — entity/concept pages /entidade/X/, /conceito/X/
+         // Complementa internal_link_glossary (que cobre termos canônicos do nicho); EntityPageLinker
+         // foca em hubs WP novos (EC Vitória, CBF, Brasileirão, Copa do Nordeste, Ba-Vi, Barradão).
+         'entity_pages_enabled'     => true,
+         'entity_pages_parent_slugs' => ['entidade', 'conceito'],
+         'entity_pages_max_links'   => 2,
+         // Autor padrão pros posts NOVOS (07/05): Redação Leão da Barra (user_id=3, role author — já existia).
+         // Substitui author=admin (#1) nos posts novos. Genérico anti-PBN.
+         'default_post_author_id'   => 3,
      ],
 	 'ondecompraragora' => [
          'name'              => 'Onde comprar agora',
@@ -511,6 +556,13 @@ return [
          'author_box_inline'        => false,
          'breadcrumb_inline'        => false,
          'rankmath_handles_schemas' => true,
+         // Wiki-Aware Internal Linking (Onda 2 llm-wiki) — entity/concept pages /entidade/X/, /conceito/X/
+         'entity_pages_enabled'     => true,
+         'entity_pages_parent_slugs' => ['entidade', 'conceito'],
+         'entity_pages_max_links'   => 2,
+         // Autor padrão pros posts NOVOS (07/05): Redação Onde Comprar Agora (user_id=2, role editor).
+         // Substitui author=admin (#1) nos posts novos. Genérico anti-PBN.
+         'default_post_author_id'   => 2,
      ],
      'vafast' => [
          'name'              => 'VaFast',

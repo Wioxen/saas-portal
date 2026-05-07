@@ -1223,6 +1223,34 @@ class DiscoverGerador
                         $linksRemovidosAlucinados = count($valR['removidos'] ?? []);
                     } catch (Throwable $e) { /* não bloqueia */ }
 
+                    // 5a-bis) Wiki-Aware Internal Linking — entity pages (hubs /entidade/X/) PRIMEIRO
+                    //          Concentra PageRank nos hubs antes do contextual rodar.
+                    $entityLinksAplicados = 0;
+                    $entityLinksUrls = [];
+                    $entityLinksIds = [];
+                    if (!empty($cfgTrend['entity_pages_enabled'])) {
+                        try {
+                            require_once __DIR__ . '/EntityPageLinker.php';
+                            $parents = $cfgTrend['entity_pages_parent_slugs']
+                                ?? $cfgTrend['entity_pages_parent_slug']
+                                ?? 'entidade';
+                            $epLinker = new EntityPageLinker(
+                                $this->wp,
+                                (string)($cfgTrend['site_slug'] ?? $cfgTrend['slug'] ?? 'default'),
+                                $parents,
+                                (int)($cfgTrend['entity_pages_max_links'] ?? 2)
+                            );
+                            $rEp = $epLinker->injetar($content);
+                            if ($rEp['aplicados'] > 0) {
+                                $this->wp->atualizarPost($postId, ['content' => $rEp['html']]);
+                                $content = $rEp['html'];
+                                $entityLinksAplicados = $rEp['aplicados'];
+                                $entityLinksUrls = $rEp['urls'] ?? [];
+                                $entityLinksIds = $rEp['ids'] ?? [];
+                            }
+                        } catch (Throwable $e) { /* não bloqueia */ }
+                    }
+
                     // 5b) Interlinks internos STANDALONE — funcionam mesmo sem cluster formado
                     //     (cluster só tem siblings quando há 2+ posts do mesmo evento;
                     //     sem isso, o artigo saía sem NENHUM link interno contextual)
@@ -1260,7 +1288,7 @@ class DiscoverGerador
                                 $termosSeguros = array_merge($termosSeguros, $cfgTrend['nicho_termos']);
                             }
                             $linker->setTermosSemanticos($termosSeguros);
-                            $r = $linker->injetar($content, $termosLink, [], $postId);
+                            $r = $linker->injetar($content, $termosLink, $entityLinksIds, $postId);
                             if ($r['aplicados'] > 0) {
                                 $this->wp->atualizarPost($postId, ['content' => $r['html']]);
                                 $content = $r['html'];

@@ -182,10 +182,56 @@ class Wordpress
         return $this->request('GET', "/pages/{$id}?context=edit");
     }
 
+    /** Busca página por slug. Retorna primeira encontrada ou null. */
+    public function buscarPaginaPorSlug(string $slug, int $parentId = 0): ?array
+    {
+        $path = '/pages?slug=' . rawurlencode($slug) . '&per_page=5&status=publish,draft,private';
+        if ($parentId > 0) $path .= '&parent=' . $parentId;
+        try {
+            $r = $this->request('GET', $path);
+            if (is_array($r) && !empty($r)) return $r[0];
+        } catch (Throwable $e) { /* ignora */ }
+        return null;
+    }
+
     /** Atualiza campos de uma página existente. */
     public function atualizarPagina(int $id, array $payload): array
     {
         return $this->request('POST', "/pages/{$id}", $payload);
+    }
+
+    /**
+     * Lista páginas filhas de um parent (via slug ou ID). Default só status=publish.
+     * Resolve slug → id automaticamente se for string.
+     * Retorna [{id, slug, title, link}].
+     *
+     * @param string $statusList CSV de status WP (ex: 'publish' | 'publish,draft' | 'any').
+     */
+    public function listarEntityPages(string|int $parent, int $perPage = 100, string $statusList = 'publish'): array
+    {
+        $parentId = 0;
+        if (is_int($parent)) {
+            $parentId = $parent;
+        } elseif (is_string($parent) && $parent !== '') {
+            $p = $this->buscarPaginaPorSlug($parent);
+            if ($p && !empty($p['id'])) $parentId = (int)$p['id'];
+        }
+        if ($parentId === 0) return [];
+        $statusEnc = urlencode($statusList);
+        $path = "/pages?parent={$parentId}&per_page={$perPage}&status={$statusEnc}&orderby=title&order=asc";
+        try {
+            $resp = $this->request('GET', $path);
+        } catch (Throwable $e) { return []; }
+        $out = [];
+        foreach ((array)$resp as $p) {
+            $out[] = [
+                'id'    => (int)($p['id'] ?? 0),
+                'slug'  => (string)($p['slug'] ?? ''),
+                'title' => trim(strip_tags(html_entity_decode((string)($p['title']['rendered'] ?? '')))),
+                'link'  => (string)($p['link'] ?? ''),
+            ];
+        }
+        return $out;
     }
 
     /** Retorna dados de um media attachment (inclusive source_url). */

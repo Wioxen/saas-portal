@@ -308,6 +308,10 @@ class DiscoverGeradorGPT
                 ],
             ];
             if ($featuredId) $payloadPost['featured_media'] = $featuredId;
+            // Autor padrão do site (anti-PBN: cada site declara autor distinto via persona)
+            if (!empty($this->cfg['default_post_author_id'])) {
+                $payloadPost['author'] = (int)$this->cfg['default_post_author_id'];
+            }
             $postCriado = $this->wp->criarPost($payloadPost);
             $postId = (int)($postCriado['id'] ?? 0);
         } catch (Throwable $e) {
@@ -389,6 +393,31 @@ class DiscoverGeradorGPT
                 $linksRemovidosAlucinados = count($valR['removidos'] ?? []);
             } catch (Throwable $e) { /* não bloqueia */ }
 
+            // Wiki-Aware Internal Linking — entity pages PRIMEIRO (concentra PageRank nos hubs)
+            $entityLinksAplicados = 0;
+            $entityLinksIds = [];
+            if (!empty($cfgTrend['entity_pages_enabled'])) {
+                try {
+                    require_once __DIR__ . '/EntityPageLinker.php';
+                    $parents = $cfgTrend['entity_pages_parent_slugs']
+                        ?? $cfgTrend['entity_pages_parent_slug']
+                        ?? 'entidade';
+                    $epLinker = new EntityPageLinker(
+                        $this->wp,
+                        (string)($cfgTrend['site_slug'] ?? $cfgTrend['slug'] ?? 'default'),
+                        $parents,
+                        (int)($cfgTrend['entity_pages_max_links'] ?? 2)
+                    );
+                    $rEp = $epLinker->injetar($contentAtual);
+                    if ($rEp['aplicados'] > 0) {
+                        $this->wp->atualizarPost($postId, ['content' => $rEp['html']]);
+                        $contentAtual = $rEp['html'];
+                        $entityLinksAplicados = $rEp['aplicados'];
+                        $entityLinksIds = $rEp['ids'] ?? [];
+                    }
+                } catch (Throwable $e) { /* não bloqueia */ }
+            }
+
             // Interlinks internos standalone (funciona mesmo sem cluster formado)
             try {
                 require_once __DIR__ . '/DiscoverInternalLinks.php';
@@ -410,7 +439,7 @@ class DiscoverGeradorGPT
                         : [];
                     $termosSeguros = array_merge($termosSeguros, DiscoverInternalLinks::extrairNgramasSignificativos($contentAtual));
                     $linker->setTermosSemanticos($termosSeguros);
-                    $r = $linker->injetar($contentAtual, $termosLink, [], $postId);
+                    $r = $linker->injetar($contentAtual, $termosLink, $entityLinksIds, $postId);
                     if ($r['aplicados'] > 0) {
                         $this->wp->atualizarPost($postId, ['content' => $r['html']]);
                         $contentAtual = $r['html'];
