@@ -1,0 +1,66 @@
+sudo apt update
+sudo apt install nano
+sudo apt install cron
+
+crontab -e
+
+*/2 * * * * root php /app/scripts/tick_filas.php --quiet >> /var/log/tick.log 2>&1
+*/10 * * * *  php /app/scripts/pingo.php --site=vagasebeneficios --quiet && sleep 30 && php /app/scripts/pingo.php --site=leaodabarra --quiet >> /var/log/pingo.log 2>&1
+*/15 * * * * root php /app/scripts/auto_enqueue.php --quiet >> /var/log/fila.log 2>&1
+# === Calendário do Vitória (Camada 1 pós-jogo) ===
+# Sweep diário 08:00 BR (11:00 UTC) — atualiza próximos jogos
+0 11 * * * root php /app/scripts/atualizar_jogos.php >> /var/log/jogos.log 2>&1
+# A cada 1h só se próximo jogo <24h (D-1 / dia de jogo)
+17 * * * * root php /app/scripts/atualizar_jogos.php --so-se-perto >> /var/log/jogos.log 2>&1
+# === Cursosenacgratuito pingo (a cada 10 min) ===
+3,13,23,33,43,53 * * * * root php /app/scripts/pingo.php --site=cursosenac --quiet >> /var/log/pingo.log 2>&1
+*/10 * * * * root /app/scripts/pingo_sequencial.sh >> /var/log/pingo.log 2>&1
+
+
+  # Tick filas (a cada 2 min)
+  */2 * * * * root php /app/scripts/tick_filas.php --quiet >> /var/log/tick.log 2>&1
+
+  # Auto-enqueue (a cada 15 min)
+  */15 * * * * root php /app/scripts/auto_enqueue.php --quiet >> /var/log/fila.log 2>&1
+
+  # Pingo — todos os sites em sequência (a cada 10 min)
+  */10 * * * * root /app/scripts/pingo_sequencial.sh >> /var/log/pingo.log 2>&1
+
+  # Calendário do Vitória — diário 08:00 BR
+  0 11 * * * root php /app/scripts/atualizar_jogos.php >> /var/log/jogos.log 2>&1
+  # Calendário Vitória — D-1 (a cada 1h, só se próximo jogo <24h)
+  17 * * * * root php /app/scripts/atualizar_jogos.php --so-se-perto >> /var/log/jogos.log 2>&1
+
+  # === Update Detector — frescor de fatos (Onda 2 llm-wiki) ===
+  # Cada site em janela diferente (anti-PBN footprint). Cap 20 posts/dia/site.
+  # 1ª execução só cria baseline; 2ª+ detecta diff.
+  7 8 * * * root php /app/scripts/update_detector.php --site=cursosenac --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+  23 9 * * * root php /app/scripts/update_detector.php --site=vagasebeneficios --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+  41 10 * * * root php /app/scripts/update_detector.php --site=guiadoscursos --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+  17 14 * * * root php /app/scripts/update_detector.php --site=comocomprar --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+  53 15 * * * root php /app/scripts/update_detector.php --site=ondecompraragora --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+  29 17 * * * root php /app/scripts/update_detector.php --site=leaodabarra --confirm --max=20 --quiet >> /var/log/update_detector.log 2>&1
+
+  # === Contradiction Detector — diff de fatos entre posts mesma entidade (Onda 3 llm-wiki) ===
+  # Cria draft alerta no WP. Janela 7 dias. Horários espaçados por site.
+  37 11 * * * root php /app/scripts/contradiction_detector.php --site=cursosenac --confirm --janela=7 --quiet >> /var/log/contradiction.log 2>&1
+  19 13 * * * root php /app/scripts/contradiction_detector.php --site=vagasebeneficios --confirm --janela=7 --quiet >> /var/log/contradiction.log 2>&1
+  47 16 * * * root php /app/scripts/contradiction_detector.php --site=guiadoscursos --confirm --janela=7 --quiet >> /var/log/contradiction.log 2>&1
+
+  # === FAQ Hubs Updater — cresce FAQ dos entity/concept hubs (Onda 3 llm-wiki) ===
+  # Custo ZERO de API. Cada site em janela distinta (anti-PBN footprint).
+  13 6 * * * root php /app/scripts/atualizar_faq_hubs.php --site=cursosenac --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+  41 7 * * * root php /app/scripts/atualizar_faq_hubs.php --site=vagasebeneficios --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+  27 12 * * * root php /app/scripts/atualizar_faq_hubs.php --site=guiadoscursos --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+  9 18 * * * root php /app/scripts/atualizar_faq_hubs.php --site=leaodabarra --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+  53 19 * * * root php /app/scripts/atualizar_faq_hubs.php --site=comocomprar --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+  31 21 * * * root php /app/scripts/atualizar_faq_hubs.php --site=ondecompraragora --limite=50 --quiet >> /var/log/faq_hubs.log 2>&1
+
+  # === Knowledge Graph — page /knowledge-graph/ com Schema.org JSON-LD (Onda 3 llm-wiki) ===
+  # Semanal mas dias e horas distribuídos por site (anti-PBN footprint).
+  19 4 * * 1 root php /app/scripts/gerar_knowledge_graph.php --site=cursosenac --quiet >> /var/log/knowledge_graph.log 2>&1
+  43 5 * * 2 root php /app/scripts/gerar_knowledge_graph.php --site=vagasebeneficios --quiet >> /var/log/knowledge_graph.log 2>&1
+  11 6 * * 3 root php /app/scripts/gerar_knowledge_graph.php --site=guiadoscursos --quiet >> /var/log/knowledge_graph.log 2>&1
+  37 7 * * 4 root php /app/scripts/gerar_knowledge_graph.php --site=leaodabarra --quiet >> /var/log/knowledge_graph.log 2>&1
+  29 8 * * 5 root php /app/scripts/gerar_knowledge_graph.php --site=comocomprar --quiet >> /var/log/knowledge_graph.log 2>&1
+  51 9 * * 6 root php /app/scripts/gerar_knowledge_graph.php --site=ondecompraragora --quiet >> /var/log/knowledge_graph.log 2>&1
