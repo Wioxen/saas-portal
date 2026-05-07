@@ -2,6 +2,11 @@
 .env
 .env.local
 .env.*.local
+# Service account JSON do Google Cloud (Indexing API, etc.) — NUNCA commitar
+*-iam-gserviceaccount*.json
+gentle-post-*.json
+service-account-*.json
+google-credentials*.json
 
 # config.php é só wrapper de Env::get() — pode ir pro repo
 
