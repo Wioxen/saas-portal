@@ -70,6 +70,24 @@ if ($mockJson !== '') {
     }
     if (!$jogo) { fwrite(STDERR, "✗ jogo {$gameId} não encontrado\n"); exit(1); }
     echo "→ [1/7] Carregado do calendário\n";
+
+    // Anti-stale: data/hora podem estar desatualizadas (caso real 2026-05-08:
+    // hora #vit-flu estava 21:30 no JSON mas o jogo era 18h → texto+schema
+    // saíram errados). Aborta se scraped_at for antigo, a menos que --skip-stale-check.
+    $scrapedAt = $jogo['scraped_at'] ?? $jogo['_meta_jogo']['scraped_at'] ?? null;
+    if ($scrapedAt && empty($args['skip-stale-check'])) {
+        $diasDesdeAtualizacao = (time() - strtotime($scrapedAt)) / 86400;
+        if ($diasDesdeAtualizacao > 7) {
+            fwrite(STDERR, "✗ ABORT: scraped_at do jogo é " . round($diasDesdeAtualizacao, 1) . " dias atrás.\n"
+                . "  data='{$jogo['data']}' hora='{$jogo['hora']}' podem estar desatualizados.\n"
+                . "  Confirme via ge.globo / site oficial e atualize jogos_vitoria.json,\n"
+                . "  ou rode com --skip-stale-check pra forçar.\n");
+            exit(7);
+        }
+        if ($diasDesdeAtualizacao > 2) {
+            echo "  ⚠ AVISO: scraped_at há " . round($diasDesdeAtualizacao, 1) . "d — verifique data/hora antes de seguir\n";
+        }
+    }
 }
 
 $adv = $jogo['adversario']['nome'] ?? '?';
