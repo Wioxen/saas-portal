@@ -45,6 +45,8 @@ require_once __DIR__ . '/../lib/SourceTrustScore.php';
 require_once __DIR__ . '/../lib/SourceFidelityValidator.php';
 require_once __DIR__ . '/../lib/BroadcastEventBuilder.php';
 require_once __DIR__ . '/../lib/GoogleIndexingApi.php';
+require_once __DIR__ . '/../lib/JogosCalendario.php';
+require_once __DIR__ . '/../lib/JogoClusterLinker.php';
 
 $sitesGlobais = sitesDisponiveis();
 aplicarSite($cfg, $sitesGlobais, $siteSlug);
@@ -278,6 +280,14 @@ $builder = new BroadcastEventBuilder();
 $schema = $builder->montar($jogo, []);
 $contentComSchema = $contentHtml . $builder->renderizarScript($schema);
 
+// Cluster cross-link: se já existem outros posts do mesmo jogo (pos_jogo, etc.),
+// injeta bloco "Mais sobre Vitória x Adv" + Schema Series no fim
+$clusterLinker = new JogoClusterLinker(__DIR__ . '/../data/jogos_vitoria.json');
+if (!empty($jogo['posts_gerados']) && !$dryRun && !$mockJson) {
+    $wpTmp = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
+    $contentComSchema = $clusterLinker->injetarNoPost($jogo, 'pre_jogo', $contentComSchema, $wpTmp);
+}
+
 $titulo = $tituloPadrao;
 $slug = trim(preg_replace('/[^a-z0-9-]/', '-', strtolower(transliterator_transliterate('Any-Latin; Latin-ASCII', $titulo))), '-');
 $slug = substr($slug, 0, 70);
@@ -333,6 +343,20 @@ if ($payload['status'] === 'publish') {
     }
 } else {
     echo "   ⊘ Indexing API SKIP (post draft)\n";
+}
+
+// Cluster: registra post no calendário + backfill links nos irmãos
+if (!$mockJson && !empty($gameId)) {
+    $cal = new JogosCalendario(__DIR__ . '/../data/jogos_vitoria.json');
+    $registrou = $cal->registrarPostGerado($gameId, 'pre_jogo', $postId);
+    echo "   " . ($registrou ? "✓" : "⚠") . " Calendário: posts_gerados.pre_jogo={$postId}\n";
+
+    if (!empty($jogo['posts_gerados'])) {
+        $bf = $clusterLinker->backfillIrmaos($jogo, 'pre_jogo', $postId, $wp);
+        echo "   ✓ Cluster backfill: {$bf['atualizados']} irmão(s) atualizado(s)";
+        if (!empty($bf['erros'])) echo " (erros: " . count($bf['erros']) . ")";
+        echo "\n";
+    }
 }
 
 echo "\n═══ RESUMO ═══\n";

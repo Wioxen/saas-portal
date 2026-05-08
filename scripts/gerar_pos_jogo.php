@@ -31,6 +31,7 @@ require_once __DIR__ . '/../lib/AntiAIValidator.php';
 require_once __DIR__ . '/../lib/SourceFidelityValidator.php';
 require_once __DIR__ . '/../lib/InternalLinkGlossary.php';
 require_once __DIR__ . '/../lib/JogosCalendario.php';
+require_once __DIR__ . '/../lib/JogoClusterLinker.php';
 require_once __DIR__ . '/../lib/DiscoverPromptBuilder.php';
 require_once __DIR__ . '/../lib/AutoRevisor.php';
 require_once __DIR__ . '/../lib/SportsHighlightsExtractor.php';
@@ -291,11 +292,28 @@ try {
         echo "  ▶ highlights: erro — " . $e->getMessage() . "\n";
     }
 
+    // Cluster cross-link: se já existem outros posts do jogo (pre_jogo, etc.),
+    // injeta bloco "Mais sobre Vitória x Adv" antes de criar o post
+    $clusterLinker = new JogoClusterLinker(__DIR__ . '/../data/jogos_vitoria.json');
+    if (!empty($jogo['posts_gerados'])) {
+        $payload['content'] = $clusterLinker->injetarNoPost($jogo, 'pos_jogo', $payload['content'], $wp);
+    }
+
     $post = $wp->criarPost($payload);
     $pid = (int)($post['id'] ?? 0);
     echo "\n✓ POST CRIADO id={$pid} status={$status}\n";
     echo "  Edit: {$cfg['wp_url']}/wp-admin/post.php?post={$pid}&action=edit\n";
     if ($status === 'publish') echo "  URL : {$post['link']}\n";
+
+    // Cluster: registra post + backfill irmãos
+    if ($pid > 0) {
+        $registrou = $cal->registrarPostGerado($jogoId, 'pos_jogo', $pid);
+        echo "  ✓ Calendário: posts_gerados.pos_jogo={$pid}\n";
+        if (!empty($jogo['posts_gerados'])) {
+            $bf = $clusterLinker->backfillIrmaos($jogo, 'pos_jogo', $pid, $wp);
+            echo "  ✓ Cluster backfill: {$bf['atualizados']} irmão(s) atualizado(s)\n";
+        }
+    }
 
     // Injeta schemas NewsArticle + SportsEvent completos via fix_schema_post.php
     // (precisa rodar APÓS criar post pra ter dateModified + featured_media — quando

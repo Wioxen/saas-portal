@@ -128,6 +128,44 @@ class JogosCalendario
     }
 
     /** Cadência sugerida do Pingo baseado em janela atual. */
+    /**
+     * Persiste posts_gerados[$tipo] = $postId pra um jogo específico.
+     * Recarrega o JSON do disco antes de salvar (evita race em runs simultâneos).
+     *
+     * @param string $jogoId ID do jogo (e.g. '2026-05-09-vit-flu')
+     * @param string $tipo 'pre_jogo' | 'pos_jogo' | 'preview_tatico' | 'analise_pos' | 'repercussao'
+     * @param int $postId ID do post WP
+     * @return bool true se atualizou; false se jogo não existe
+     */
+    public function registrarPostGerado(string $jogoId, string $tipo, int $postId): bool
+    {
+        if (!file_exists($this->jsonPath)) return false;
+        $raw = (string)file_get_contents($this->jsonPath);
+        $db = json_decode($raw, true);
+        if (!is_array($db) || empty($db['jogos'])) return false;
+
+        $changed = false;
+        foreach ($db['jogos'] as &$j) {
+            if (($j['id'] ?? '') !== $jogoId) continue;
+            if (!isset($j['posts_gerados']) || !is_array($j['posts_gerados'])) {
+                $j['posts_gerados'] = [];
+            }
+            $j['posts_gerados'][$tipo] = $postId;
+            $changed = true;
+            break;
+        }
+        unset($j);
+        if (!$changed) return false;
+
+        $db['_meta']['posts_gerados_atualizado_em'] = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('c');
+        file_put_contents(
+            $this->jsonPath,
+            json_encode($db, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"
+        );
+        $this->dados = $db;
+        return true;
+    }
+
     public function cadenciaPingoMinutos(int $cadenciaNormal = 15): int
     {
         $janela = $this->janelaAtual();
