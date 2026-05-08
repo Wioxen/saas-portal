@@ -102,7 +102,17 @@ foreach ($db['jogos'] as &$jogo) {
     }
 
     $current = $jogo['_lifecycle_status'] ?? 'EventScheduled';
-    if (!$forceGame && $current === $newStatus) {
+
+    // Re-update se placar chegou DEPOIS do EventCompleted ter sido marcado.
+    // atualizar_jogos.php roda em cron próprio e pode trazer placar horas após
+    // o lifecycle ter virado Completed (sem score). Aqui detectamos esse caso
+    // e forçamos uma 2ª passagem pra injetar score no schema.
+    $temPlacar = isset($jogo['placar']['vitoria'], $jogo['placar']['adversario'])
+        && $jogo['placar']['vitoria'] !== null && $jogo['placar']['adversario'] !== null;
+    $scoreJaInjetado = !empty($jogo['_score_injetado']);
+    $precisaInjetarScore = ($newStatus === 'EventCompleted') && $temPlacar && !$scoreJaInjetado;
+
+    if (!$forceGame && $current === $newStatus && !$precisaInjetarScore) {
         if ($verbose) echo "[{$jogo['id']}] já em {$newStatus}, skip\n";
         $skipped++;
         continue;
@@ -172,6 +182,9 @@ foreach ($db['jogos'] as &$jogo) {
 
     $jogo['_lifecycle_status'] = $newStatus;
     $jogo['_lifecycle_updated_at'] = $now->format('c');
+    if ($newStatus === 'EventCompleted' && $temPlacar) {
+        $jogo['_score_injetado'] = true;
+    }
 
     $idxStatus = 'skip';
     if ($idxClient && $link) {
