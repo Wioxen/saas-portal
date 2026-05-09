@@ -172,19 +172,41 @@ echo "→ [4/7] Scrape conteúdo\n";
 $scraper = new Scraper($cfg['user_agent'], (int)($cfg['scrape_timeout'] ?? 15));
 $briefingFontes = '';
 $nomesFontes = []; // pra source-fidelity
+$maxAgeFontesDias = (int)($args['max-age-fontes-dias'] ?? 14);
+$cutoffPublishTs = time() - ($maxAgeFontesDias * 86400);
 foreach ($urlsFontes as $idx => $url) {
     try {
         $sc = $scraper->fetch($url);
         $titulo = (string)($sc['meta']['title'] ?? '');
+        $publishedRaw = (string)($sc['meta']['published'] ?? '');
+        $publishedTs = $publishedRaw ? strtotime($publishedRaw) : 0;
+        $publishedSrc = 'meta';
+
+        // Fallback: extrai data do path da URL (padrão /YYYY/MM/DD/ comum em portais)
+        if ($publishedTs === 0 && preg_match('#/(20\d{2})/(\d{2})/(\d{2})/#', $url, $um)) {
+            $publishedTs = strtotime("{$um[1]}-{$um[2]}-{$um[3]}");
+            $publishedSrc = 'url';
+        }
+        $publishedHuman = $publishedTs ? date('Y-m-d', $publishedTs) : '?';
+
+        // Filtro: rejeita fontes mais velhas que --max-age-fontes-dias (default 14d)
+        if ($publishedTs > 0 && $publishedTs < $cutoffPublishTs) {
+            $diasAtras = round((time() - $publishedTs) / 86400);
+            echo "   · scrape SKIP (obsoleto {$diasAtras}d via {$publishedSrc}): {$url}\n";
+            continue;
+        }
+        if ($publishedTs === 0 && empty($args['allow-no-date'])) {
+            echo "   · scrape WARN (sem data): {$url}\n";
+        }
+
         $paragraphs = $sc['content']['paragraphs'] ?? [];
         $textoTopo = trim(implode("\n", array_slice($paragraphs, 0, 8)));
         if (mb_strlen($textoTopo) < 100) continue;
-        $briefingFontes .= "FONTE " . ($idx + 1) . ": {$titulo}\nURL: {$url}\n{$textoTopo}\n\n---\n\n";
-        // Nomes próprios pra fidelity
+        $briefingFontes .= "FONTE " . ($idx + 1) . " [pub={$publishedHuman}]: {$titulo}\nURL: {$url}\n{$textoTopo}\n\n---\n\n";
         if (preg_match_all('/\b[A-ZÁÉÍÓÚÂÊÔÃÕ][a-záéíóúâêôãõç]{2,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕ][a-záéíóúâêôãõç]{2,})?/u', $textoTopo, $mm)) {
             foreach ($mm[0] as $n) $nomesFontes[$n] = true;
         }
-        echo "   · scrape OK: {$url} (" . mb_strlen($textoTopo) . " chars)\n";
+        echo "   · scrape OK [{$publishedHuman}]: {$url} (" . mb_strlen($textoTopo) . " chars)\n";
     } catch (Throwable $e) {
         echo "   · scrape falhou: {$url} (" . $e->getMessage() . ")\n";
     }
