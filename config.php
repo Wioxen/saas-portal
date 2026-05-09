@@ -25,8 +25,17 @@ return [
     // Serper
     'serper_api_key'    => Env::get('SERPER_API_KEY', ''),
 
+    // api-futebol.com.br — chave usada pra dados oficiais (escalações, eventos,
+    // tabela). Espelha a chave configurada no tema do leaodabarra (ldb_api_key).
+    // Plano free: 100 req/dia. Pago: ver api-futebol.com.br/precos
+    'api_futebol_key'   => Env::get('API_FUTEBOL_KEY', ''),
+    'api_futebol_vitoria_id' => (int)Env::get('API_FUTEBOL_VITORIA_ID', 50),
+
     // Pexels (featured image cascade)
     'pexels_api_key'    => Env::get('PEXELS_API_KEY', ''),
+    // Unsplash (2026-05-08) — pool adicional CC0 ao lado do Pexels. Cascata padrão:
+    // og → Unsplash → Pexels → DALL-E. Estratégia configurável por site.
+    'unsplash_access_key' => Env::get('UNSPLASH_ACCESS_KEY', ''),
     'imagem_featured_estrategia'      => Env::get('IMAGEM_FEATURED_ESTRATEGIA', 'pexels_first'),
     'imagem_featured_dalle_fallback'  => (bool)Env::get('IMAGEM_FEATURED_DALLE_FALLBACK', 1),
 

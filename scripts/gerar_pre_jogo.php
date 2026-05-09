@@ -29,6 +29,7 @@ $mockJson = (string)($args['mock-data'] ?? '');
 $dryRun = !empty($args['dry-run']);
 $siteSlug = (string)($args['site'] ?? 'leaodabarra');
 $asDraft = !empty($args['draft']);
+$apiPartidaId = (int)($args['api-partida-id'] ?? 0);
 
 if ($gameId === '' && $mockJson === '') {
     fwrite(STDERR, "uso: php gerar_pre_jogo.php --game-id=ID  OU  --mock-data='{...}' [--draft] [--dry-run]\n");
@@ -52,6 +53,7 @@ require_once __DIR__ . '/../lib/InlineImageInjector.php';
 require_once __DIR__ . '/../lib/SerperImages.php';
 require_once __DIR__ . '/../lib/CategoryMatcher.php';
 require_once __DIR__ . '/../lib/EntityPageLinker.php';
+require_once __DIR__ . '/../lib/ApiFutebol.php';
 
 $sitesGlobais = sitesDisponiveis();
 aplicarSite($cfg, $sitesGlobais, $siteSlug);
@@ -100,6 +102,63 @@ $comp = $jogo['competicao'] ?? '?';
 $mando = $jogo['mando'] ?? '?';
 $dataStr = ($jogo['data'] ?? '?') . ' ' . ($jogo['hora'] ?? '?');
 echo "  adversário: {$adv} · competição: {$comp} · mando: {$mando} · data: {$dataStr}\n\n";
+
+// ── 1b. API Futebol (fonte oficial — escalação, transmissão, árbitros) ────
+// Se passou --api-partida-id ou jogo no JSON tem api_partida_id, busca dados
+// estruturados oficiais. Esses fatos viram bloco "FONTE OFICIAL" no briefing
+// do Sonnet, com prioridade máxima sobre Serper.
+$apiBriefing = '';
+$apiOk = false;
+$apiPartidaIdFinal = $apiPartidaId ?: (int)($jogo['api_partida_id'] ?? 0);
+if ($apiPartidaIdFinal > 0) {
+    echo "→ [1b/7] Consultando api-futebol (partida_id={$apiPartidaIdFinal})\n";
+    try {
+        $apiKey = (string)($cfg['api_futebol_key'] ?? getenv('API_FUTEBOL_KEY') ?: '');
+        if ($apiKey === '') throw new RuntimeException('api_futebol_key não configurada em config.php');
+        $api = new ApiFutebol($apiKey);
+        $partida = $api->getPartida($apiPartidaIdFinal);
+        $stale = !empty($partida['_stale']);
+        $home = $partida['time_mandante']['nome_popular'] ?? '?';
+        $away = $partida['time_visitante']['nome_popular'] ?? '?';
+        $estad = $partida['estadio']['nome_popular'] ?? '';
+        $dataIso = $partida['data_realizacao_iso'] ?? '';
+        $transmissao = (array)($partida['transmissao'] ?? []);
+        $arbs = (array)($partida['arbitragem'] ?? []);
+        $escMandante = $partida['time_mandante']['escalacao'] ?? null;
+        $escVisitante = $partida['time_visitante']['escalacao'] ?? null;
+        $linhasArb = [];
+        foreach ($arbs as $a) {
+            if (!empty($a['nome_popular']) && !empty($a['funcao'])) {
+                $linhasArb[] = "{$a['funcao']}: {$a['nome_popular']}";
+            }
+        }
+        $linhasTrans = [];
+        foreach ($transmissao as $t) {
+            $nome = $t['nome'] ?? $t['canal'] ?? null;
+            if ($nome) $linhasTrans[] = (string)$nome;
+        }
+        $apiBriefing = "FONTE OFICIAL (api-futebol — verdade absoluta) [pub=" . substr($dataIso, 0, 10) . "]:\n";
+        $apiBriefing .= "  Confronto: {$home} x {$away}\n";
+        $apiBriefing .= "  Local: " . ($estad ?: '?') . "\n";
+        $apiBriefing .= "  Data/hora ISO: {$dataIso}\n";
+        if (!empty($linhasTrans)) $apiBriefing .= "  Transmissão: " . implode(', ', $linhasTrans) . "\n";
+        if (!empty($linhasArb))   $apiBriefing .= "  Arbitragem: " . implode(' | ', $linhasArb) . "\n";
+        if (is_array($escMandante) && !empty($escMandante['titulares'])) {
+            $nomes = array_map(fn($j) => (string)($j['apelido'] ?? $j['nome_popular'] ?? ''), $escMandante['titulares']);
+            $apiBriefing .= "  Escalação {$home}: " . implode(', ', array_filter($nomes)) . "\n";
+        }
+        if (is_array($escVisitante) && !empty($escVisitante['titulares'])) {
+            $nomes = array_map(fn($j) => (string)($j['apelido'] ?? $j['nome_popular'] ?? ''), $escVisitante['titulares']);
+            $apiBriefing .= "  Escalação {$away}: " . implode(', ', array_filter($nomes)) . "\n";
+        }
+        $apiBriefing .= "\n---\n\n";
+        $apiOk = true;
+        echo "  ✓ api-futebol OK" . ($stale ? " (stale-cache)" : '') . " — escalações=" . (($escMandante ? 1 : 0) + ($escVisitante ? 1 : 0)) . "/2, arbs=" . count($linhasArb) . ", transm=" . count($linhasTrans) . "\n";
+    } catch (Throwable $e) {
+        echo "  ⚠ api-futebol falhou: " . $e->getMessage() . " — fallback Serper\n";
+    }
+    echo "\n";
+}
 
 // ── 2. Carrega persona do site (elenco real, voz, tom) ──────────────────────
 $persona = $cfgSiteRaw['persona'] ?? [];
@@ -186,7 +245,7 @@ echo "\n";
 // ── 4. Scrape conteúdo das fontes ──────────────────────────────────────────
 echo "→ [4/7] Scrape conteúdo\n";
 $scraper = new Scraper($cfg['user_agent'], (int)($cfg['scrape_timeout'] ?? 15));
-$briefingFontes = '';
+$briefingFontes = $apiBriefing; // API oficial entra no topo do briefing (fonte primária)
 $nomesFontes = []; // pra source-fidelity
 $ogImagesCandidatos = []; // pra featured image
 $urlsScrapedasOk = []; // só URLs que retornaram texto válido (pra InlineImageInjector)
@@ -288,7 +347,13 @@ Você redator do Leão da Barra. Tom: jornalismo factual de serviço público, f
 
 ═══ REGRA ÚNICA E ABSOLUTA ═══
 
-Cada FATO mencionado no post (nome de jogador, lesão, suspensão, escalação, árbitro, retrospecto) DEVE estar EXPLICITAMENTE escrito nas FONTES SCRAPEDAS fornecidas.
+Cada FATO mencionado no post (nome de jogador, lesão, suspensão, escalação, árbitro, retrospecto) DEVE estar EXPLICITAMENTE escrito nas FONTES fornecidas abaixo.
+
+PRIORIDADE entre fontes (quando houver conflito):
+1. FONTE OFICIAL (api-futebol) — verdade absoluta. Escalação, transmissão, árbitros, data/hora.
+2. FONTES SCRAPEDAS — usar pra contexto narrativo, retrospectos, declarações de jogadores/técnico.
+
+Se FONTE OFICIAL diz X e fonte scraped diz Y, use X. Se conflito grave, omita.
 
 Se a fonte trouxe → você pode mencionar.
 Se a fonte NÃO trouxe → NÃO MENCIONE (mesmo se você "sabe" do training data).
