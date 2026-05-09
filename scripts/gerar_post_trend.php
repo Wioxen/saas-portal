@@ -40,6 +40,8 @@ require_once __DIR__ . '/../lib/GoogleIndexingApi.php';
 require_once __DIR__ . '/../lib/SerperImages.php';
 require_once __DIR__ . '/../lib/InlineImageInjector.php';
 require_once __DIR__ . '/../lib/DiscoverImagemFeatured.php';
+require_once __DIR__ . '/../lib/CategoryMatcher.php';
+require_once __DIR__ . '/../lib/EntityPageLinker.php';
 require_once __DIR__ . '/../lib/DbConnection.php';
 
 aplicarSite($cfg, sitesDisponiveis(), $siteSlug);
@@ -215,12 +217,16 @@ if ($fidelityWarn && !$asDraft) {
 
 $wp = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
 
+// Featured upload + caption + description (rastreia URL pra evitar dupla no inline)
 $featuredId = 0;
+$featuredUrl = '';
+$featuredFonte = '';
+$featuredCredito = 'divulgação';
 if (!$dryRun) {
     foreach ($ogImagesCandidatos as $ogU) {
         if (!filter_var($ogU, FILTER_VALIDATE_URL)) continue;
         $mid = (int)$wp->uploadImagemPorUrl($ogU, $titulo, '');
-        if ($mid > 0) { $featuredId = $mid; echo "   ✓ Featured: media_id={$mid} fonte=og\n"; break; }
+        if ($mid > 0) { $featuredId = $mid; $featuredUrl = $ogU; $featuredFonte = 'og'; echo "   ✓ Featured: media_id={$mid} fonte=og\n"; break; }
     }
     if ($featuredId === 0 && !empty($cfg['serper_api_key'])) {
         try {
@@ -228,10 +234,44 @@ if (!$dryRun) {
             $img = $sx->melhor($titulo . ' Esporte Clube Vitoria', ['min_w' => 800, 'min_h' => 400, 'credito_generico' => false]);
             if ($img) {
                 $mid = (int)$wp->uploadImagemPorUrl((string)$img['imageUrl'], $titulo, '');
-                if ($mid > 0) { $featuredId = $mid; echo "   ✓ Featured: media_id={$mid} fonte=serper-images credito={$img['credito']} score={$img['score']}\n"; }
+                if ($mid > 0) { $featuredId = $mid; $featuredUrl = (string)$img['imageUrl']; $featuredFonte = 'serper-images'; $featuredCredito = (string)($img['credito'] ?? 'divulgação'); echo "   ✓ Featured: media_id={$mid} fonte=serper-images credito={$img['credito']} score={$img['score']}\n"; }
             }
         } catch (Throwable $e) { echo "   ⚠ serper images: {$e->getMessage()}\n"; }
     }
+
+    // Caption + description + title do attachment (SEO + acessibilidade)
+    if ($featuredId > 0) {
+        try {
+            $captionTxt = "{$titulo} (Foto: {$featuredCredito})";
+            $descTxt = "Imagem ilustrativa da matéria '{$titulo}' publicada no portal Leão da Barra. " . mb_substr(strip_tags($contentHtml), 0, 200);
+            $wp->atualizarMedia($featuredId, [
+                'caption' => $captionTxt,
+                'description' => $descTxt,
+                'title' => $titulo,
+                'alt_text' => $titulo,
+            ]);
+            echo "   ✓ Featured caption + description setados\n";
+        } catch (Throwable $e) { echo "   ⚠ atualizarMedia falhou: {$e->getMessage()}\n"; }
+    }
+}
+
+// Categoria — resolve via CategoryMatcher (fuzzy anti-fragmentacao)
+$categoryIds = [];
+if (!$dryRun) {
+    $catsPropostas = ['Esporte Clube Vitória'];
+    // Adiciona categorias contextuais detectadas no título
+    $tlow = mb_strtolower($titulo);
+    if (mb_stripos($tlow, 'copa do brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
+    if (mb_stripos($tlow, 'copa do nordeste') !== false || mb_stripos($tlow, 'nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
+    if (mb_stripos($tlow, 'brasileir') !== false || mb_stripos($tlow, 'série a') !== false) $catsPropostas[] = 'Brasileirão';
+    if (mb_stripos($tlow, 'stjd') !== false) $catsPropostas[] = 'STJD';
+    if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $catsPropostas[] = 'Arbitragem';
+    try {
+        $cm = new CategoryMatcher($wp, 70.0);
+        $resolvido = $cm->resolverComMatch($catsPropostas);
+        $categoryIds = array_values(array_filter(array_map('intval', $resolvido)));
+        echo "   ✓ Categorias: " . implode(',', $categoryIds) . " (" . implode(', ', $catsPropostas) . ")\n";
+    } catch (Throwable $e) { echo "   ⚠ categoria falhou: {$e->getMessage()}\n"; }
 }
 
 $payload = [
@@ -245,6 +285,7 @@ $payload = [
     ],
 ];
 if ($featuredId > 0) $payload['featured_media'] = $featuredId;
+if (!empty($categoryIds)) $payload['categories'] = $categoryIds;
 if (!empty($cfg['default_post_author_id'])) $payload['author'] = (int)$cfg['default_post_author_id'];
 
 if ($dryRun) {
@@ -265,14 +306,69 @@ try {
     exit(5);
 }
 
-// Inline image
+// Pós-publish: 4 enriquecimentos (inline ≠ featured + entity links + relacionados)
+$htmlFinal = $contentComSchema;
+
+// (1) Entity links: backlinks pra hubs do site (entidades)
 try {
-    $resInline = InlineImageInjector::injetar($contentComSchema, $urlsScrapedasOk, $wp, 1, $titulo, $cfg);
+    $linker = new EntityPageLinker($wp, $siteSlug, ['entidade', 'conceito'], 3, 'publish');
+    $resLinker = $linker->injetar($htmlFinal);
+    if (!empty($resLinker['html']) && $resLinker['html'] !== $htmlFinal) {
+        $htmlFinal = $resLinker['html'];
+        $logL = $linker->getLog();
+        echo "   ✓ Entity links: " . ($logL['links_inseridos'] ?? 0) . " inseridos\n";
+    }
+} catch (Throwable $e) { echo "   ⚠ entity links: {$e->getMessage()}\n"; }
+
+// (2) Inline image — exclui URL da featured pra não duplicar
+$urlsParaInline = array_values(array_filter($urlsScrapedasOk, function($u) use ($featuredUrl) {
+    return $u !== $featuredUrl;
+}));
+try {
+    $resInline = InlineImageInjector::injetar($htmlFinal, $urlsParaInline, $wp, 1, $titulo, $cfg);
     if (($resInline['log']['inseridas'] ?? 0) > 0) {
-        $wp->atualizarPost($postId, ['content' => $resInline['html']]);
-        echo "   ✓ Inline image: " . $resInline['log']['inseridas'] . " inserida\n";
+        $htmlFinal = $resInline['html'];
+        echo "   ✓ Inline image: " . $resInline['log']['inseridas'] . " inserida (≠ featured)\n";
+    } else {
+        echo "   ⊘ Inline: 0 inseridas (candidatas={$resInline['log']['candidatas_encontradas']}, aprovadas={$resInline['log']['aprovadas']})\n";
     }
 } catch (Throwable $e) { echo "   ⚠ inline: {$e->getMessage()}\n"; }
+
+// (3) Posts relacionados — bloco "Veja também" no fim
+try {
+    // Keyword CURTA: WP search bate melhor com 1-2 palavras significativas
+    $kwBusca = 'Vitória';
+    if (preg_match_all('/\b([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]{3,})\b/u', $titulo, $mm)) {
+        $palavras = array_values(array_filter($mm[1], fn($p) => !in_array(mb_strtolower($p), ['vitória', 'leão', 'flamengo', 'fluminense'])));
+        if (!empty($palavras)) $kwBusca = (string)$palavras[0];
+    }
+    $kwBusca = $kwBusca ?: 'Vitória';
+    $relacionados = $wp->buscarRelacionados($kwBusca, 6, $postId);
+    if (count($relacionados) >= 2) {
+        $blocoRel = "\n<aside class='posts-relacionados' aria-label='Posts relacionados'>\n";
+        $blocoRel .= "  <h2>Veja também</h2>\n  <ul>\n";
+        foreach (array_slice($relacionados, 0, 4) as $rel) {
+            $titRel = htmlspecialchars(html_entity_decode((string)$rel['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $linkRel = htmlspecialchars((string)$rel['link'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $blocoRel .= "    <li><a href='{$linkRel}'>{$titRel}</a></li>\n";
+        }
+        $blocoRel .= "  </ul>\n</aside>\n";
+        // Insere antes do </script> data-newsarticle (se existir) ou no fim
+        if (preg_match('/<script[^>]*data-newsarticle/', $htmlFinal)) {
+            $htmlFinal = preg_replace('/(<script[^>]*data-newsarticle)/', $blocoRel . "$1", $htmlFinal, 1);
+        } else {
+            $htmlFinal .= $blocoRel;
+        }
+        echo "   ✓ Posts relacionados: " . min(4, count($relacionados)) . " links\n";
+    } else {
+        echo "   ⊘ Posts relacionados: " . count($relacionados) . " achados (mín 2)\n";
+    }
+} catch (Throwable $e) { echo "   ⚠ relacionados: {$e->getMessage()}\n"; }
+
+// Update post WP com tudo enriquecido
+if ($htmlFinal !== $contentComSchema) {
+    $wp->atualizarPost($postId, ['content' => $htmlFinal]);
+}
 
 // Indexing API se publish
 if ($payload['status'] === 'publish' && $linkPub) {
