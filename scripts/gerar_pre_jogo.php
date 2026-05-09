@@ -47,6 +47,8 @@ require_once __DIR__ . '/../lib/BroadcastEventBuilder.php';
 require_once __DIR__ . '/../lib/GoogleIndexingApi.php';
 require_once __DIR__ . '/../lib/JogosCalendario.php';
 require_once __DIR__ . '/../lib/JogoClusterLinker.php';
+require_once __DIR__ . '/../lib/DiscoverImagemFeatured.php';
+require_once __DIR__ . '/../lib/InlineImageInjector.php';
 
 $sitesGlobais = sitesDisponiveis();
 aplicarSite($cfg, $sitesGlobais, $siteSlug);
@@ -101,12 +103,23 @@ $persona = $cfgSiteRaw['persona'] ?? [];
 if (empty($persona)) { fwrite(STDERR, "⚠ persona vazia em sites.php\n"); }
 echo "→ [2/7] Persona carregada (autor: " . ($persona['autor'] ?? '?') . ")\n\n";
 
-// ── 3. Busca fontes via Serper (3 queries focadas) ─────────────────────────
-echo "→ [3/7] Buscando fontes Serper (3 queries focadas)\n";
+// ── 3. Busca fontes via Serper (queries focadas em data-alvo) ──────────────
+echo "→ [3/7] Buscando fontes Serper (queries focadas)\n";
+$diaJogo = (int)substr($jogo['data'] ?? '', 8, 2);
+$mesJogo = (int)substr($jogo['data'] ?? '', 5, 2);
+$mesesPt = ['','janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+$mesNome = $mesesPt[$mesJogo] ?? '';
+$diaMes = sprintf('%d/%02d', $diaJogo, $mesJogo);
+$diaMesPorExtenso = "{$diaJogo} de {$mesNome}";
+
+// Detecta se é jogo de volta (oitava/quartas/etc) pra adicionar contexto
+$ehVolta = mb_stripos((string)($jogo['fase'] ?? ''), 'volta') !== false;
 $queries = [
-    "Vitória escalação treino " . $adv . " " . ($jogo['data'] ?? ''),
-    "Vitória desfalques suspensos " . $adv,
-    "Vitória x " . $adv . " " . $comp . " transmissão",
+    // Específicas pro JOGO ALVO (data + contexto)
+    "Vitória x {$adv} {$diaMes} {$comp}" . ($ehVolta ? ' jogo de volta' : ''),
+    "Vitória x {$adv} {$diaMesPorExtenso} escalação provável",
+    "Vitória {$adv} desfalques suspensos {$diaMes}",
+    "Vitória x {$adv} {$comp} transmissão {$diaMes}",
 ];
 // Domínios prioritários pra cobertura específica do EC Vitória
 $dominiosVitoria = [
@@ -172,6 +185,8 @@ echo "→ [4/7] Scrape conteúdo\n";
 $scraper = new Scraper($cfg['user_agent'], (int)($cfg['scrape_timeout'] ?? 15));
 $briefingFontes = '';
 $nomesFontes = []; // pra source-fidelity
+$ogImagesCandidatos = []; // pra featured image
+$urlsScrapedasOk = []; // só URLs que retornaram texto válido (pra InlineImageInjector)
 $maxAgeFontesDias = (int)($args['max-age-fontes-dias'] ?? 14);
 $cutoffPublishTs = time() - ($maxAgeFontesDias * 86400);
 foreach ($urlsFontes as $idx => $url) {
@@ -182,21 +197,49 @@ foreach ($urlsFontes as $idx => $url) {
         $publishedTs = $publishedRaw ? strtotime($publishedRaw) : 0;
         $publishedSrc = 'meta';
 
-        // Fallback: extrai data do path da URL (padrão /YYYY/MM/DD/ comum em portais)
+        // Fallback A: extrai data do path /YYYY/MM/DD/ (ge.globo, g1, etc.)
         if ($publishedTs === 0 && preg_match('#/(20\d{2})/(\d{2})/(\d{2})/#', $url, $um)) {
             $publishedTs = strtotime("{$um[1]}-{$um[2]}-{$um[3]}");
-            $publishedSrc = 'url';
+            $publishedSrc = 'url-ymd';
+        }
+        // Fallback B: padrão /DD-MM-YYYY/ (alguns portais — ex: ge.globo jogo)
+        if ($publishedTs === 0 && preg_match('#/(\d{2})-(\d{2})-(20\d{2})[/.]#', $url, $um)) {
+            $publishedTs = strtotime("{$um[3]}-{$um[2]}-{$um[1]}");
+            $publishedSrc = 'url-dmy';
         }
         $publishedHuman = $publishedTs ? date('Y-m-d', $publishedTs) : '?';
 
-        // Filtro: rejeita fontes mais velhas que --max-age-fontes-dias (default 14d)
+        // Filtro 1: rejeita fontes datadas mais velhas que --max-age-fontes-dias
         if ($publishedTs > 0 && $publishedTs < $cutoffPublishTs) {
             $diasAtras = round((time() - $publishedTs) / 86400);
             echo "   · scrape SKIP (obsoleto {$diasAtras}d via {$publishedSrc}): {$url}\n";
             continue;
         }
+        // Filtro 2: SEM DATA — só aceita se URL ou título contém marker do jogo-alvo
         if ($publishedTs === 0 && empty($args['allow-no-date'])) {
-            echo "   · scrape WARN (sem data): {$url}\n";
+            $dataAlvoStr = (string)($jogo['data'] ?? '');
+            $diaAlvo = $dataAlvoStr ? (int)substr($dataAlvoStr, 8, 2) : 0;
+            $mesAlvo = $dataAlvoStr ? (int)substr($dataAlvoStr, 5, 2) : 0;
+            $mesesPt = ['', 'janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+            $mesNome = $mesesPt[$mesAlvo] ?? '';
+            $tituloMeta = mb_strtolower((string)($sc['meta']['title'] ?? '') . ' ' . $url);
+            $temMarker = false;
+            if ($diaAlvo > 0 && $mesAlvo > 0) {
+                $padroes = [
+                    sprintf('%02d/%02d', $diaAlvo, $mesAlvo),
+                    sprintf('%d/%d', $diaAlvo, $mesAlvo),
+                    sprintf('%02d-%02d-20%d', $diaAlvo, $mesAlvo, (int)substr($dataAlvoStr, 2, 2)),
+                    sprintf('%d de %s', $diaAlvo, $mesNome),
+                ];
+                foreach ($padroes as $p) {
+                    if (mb_stripos($tituloMeta, $p) !== false) { $temMarker = true; break; }
+                }
+            }
+            if (!$temMarker) {
+                echo "   · scrape SKIP (sem data + sem marker {$diaAlvo}/{$mesAlvo}): {$url}\n";
+                continue;
+            }
+            echo "   · scrape OK [sem-data+marker]: {$url}\n";
         }
 
         $paragraphs = $sc['content']['paragraphs'] ?? [];
@@ -206,6 +249,12 @@ foreach ($urlsFontes as $idx => $url) {
         if (preg_match_all('/\b[A-ZÁÉÍÓÚÂÊÔÃÕ][a-záéíóúâêôãõç]{2,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕ][a-záéíóúâêôãõç]{2,})?/u', $textoTopo, $mm)) {
             foreach ($mm[0] as $n) $nomesFontes[$n] = true;
         }
+        // Coleta og:image pra featured + URL pra inline injector
+        $ogImg = (string)($sc['meta']['og_image'] ?? '');
+        if ($ogImg && filter_var($ogImg, FILTER_VALIDATE_URL)) {
+            $ogImagesCandidatos[] = $ogImg;
+        }
+        $urlsScrapedasOk[] = $url;
         echo "   · scrape OK [{$publishedHuman}]: {$url} (" . mb_strlen($textoTopo) . " chars)\n";
     } catch (Throwable $e) {
         echo "   · scrape falhou: {$url} (" . $e->getMessage() . ")\n";
@@ -222,7 +271,13 @@ $nomesFontes['Esporte Clube Vitória'] = true;
 echo "→ [5/7] Sonnet gerando matéria pré-jogo\n";
 $claude = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model']);
 
-$tituloPadrao = "Vitória x {$adv}: onde assistir, escalação provável e horário do jogo do " . ($comp ?: 'Brasileirão');
+// Concordância: "do Copa" é erro — feminino exige "da". Detecta gênero do nome da competição.
+$competicaoNome = $comp ?: 'Brasileirão';
+$artigoComp = preg_match('/^(Copa|Liga|Série|Final|Sul-Americana|Libertadores)\b/i', $competicaoNome) ? 'da' : 'do';
+$faseHint = '';
+if (mb_stripos((string)($jogo['fase'] ?? ''), 'volta') !== false) $faseHint = ' de volta';
+elseif (mb_stripos((string)($jogo['fase'] ?? ''), 'ida') !== false) $faseHint = ' de ida';
+$tituloPadrao = "Vitória x {$adv}: onde assistir, escalação e horário do jogo{$faseHint} {$artigoComp} {$competicaoNome}";
 
 // V4 ESTRITO: persona só pra voz/tom (não fatos), Sonnet só pode usar fontes
 $systemPrompt = <<<EOT
@@ -235,7 +290,24 @@ Cada FATO mencionado no post (nome de jogador, lesão, suspensão, escalação, 
 Se a fonte trouxe → você pode mencionar.
 Se a fonte NÃO trouxe → NÃO MENCIONE (mesmo se você "sabe" do training data).
 
-PROIBIDO:
+═══ ATRIBUIÇÃO — VOZ DE AUTORIDADE PRÓPRIA ═══
+
+NÓS somos o Leão da Barra. AS FONTES scrapedas são INSUMOS internos da nossa apuração — NÃO citar veículos por nome no corpo do texto.
+
+PROIBIDO mencionar no texto:
+✗ "Segundo o ge.globo / Lance / Terra / bolavip / Arena Rubro-Negra"
+✗ "Conforme o [veículo]"
+✗ "O [veículo] informa que / explica que / aponta que"
+✗ Qualquer nome de portal externo
+
+USAR no lugar (vozes de autoridade própria):
+✓ "Apuração da nossa redação aponta que..."
+✓ "Levantamento da equipe do Leão da Barra mostra que..."
+✓ "A redação confirmou que..."
+✓ "Conforme apurado pela redação..."
+✓ "Segundo nosso acompanhamento..."
+
+═══ PROIBIDO (factualidade) ═══
 ✗ Inventar lista de "11 prováveis" sem fonte que confirme
 ✗ Citar nomes de jogadores que não aparecem nas fontes
 ✗ Citar lesões/suspensões/contratos que não aparecem nas fontes
@@ -243,19 +315,26 @@ PROIBIDO:
 ✗ Inventar arbitragem sem fonte
 ✗ Especular ("o time deve atuar com...", "Jair pode escalar...")
 
-PERMITIDO:
+═══ PERMITIDO ═══
 ✓ Reescrever fato da fonte em PT-BR jornalístico
-✓ Atribuir explicitamente ("Segundo o ge.globo, ...")
 ✓ Escrever "escalação será definida em coletiva D-1" se nenhuma fonte trouxe
 ✓ OMITIR seção inteira se não há fonte
 ✓ Conteúdo CURTO é melhor que conteúdo INVENTADO
 
-ESTRUTURA SUGERIDA (~250-400 palavras é o ideal — não infle):
+ESTRUTURA SUGERIDA (~350-600 palavras — pra Discover precisa volume + densidade):
 
 1. P1 lead (3-4 frases): adversário, dia, hora, estádio, competição, transmissão (apenas o que está nos DADOS DO JOGO + fontes)
-2. <h2>Desfalques confirmados</h2> (só se há fonte com lesão/suspensão. Senão omitir h2)
-3. <h2>Onde assistir</h2> (só se transmissão informada nos dados)
-4. <h2>O que se sabe até agora</h2> (1-2 parágrafos resumindo TRENDS + FONTES sem inventar)
+2. <h2>Onde assistir [Time A] x [Time B] ao vivo</h2> (sempre — H2 SEO friendly mesmo se transmissão "a confirmar")
+3. <h2>Provável escalação do Vitória contra o [Adversário]</h2> (só se fonte trouxer; senão omitir esse h2)
+4. <h2>Desfalques confirmados</h2> (só se fonte explícita)
+5. <h2>Como o [Adversário] chega para o jogo</h2> (situação do oponente; só se fonte trouxer)
+6. <h2>O que está em jogo</h2> (contexto: classificação, importância da partida — pode ser inferido dos dados oficiais)
+
+═══ H2/H3 — REGRAS SEO ═══
+✓ H2 deve conter PALAVRAS-CHAVE de busca real ("escalação provável", "onde assistir", "desfalques", "horário")
+✓ H2 NUNCA pode ser pergunta sem resposta abaixo ("O que é isso") ou frase abstrata ("O que muda")
+✗ PROIBIDO H2 vazio: "Próximos passos", "O que se sabe", "Sobre o confronto"
+✗ PROIBIDO H2 com "Por que está em alta" / "O que muda" / "Entenda" — são gancho artificial sem valor SEO
 
 Saída: APENAS HTML limpo (sem markdown ```). Use <p>, <h2>, <ul>, <li>, <strong>.
 EOT;
@@ -265,7 +344,17 @@ $mandoTxt = $mando === 'casa'
     ? "Vitória joga EM CASA (Barradão, Salvador)"
     : "Vitória joga FORA DE CASA, no estádio: " . ($jogo['estadio'] ?? '?');
 
-$userPrompt = "DADOS DO JOGO (verdade absoluta — pode citar livremente):\n"
+// Contexto temporal: alerta sobre confusão com jogo de ida/anterior se houver
+$contextoTemporal = '';
+if (mb_stripos((string)($jogo['fase'] ?? ''), 'volta') !== false) {
+    $contextoTemporal = "\n═══ ATENÇÃO TEMPORAL ═══\n"
+        . "Este post é sobre o JOGO DE VOLTA, marcado para {$dataStr}.\n"
+        . "Existe um JOGO DE IDA passado (já aconteceu, com placar definido).\n"
+        . "IGNORE qualquer informação nas fontes que se refira ao jogo de IDA — escalações, desfalques, transmissão e arbitragem mudam de um jogo para o outro.\n"
+        . "Se a fonte cita 'amanhã' ou 'nesta data X', verifique se X bate com {$dataStr}. Se NÃO bate, NÃO use o fato.\n\n";
+}
+
+$userPrompt = $contextoTemporal . "DADOS DO JOGO (verdade absoluta — pode citar livremente):\n"
     . "  Adversário: {$adv}\n"
     . "  Competição: {$comp}\n"
     . "  Mando: {$mandoTxt}\n"
@@ -338,6 +427,31 @@ if ($fidelityWarn && !$asDraft) {
     $asDraft = true;
 }
 
+// Featured image: og:image da melhor fonte → fallback Pexels via DiscoverImagemFeatured
+$featuredMediaId = 0;
+if (!$dryRun) {
+    try {
+        $imagemFeatured = new DiscoverImagemFeatured($cfg);
+        $resultado = $imagemFeatured->escolher([
+            'termo' => "Vitória x {$adv}",
+            'cluster_key' => 'esportes',
+            'briefing_titulo' => $titulo,
+            'og_image_fallback' => $ogImagesCandidatos[0] ?? '',
+        ]);
+        $imgUrl = (string)($resultado['url'] ?? '');
+        if ($imgUrl) {
+            $wpUploader = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
+            $altText = "Vitória x {$adv} pelo " . ($comp ?: 'Brasileirão');
+            $featuredMediaId = (int)$wpUploader->uploadImagemPorUrl($imgUrl, $altText, $resultado['slug_sugerido'] ?? '');
+            echo "   ✓ Featured: media_id={$featuredMediaId} fonte=" . ($resultado['fonte'] ?? '?') . "\n";
+        } else {
+            echo "   ⚠ Sem featured image disponível\n";
+        }
+    } catch (Throwable $e) {
+        echo "   ⚠ featured image falhou: " . $e->getMessage() . "\n";
+    }
+}
+
 $payload = [
     'title' => $titulo,
     'slug' => $slug,
@@ -349,6 +463,9 @@ $payload = [
         'rank_math_description' => "Pré-jogo do Vitória contra o {$adv}: onde assistir, escalação e detalhes.",
     ],
 ];
+if ($featuredMediaId > 0) {
+    $payload['featured_media'] = $featuredMediaId;
+}
 if (!empty($cfg['default_post_author_id'])) {
     $payload['author'] = (int)$cfg['default_post_author_id'];
 }
@@ -371,6 +488,19 @@ try {
 } catch (Throwable $e) {
     fwrite(STDERR, "✗ falha publicar WP: " . $e->getMessage() . "\n");
     exit(1);
+}
+
+// Inline image: 1 imagem após primeiro </p> que segue um <h2>
+try {
+    $resInline = InlineImageInjector::injetar($contentComSchema, $urlsScrapedasOk, $wp, 1, $titulo, $cfg);
+    if (($resInline['log']['inseridas'] ?? 0) > 0) {
+        $wp->atualizarPost($postId, ['content' => $resInline['html']]);
+        echo "   ✓ Inline image: " . $resInline['log']['inseridas'] . " inserida (fonte=" . ($resInline['log']['pexels_fallback'] ?? 0 ? 'pexels' : 'fontes') . ")\n";
+    } else {
+        echo "   ⊘ Inline image: 0 inseridas (candidatas=" . ($resInline['log']['candidatas_encontradas'] ?? 0) . ", aprovadas=" . ($resInline['log']['aprovadas'] ?? 0) . ")\n";
+    }
+} catch (Throwable $e) {
+    echo "   ⚠ inline image falhou: " . $e->getMessage() . "\n";
 }
 
 if ($payload['status'] === 'publish') {
