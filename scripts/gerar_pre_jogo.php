@@ -50,6 +50,8 @@ require_once __DIR__ . '/../lib/JogoClusterLinker.php';
 require_once __DIR__ . '/../lib/DiscoverImagemFeatured.php';
 require_once __DIR__ . '/../lib/InlineImageInjector.php';
 require_once __DIR__ . '/../lib/SerperImages.php';
+require_once __DIR__ . '/../lib/CategoryMatcher.php';
+require_once __DIR__ . '/../lib/EntityPageLinker.php';
 
 $sitesGlobais = sitesDisponiveis();
 aplicarSite($cfg, $sitesGlobais, $siteSlug);
@@ -430,7 +432,8 @@ if ($fidelityWarn && !$asDraft) {
 
 // Featured image: prioridade og:image > Serper Images (Google) > Pexels via DiscoverImagemFeatured
 $featuredMediaId = 0;
-$featuredCredito = '';
+$featuredUrl = '';
+$featuredCredito = 'divulgação';
 if (!$dryRun) {
     $wpUploader = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
     $altText = "Vitória x {$adv} pelo " . ($comp ?: 'Brasileirão');
@@ -441,6 +444,7 @@ if (!$dryRun) {
         $mid = (int)$wpUploader->uploadImagemPorUrl($ogUrl, $altText, '');
         if ($mid > 0) {
             $featuredMediaId = $mid;
+            $featuredUrl = $ogUrl;
             echo "   ✓ Featured: media_id={$mid} fonte=og\n";
             break;
         }
@@ -451,11 +455,12 @@ if (!$dryRun) {
         try {
             $sx = new SerperImages($cfg['serper_api_key']);
             $queryImg = "Vitória x {$adv} " . ($jogo['estadio'] ?? '');
-            $img = $sx->melhor($queryImg, ['min_w' => 800, 'min_h' => 400, 'credito_generico' => true]);
+            $img = $sx->melhor($queryImg, ['min_w' => 800, 'min_h' => 400, 'credito_generico' => false]);
             if ($img) {
                 $mid = (int)$wpUploader->uploadImagemPorUrl((string)$img['imageUrl'], $altText, '');
                 if ($mid > 0) {
                     $featuredMediaId = $mid;
+                    $featuredUrl = (string)$img['imageUrl'];
                     $featuredCredito = (string)($img['credito'] ?? 'divulgação');
                     echo "   ✓ Featured: media_id={$mid} fonte=serper-images credito={$featuredCredito} score={$img['score']}\n";
                 }
@@ -478,6 +483,7 @@ if (!$dryRun) {
             $imgUrl = (string)($resultado['url'] ?? '');
             if ($imgUrl) {
                 $featuredMediaId = (int)$wpUploader->uploadImagemPorUrl($imgUrl, $altText, $resultado['slug_sugerido'] ?? '');
+                $featuredUrl = $imgUrl;
                 echo "   ✓ Featured: media_id={$featuredMediaId} fonte=" . ($resultado['fonte'] ?? '?') . " (fallback)\n";
             } else {
                 echo "   ⚠ Sem featured image disponível\n";
@@ -486,6 +492,37 @@ if (!$dryRun) {
             echo "   ⚠ featured image falhou: " . $e->getMessage() . "\n";
         }
     }
+
+    // Caption + description + alt_text na featured (SEO + acessibilidade)
+    if ($featuredMediaId > 0) {
+        try {
+            $captionTxt = "{$titulo} (Foto: {$featuredCredito})";
+            $descTxt = "Imagem ilustrativa da matéria '{$titulo}' publicada no portal Leão da Barra. " . mb_substr(strip_tags($contentHtml), 0, 200);
+            $wpUploader->atualizarMedia($featuredMediaId, [
+                'caption' => $captionTxt,
+                'description' => $descTxt,
+                'title' => $titulo,
+                'alt_text' => $altText,
+            ]);
+            echo "   ✓ Featured caption + description setados\n";
+        } catch (Throwable $e) { echo "   ⚠ atualizarMedia falhou: " . $e->getMessage() . "\n"; }
+    }
+}
+
+// Categoria: detecta no contexto do jogo + competicao
+$categoryIds = [];
+if (!$dryRun) {
+    $catsPropostas = ['Esporte Clube Vitória'];
+    if (mb_stripos($comp, 'Copa do Brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
+    if (mb_stripos($comp, 'Copa do Nordeste') !== false || mb_stripos($comp, 'Nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
+    if (mb_stripos($comp, 'Brasileir') !== false || mb_stripos($comp, 'Série A') !== false) $catsPropostas[] = 'Brasileirão';
+    if ($adv) $catsPropostas[] = $adv; // adversario como categoria
+    try {
+        $cm = new CategoryMatcher($wpUploader, 70.0);
+        $resolvido = $cm->resolverComMatch($catsPropostas);
+        $categoryIds = array_values(array_filter(array_map('intval', $resolvido)));
+        echo "   ✓ Categorias: " . implode(',', $categoryIds) . "\n";
+    } catch (Throwable $e) { echo "   ⚠ categoria: " . $e->getMessage() . "\n"; }
 }
 
 $payload = [
@@ -501,6 +538,9 @@ $payload = [
 ];
 if ($featuredMediaId > 0) {
     $payload['featured_media'] = $featuredMediaId;
+}
+if (!empty($categoryIds)) {
+    $payload['categories'] = $categoryIds;
 }
 if (!empty($cfg['default_post_author_id'])) {
     $payload['author'] = (int)$cfg['default_post_author_id'];
@@ -526,17 +566,60 @@ try {
     exit(1);
 }
 
-// Inline image: 1 imagem após primeiro </p> que segue um <h2>
+// Pós-publish: 3 enriquecimentos (entity links + inline ≠ featured + relacionados)
+$htmlFinal = $contentComSchema;
+
+// (1) Entity links pra hubs
 try {
-    $resInline = InlineImageInjector::injetar($contentComSchema, $urlsScrapedasOk, $wp, 1, $titulo, $cfg);
-    if (($resInline['log']['inseridas'] ?? 0) > 0) {
-        $wp->atualizarPost($postId, ['content' => $resInline['html']]);
-        echo "   ✓ Inline image: " . $resInline['log']['inseridas'] . " inserida (fonte=" . ($resInline['log']['pexels_fallback'] ?? 0 ? 'pexels' : 'fontes') . ")\n";
-    } else {
-        echo "   ⊘ Inline image: 0 inseridas (candidatas=" . ($resInline['log']['candidatas_encontradas'] ?? 0) . ", aprovadas=" . ($resInline['log']['aprovadas'] ?? 0) . ")\n";
+    $linker = new EntityPageLinker($wp, $siteSlug, ['entidade', 'conceito'], 3, 'publish');
+    $resL = $linker->injetar($htmlFinal);
+    if (!empty($resL['html']) && $resL['html'] !== $htmlFinal) {
+        $htmlFinal = $resL['html'];
+        $logL = $linker->getLog();
+        echo "   ✓ Entity links: " . ($logL['links_inseridos'] ?? 0) . " inseridos\n";
     }
-} catch (Throwable $e) {
-    echo "   ⚠ inline image falhou: " . $e->getMessage() . "\n";
+} catch (Throwable $e) { echo "   ⚠ entity links: " . $e->getMessage() . "\n"; }
+
+// (2) Inline image — exclui URL da featured
+$urlsParaInline = array_values(array_filter($urlsScrapedasOk, fn($u) => $u !== $featuredUrl));
+try {
+    $resInline = InlineImageInjector::injetar($htmlFinal, $urlsParaInline, $wp, 1, $titulo, $cfg);
+    if (($resInline['log']['inseridas'] ?? 0) > 0) {
+        $htmlFinal = $resInline['html'];
+        echo "   ✓ Inline image: " . $resInline['log']['inseridas'] . " inserida (≠ featured)\n";
+    } else {
+        echo "   ⊘ Inline image: 0 inseridas (candidatas=" . ($resInline['log']['candidatas_encontradas'] ?? 0) . ")\n";
+    }
+} catch (Throwable $e) { echo "   ⚠ inline image: " . $e->getMessage() . "\n"; }
+
+// (3) Posts relacionados (keyword curta — 1ª palavra significativa)
+try {
+    $kwBusca = 'Vitória';
+    if (preg_match_all('/\b([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]{3,})\b/u', $titulo, $mm)) {
+        $palavras = array_values(array_filter($mm[1], fn($p) => !in_array(mb_strtolower($p), ['vitória', 'leão', 'flamengo', 'fluminense'])));
+        if (!empty($palavras)) $kwBusca = (string)$palavras[0];
+    }
+    $kwBusca = $kwBusca ?: 'Vitória';
+    $relacionados = $wp->buscarRelacionados($kwBusca, 6, $postId);
+    if (count($relacionados) >= 2) {
+        $blocoRel = "\n<aside class='posts-relacionados' aria-label='Posts relacionados'>\n  <h2>Veja também</h2>\n  <ul>\n";
+        foreach (array_slice($relacionados, 0, 4) as $rel) {
+            $titRel = htmlspecialchars(html_entity_decode((string)$rel['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $linkRel = htmlspecialchars((string)$rel['link'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $blocoRel .= "    <li><a href='{$linkRel}'>{$titRel}</a></li>\n";
+        }
+        $blocoRel .= "  </ul>\n</aside>\n";
+        if (preg_match('/<script[^>]*data-broadcast-event/', $htmlFinal)) {
+            $htmlFinal = preg_replace('/(<script[^>]*data-broadcast-event)/', $blocoRel . "$1", $htmlFinal, 1);
+        } else {
+            $htmlFinal .= $blocoRel;
+        }
+        echo "   ✓ Posts relacionados: " . min(4, count($relacionados)) . " links\n";
+    }
+} catch (Throwable $e) { echo "   ⚠ relacionados: " . $e->getMessage() . "\n"; }
+
+if ($htmlFinal !== $contentComSchema) {
+    $wp->atualizarPost($postId, ['content' => $htmlFinal]);
 }
 
 if ($payload['status'] === 'publish') {
