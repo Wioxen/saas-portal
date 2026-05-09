@@ -49,6 +49,7 @@ require_once __DIR__ . '/../lib/JogosCalendario.php';
 require_once __DIR__ . '/../lib/JogoClusterLinker.php';
 require_once __DIR__ . '/../lib/DiscoverImagemFeatured.php';
 require_once __DIR__ . '/../lib/InlineImageInjector.php';
+require_once __DIR__ . '/../lib/SerperImages.php';
 
 $sitesGlobais = sitesDisponiveis();
 aplicarSite($cfg, $sitesGlobais, $siteSlug);
@@ -427,28 +428,63 @@ if ($fidelityWarn && !$asDraft) {
     $asDraft = true;
 }
 
-// Featured image: og:image da melhor fonte → fallback Pexels via DiscoverImagemFeatured
+// Featured image: prioridade og:image > Serper Images (Google) > Pexels via DiscoverImagemFeatured
 $featuredMediaId = 0;
+$featuredCredito = '';
 if (!$dryRun) {
-    try {
-        $imagemFeatured = new DiscoverImagemFeatured($cfg);
-        $resultado = $imagemFeatured->escolher([
-            'termo' => "Vitória x {$adv}",
-            'cluster_key' => 'esportes',
-            'briefing_titulo' => $titulo,
-            'og_image_fallback' => $ogImagesCandidatos[0] ?? '',
-        ]);
-        $imgUrl = (string)($resultado['url'] ?? '');
-        if ($imgUrl) {
-            $wpUploader = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
-            $altText = "Vitória x {$adv} pelo " . ($comp ?: 'Brasileirão');
-            $featuredMediaId = (int)$wpUploader->uploadImagemPorUrl($imgUrl, $altText, $resultado['slug_sugerido'] ?? '');
-            echo "   ✓ Featured: media_id={$featuredMediaId} fonte=" . ($resultado['fonte'] ?? '?') . "\n";
-        } else {
-            echo "   ⚠ Sem featured image disponível\n";
+    $wpUploader = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
+    $altText = "Vitória x {$adv} pelo " . ($comp ?: 'Brasileirão');
+
+    // Tier 1: og:image da melhor fonte scrapeada (mais autêntico)
+    foreach ($ogImagesCandidatos as $ogUrl) {
+        if (!filter_var($ogUrl, FILTER_VALIDATE_URL)) continue;
+        $mid = (int)$wpUploader->uploadImagemPorUrl($ogUrl, $altText, '');
+        if ($mid > 0) {
+            $featuredMediaId = $mid;
+            echo "   ✓ Featured: media_id={$mid} fonte=og\n";
+            break;
         }
-    } catch (Throwable $e) {
-        echo "   ⚠ featured image falhou: " . $e->getMessage() . "\n";
+    }
+
+    // Tier 2: Serper Images (Google) — específica e contextual, evita Pexels stock
+    if ($featuredMediaId === 0 && !empty($cfg['serper_api_key'])) {
+        try {
+            $sx = new SerperImages($cfg['serper_api_key']);
+            $queryImg = "Vitória x {$adv} " . ($jogo['estadio'] ?? '');
+            $img = $sx->melhor($queryImg, ['min_w' => 800, 'min_h' => 400, 'credito_generico' => true]);
+            if ($img) {
+                $mid = (int)$wpUploader->uploadImagemPorUrl((string)$img['imageUrl'], $altText, '');
+                if ($mid > 0) {
+                    $featuredMediaId = $mid;
+                    $featuredCredito = (string)($img['credito'] ?? 'divulgação');
+                    echo "   ✓ Featured: media_id={$mid} fonte=serper-images credito={$featuredCredito} score={$img['score']}\n";
+                }
+            }
+        } catch (Throwable $e) {
+            echo "   ⚠ Serper Images falhou: " . $e->getMessage() . "\n";
+        }
+    }
+
+    // Tier 3: Pexels (último recurso — stock genérico)
+    if ($featuredMediaId === 0) {
+        try {
+            $imagemFeatured = new DiscoverImagemFeatured($cfg);
+            $resultado = $imagemFeatured->escolher([
+                'termo' => "Vitória x {$adv}",
+                'cluster_key' => 'esportes',
+                'briefing_titulo' => $titulo,
+                'og_image_fallback' => '',
+            ]);
+            $imgUrl = (string)($resultado['url'] ?? '');
+            if ($imgUrl) {
+                $featuredMediaId = (int)$wpUploader->uploadImagemPorUrl($imgUrl, $altText, $resultado['slug_sugerido'] ?? '');
+                echo "   ✓ Featured: media_id={$featuredMediaId} fonte=" . ($resultado['fonte'] ?? '?') . " (fallback)\n";
+            } else {
+                echo "   ⚠ Sem featured image disponível\n";
+            }
+        } catch (Throwable $e) {
+            echo "   ⚠ featured image falhou: " . $e->getMessage() . "\n";
+        }
     }
 }
 
