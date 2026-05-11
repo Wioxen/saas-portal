@@ -191,6 +191,54 @@ $res = $validator->validar($contentHtml, $fontesTexto);
 $fidelityWarn = ($res['severity'] ?? '') === 'fail';
 echo "   severity=" . ($res['severity'] ?? '?') . " | nomes_alucinados=" . count($res['nomes_alucinados'] ?? []) . "\n\n";
 
+// Video embed automático: se título sugere vídeo, busca via Serper Videos
+$videoEmbed = '';
+$gatilhosVideo = ['assista', 'veja', 'vídeo', 'video', 'imagens', 'reproduz', 'gravação', 'flagra'];
+$tituloLow = mb_strtolower($tituloTrend);
+$querMostrarVideo = false;
+foreach ($gatilhosVideo as $g) {
+    if (mb_stripos($tituloLow, $g) !== false) { $querMostrarVideo = true; break; }
+}
+if ($querMostrarVideo && !empty($cfg['serper_api_key'])) {
+    echo "→ Título sugere vídeo, buscando Serper /videos\n";
+    try {
+        $queryV = preg_replace('/:?\s*o que saber agora.*$/iu', '', $tituloTrend);
+        $ch = curl_init('https://google.serper.dev/videos');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode(['q' => $queryV, 'gl' => 'br', 'hl' => 'pt-br', 'num' => 10]),
+            CURLOPT_HTTPHEADER => ['X-API-KEY: ' . $cfg['serper_api_key'], 'Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $resp = json_decode((string)curl_exec($ch), true);
+        curl_close($ch);
+        $best = null;
+        foreach (($resp['videos'] ?? []) as $v) {
+            $link = (string)($v['link'] ?? '');
+            if (preg_match('|youtube\.com/watch\?v=([\w-]+)|', $link, $m) || preg_match('|youtu\.be/([\w-]+)|', $link, $m)) {
+                $best = ['video_id' => $m[1], 'title' => $v['title'] ?? '', 'channel' => $v['channel'] ?? '', 'link' => $link];
+                break;
+            }
+        }
+        if ($best) {
+            $tit = htmlspecialchars($best['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $videoEmbed = "\n<h2>Assista ao vídeo</h2>\n"
+                . "<div class='video-highlights' style='position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:20px 0;'>"
+                . "<iframe src='https://www.youtube.com/embed/{$best['video_id']}' "
+                . "style='position:absolute;top:0;left:0;width:100%;height:100%;border:0;' "
+                . "frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' "
+                . "allowfullscreen title='{$tit}'></iframe></div>\n";
+            echo "   ✓ Vídeo: [{$best['channel']}] {$best['title']}\n";
+        } else {
+            echo "   ⊘ Sem vídeo YouTube em /videos\n";
+        }
+    } catch (Throwable $e) { echo "   ⚠ Serper Videos: {$e->getMessage()}\n"; }
+}
+// Injeta embed após primeiro </p> do contentHtml (depois do lead)
+if ($videoEmbed) {
+    $contentHtml = preg_replace('|(</p>)|', "$1" . $videoEmbed, $contentHtml, 1) ?: $contentHtml;
+}
+
 // ── 6. Schema NewsArticle simples ──────────────────────────────────────────
 $schemaNews = [
     '@context' => 'https://schema.org',
