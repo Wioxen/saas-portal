@@ -200,6 +200,39 @@ if ($fase === 'pre-live' && empty($eventos)) {
     $entriesHtml = "<p>O jogo começa em breve. Esta página será atualizada com gols, cartões e substituições em tempo real.</p>\n";
 }
 
+// Bloco "Onde assistir" — essencial pra post AO VIVO
+// Fonte 1: JSON ($jogo['transmissao']), Fonte 2: Serper busca, Fallback: "A confirmar"
+$transmissaoNomes = [];
+$transJson = $jogo['transmissao'] ?? null;
+if (is_string($transJson) && $transJson !== '') {
+    $transmissaoNomes[] = $transJson;
+} elseif (is_array($transJson) && !empty($transJson)) {
+    $transmissaoNomes = array_filter(array_map('strval', $transJson));
+}
+// Se vazio, busca via Serper
+if (empty($transmissaoNomes) && !empty($cfg['serper_api_key'])) {
+    try {
+        $sr = new Serper($cfg['serper_api_key']);
+        $q = ($jogo['mando'] === 'casa' ? "Vitória x {$adv}" : "{$adv} x Vitória") . " {$competicao} onde assistir transmissão";
+        $resp = $sr->search($q, 6);
+        $snippets = '';
+        foreach (($resp['organic'] ?? []) as $o) $snippets .= ' ' . (string)($o['snippet'] ?? '');
+        // Regex pra canais conhecidos
+        $canais = ['Premiere', 'SporTV', 'Globoplay', 'Amazon Prime', 'Amazon Prime Video', 'Cazé TV', 'Cazé', 'YouTube', 'Disney+', 'ESPN', 'Globo', 'Band', 'Record'];
+        foreach ($canais as $c) {
+            if (mb_stripos($snippets, $c) !== false) $transmissaoNomes[] = $c;
+        }
+        $transmissaoNomes = array_values(array_unique($transmissaoNomes));
+        if (!empty($transmissaoNomes)) echo "  ✓ Onde assistir (Serper): " . implode(', ', $transmissaoNomes) . "\n";
+    } catch (Throwable $e) { /* skip */ }
+}
+$txtTransmissao = !empty($transmissaoNomes)
+    ? "O jogo entre " . ($jogo['mando'] === 'casa' ? "Vitória x {$adv}" : "{$adv} x Vitória") . " tem transmissão ao vivo por <strong>" . implode(', ', $transmissaoNomes) . "</strong>."
+    : "A transmissão da partida ainda está a confirmar.";
+
+$blocoOndeAssistir = "\n<h2>Onde assistir " . ($jogo['mando'] === 'casa' ? "Vitória x {$adv}" : "{$adv} x Vitória") . " ao vivo</h2>\n"
+    . "<p>{$txtTransmissao} Início: " . $kickoff->format('d/m/Y \à\s H:i') . " (horário de Brasília), no {$estadio}.</p>\n";
+
 // MM YouTube quando fase é post-live (jogo terminou): injeta vídeo no topo
 $blocoMM = '';
 if ($fase === 'post-live') {
@@ -275,6 +308,7 @@ if (!empty($irmaos)) {
 }
 
 $htmlPost = $blocoPlacar
+    . $blocoOndeAssistir
     . $blocoMM
     . "<h2>Acompanhe lance a lance</h2>\n"
     . $entriesHtml
