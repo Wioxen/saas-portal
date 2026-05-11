@@ -430,7 +430,14 @@ ESTRUTURA SUGERIDA (~350-600 palavras — pra Discover precisa volume + densidad
 Saída: APENAS HTML limpo (sem markdown ```). Use <p>, <h2>, <ul>, <li>, <strong>.
 EOT;
 
-$dataInfo = $dataStr . " (horário de Brasília)";
+// Calcula dia da semana real (Sonnet às vezes erra "sábado" vs "domingo")
+$diasSemanaPt = ['Sunday' => 'domingo', 'Monday' => 'segunda-feira', 'Tuesday' => 'terça-feira', 'Wednesday' => 'quarta-feira', 'Thursday' => 'quinta-feira', 'Friday' => 'sexta-feira', 'Saturday' => 'sábado'];
+$diaSemana = '';
+try {
+    $dt = new DateTime(($jogo['data'] ?? '') . ' ' . ($jogo['hora'] ?? '21:30'), new DateTimeZone('America/Sao_Paulo'));
+    $diaSemana = $diasSemanaPt[$dt->format('l')] ?? '';
+} catch (Throwable $e) {}
+$dataInfo = $dataStr . " (horário de Brasília)" . ($diaSemana ? " — dia da semana: {$diaSemana}" : '');
 $mandoTxt = $mando === 'casa'
     ? "Vitória joga EM CASA (Barradão, Salvador)"
     : "Vitória joga FORA DE CASA, no estádio: " . ($jogo['estadio'] ?? '?');
