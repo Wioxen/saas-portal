@@ -54,6 +54,8 @@ require_once __DIR__ . '/../lib/JogosCalendario.php';
 require_once __DIR__ . '/../lib/JogoClusterLinker.php';
 require_once __DIR__ . '/../lib/CategoryMatcher.php';
 require_once __DIR__ . '/../lib/ApiFutebol.php';
+require_once __DIR__ . '/../lib/SportsHighlightsExtractor.php';
+require_once __DIR__ . '/../lib/Serper.php';
 
 aplicarSite($cfg, sitesDisponiveis(), $siteSlug);
 
@@ -80,14 +82,24 @@ elseif ($now >= $preLive && $now < $kickoff) $fase = 'pre-live';
 elseif ($now >= $kickoff && $now < $endLive) $fase = 'live';
 elseif ($now >= $endLive && $now < $endPost) $fase = 'post-live';
 
-echo "[live-blog] {$gameId} fase={$fase} now=" . $now->format('H:i:s') . " kickoff=" . $kickoff->format('H:i:s') . "\n";
-if ($fase === 'off') { echo "  ⊘ fora de janela live\n"; exit(0); }
+// Override automático: se API diz "finalizado" e estamos em live/post-live,
+// força transição pra encerrado (cobre jogos que acabam antes ou depois do tempo padrão)
+$forcaEncerrado = false;
 
-// State file
+echo "[live-blog] {$gameId} fase={$fase} now=" . $now->format('H:i:s') . " kickoff=" . $kickoff->format('H:i:s') . "\n";
+
+// State file (lê ANTES do exit pra detectar fase=off mas com state preexistente)
 $stateDir = __DIR__ . '/../data/live_blog_state';
 if (!is_dir($stateDir)) @mkdir($stateDir, 0775, true);
 $statePath = $stateDir . '/' . ($simularLive ? 'sim-' : '') . $gameId . '.json';
 $state = is_readable($statePath) ? (json_decode((string)file_get_contents($statePath), true) ?: []) : [];
+
+// fase=off só sai se NÃO há post anterior (rodada nova fora de janela)
+if ($fase === 'off' && empty($state['post_id'])) { echo "  ⊘ fora de janela live\n"; exit(0); }
+if ($fase === 'off' && !empty($state['post_id'])) {
+    echo "  [continua] fase=off mas state existe (jogo passado) — força post-live\n";
+    $fase = 'post-live';
+}
 
 // Busca partida
 $api = new ApiFutebol($apiKey);
@@ -104,6 +116,18 @@ $pV = (int)($partida['placar_visitante'] ?? 0);
 $estadio = $partida['estadio']['nome_popular'] ?? '';
 $competicao = $partida['campeonato']['nome_popular'] ?? '';
 $rodada = $partida['rodada'] ?? '';
+$statusApi = $partida['status'] ?? '';
+
+// Auto-detect ENCERRADO: API diz finalizado → muda fase
+// Cobre também caso D+N (jogo já terminou faz dias mas live_blog está sendo gerado)
+if (!$simularLive && $statusApi === 'finalizado') {
+    // Só re-processa post-live se já temos post (state)
+    if (in_array($fase, ['live', 'post-live'], true) || !empty($state['post_id'])) {
+        $fase = 'post-live';
+        $forcaEncerrado = true;
+        echo "  [auto] API status=finalizado → fase=post-live\n";
+    }
+}
 
 // Extrai TODOS os eventos numa lista flat ordenada cronologicamente
 $eventos = extrairEventosFlat($partida, $home, $away);
@@ -145,6 +169,8 @@ $statusLabel = match ($fase) {
     'post-live' => '✅ ENCERRADO',
     default     => '',
 };
+// Override mais explícito quando API confirma finalizado
+if ($forcaEncerrado) $statusLabel = '✅ JOGO ENCERRADO';
 $blocoPlacar = "<div class='live-blog-placar' style='background:#000;color:#fff;padding:20px;border-radius:8px;text-align:center;margin:20px 0;'>"
     . "<div style='font-size:13px;letter-spacing:2px;'>{$statusLabel}</div>"
     . "<div style='font-size:32px;font-weight:bold;margin-top:8px;'>{$placarAtual}</div>"
@@ -172,6 +198,20 @@ foreach (array_reverse($eventos) as $ev) {
 
 if ($fase === 'pre-live' && empty($eventos)) {
     $entriesHtml = "<p>O jogo começa em breve. Esta página será atualizada com gols, cartões e substituições em tempo real.</p>\n";
+}
+
+// MM YouTube quando fase é post-live (jogo terminou): injeta vídeo no topo
+$blocoMM = '';
+if ($fase === 'post-live') {
+    try {
+        $hl = SportsHighlightsExtractor::buscar($home, $pH, $away, $pV, $competicao, null, (string)($cfg['serper_api_key'] ?? ''));
+        if ($hl && !empty($hl['embed_html'])) {
+            $blocoMM = "\n<h2>Assista aos gols e melhores momentos</h2>\n"
+                . "<p>Veja o vídeo dos lances do empate entre {$home} e {$away}:</p>\n"
+                . $hl['embed_html'] . "\n";
+            echo "  ✓ MM video: {$hl['titulo']}\n";
+        }
+    } catch (Throwable $e) { echo "  ⚠ MM video: {$e->getMessage()}\n"; }
 }
 
 // Bloco escalações (se disponível)
@@ -212,10 +252,34 @@ $schemaScript = "<script type=\"application/ld+json\" data-live-blog=\"1\">\n"
     . json_encode($schemaLB, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
     . "\n</script>\n";
 
+// Cluster cross-link com posts irmãos (pré-jogo / pós-jogo) — busca posts_gerados do JSON
+$blocoCluster = '';
+$irmaos = [];
+foreach (['pre_jogo' => 'Pré-jogo', 'pos_jogo' => 'Pós-jogo'] as $tipo => $label) {
+    $pid = (int)($jogo['posts_gerados'][$tipo] ?? 0);
+    if ($pid > 0) $irmaos[] = ['id' => $pid, 'label' => $label];
+}
+if (!empty($irmaos)) {
+    $blocoCluster = "\n<h2>Mais sobre " . ($jogo['mando'] === 'casa' ? "Vitória x {$adv}" : "{$adv} x Vitória") . "</h2>\n<ul>\n";
+    // Resolve URLs dos irmãos (rápido — getPost cada)
+    $wpTmp = new Wordpress($cfg['wp_url'], $cfg['wp_user'], $cfg['wp_app_password']);
+    foreach ($irmaos as $i) {
+        try {
+            $pIrmao = $wpTmp->getPost($i['id']);
+            $titIr = htmlspecialchars(html_entity_decode((string)($pIrmao['title']['rendered'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $linkIr = htmlspecialchars((string)($pIrmao['link'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $blocoCluster .= "  <li><strong>{$i['label']}:</strong> <a href='{$linkIr}'>{$titIr}</a></li>\n";
+        } catch (Throwable $e) {}
+    }
+    $blocoCluster .= "</ul>\n";
+}
+
 $htmlPost = $blocoPlacar
+    . $blocoMM
     . "<h2>Acompanhe lance a lance</h2>\n"
     . $entriesHtml
     . $blocoEscalacao
+    . $blocoCluster
     . $schemaScript;
 
 if ($dryRun) {
