@@ -208,6 +208,20 @@ $contextoSite = match ($siteSlug) {
         'query_imagem' => 'trabalhador brasileiro escritório',
         'cat_principal' => 'Vagas',
     ],
+    'comocomprar' => [
+        'tema' => 'produtos, ofertas, comparativos e dicas de compra para o consumidor brasileiro',
+        'tom' => 'jornalismo de consumo prático, foco em utilidade, preço justo e onde comprar',
+        'voz_marca' => 'redação Como Comprar',
+        'query_imagem' => 'produto consumidor compra',
+        'cat_principal' => 'Ofertas',
+    ],
+    'ondecompraragora' => [
+        'tema' => 'onde encontrar produtos, lojas confiáveis, preço comparado e prazo de entrega no Brasil',
+        'tom' => 'jornalismo de consumo direto, foco em local de compra, preço e segurança',
+        'voz_marca' => 'redação Onde Comprar Agora',
+        'query_imagem' => 'loja online compras brasil',
+        'cat_principal' => 'Onde Comprar',
+    ],
     default => [ // leaodabarra
         'tema' => 'Esporte Clube Vitória, Brasileirão e Copa do Nordeste',
         'tom' => 'jornalismo esportivo factual',
