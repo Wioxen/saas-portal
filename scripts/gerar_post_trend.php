@@ -173,10 +173,42 @@ ESTRUTURA SUGERIDA (~300-500 palavras):
 Saída: APENAS HTML limpo (sem markdown ```). Use <p>, <h2>, <ul>, <li>, <strong>.
 EOT;
 
+// Contexto por site (multi-site aware)
+$contextoSite = match ($siteSlug) {
+    'cursosenac' => [
+        'tema' => 'cursos gratuitos, vagas em universidades e oportunidades educacionais no Brasil',
+        'tom' => 'jornalismo de serviço educacional, foco em prazo de inscrição, requisitos e benefícios',
+        'voz_marca' => 'redação CursoSenac Gratuito',
+        'query_imagem' => 'universidade brasileira sala aula formatura',
+        'cat_principal' => 'Cursos Gratuitos',
+    ],
+    'guiadoscursos' => [
+        'tema' => 'guia de cursos, MEC, ENEM e formação acadêmica',
+        'tom' => 'jornalismo educacional informativo',
+        'voz_marca' => 'redação Guia dos Cursos',
+        'query_imagem' => 'aluno universitário brasil',
+        'cat_principal' => 'Cursos',
+    ],
+    'vagasebeneficios' => [
+        'tema' => 'vagas de emprego, benefícios sociais e oportunidades de renda no Brasil',
+        'tom' => 'jornalismo de serviço, foco em quem pode receber, como solicitar, valor',
+        'voz_marca' => 'redação Vagas e Benefícios',
+        'query_imagem' => 'trabalhador brasileiro escritório',
+        'cat_principal' => 'Vagas',
+    ],
+    default => [ // leaodabarra
+        'tema' => 'Esporte Clube Vitória, Brasileirão e Copa do Nordeste',
+        'tom' => 'jornalismo esportivo factual',
+        'voz_marca' => 'redação Leão da Barra',
+        'query_imagem' => 'Esporte Clube Vitoria',
+        'cat_principal' => 'Esporte Clube Vitória',
+    ],
+};
+
 $userPrompt = "TÍTULO DA TREND CAPTURADA: {$tituloTrend}\n\n"
     . "FONTES SCRAPEDAS (cada parágrafo deve ser atribuível):\n\n"
     . $briefingFontes
-    . "Escreva uma notícia esportiva sobre o Esporte Clube Vitória seguindo as regras. Saída só HTML.";
+    . "Escreva uma notícia sobre {$contextoSite['tema']} seguindo as regras. Saída só HTML.";
 
 $resposta = $claude->callPublic([['role' => 'user', 'content' => $userPrompt]], $systemPrompt, 2500);
 $contentHtml = trim((string)($resposta['content'][0]['text'] ?? ''));
@@ -252,8 +284,20 @@ $contentComSchema = $contentHtml . "\n<script type=\"application/ld+json\" data-
 
 // ── 7. Featured (og→Serper→Pexels) + publish + inline ──────────────────────
 $titulo = $tituloTrend;
-// Limpa sufixo padrão "o que saber agora..." que pingo cola
-$titulo = trim(preg_replace('/:?\s*o que saber agora.*$/iu', '', $titulo));
+// Limpa sufixos genéricos que pingo cola (esportivos pra leaodabarra reciclados pra outros sites)
+$sufixosPingo = [
+    '/:?\s*o que saber agora.*$/iu',
+    '/:?\s*onde assistir,?\s*horário e escalação.*$/iu',
+    '/:?\s*onde assistir,?\s*horário.*$/iu',
+    '/:?\s*o que aconteceu e por que.*$/iu',
+    '/:?\s*passo a passo.*$/iu',
+    '/:?\s*qual opç[aã]o comprar.*$/iu',
+    '/\s*\(atualizado\)\s*$/iu',
+    '/:?\s*como participar.*?:\s*/iu', // remove prefixo "Como participar de" no início
+];
+foreach ($sufixosPingo as $rx) {
+    $titulo = trim(preg_replace($rx, '', $titulo) ?? $titulo);
+}
 $titulo = mb_substr($titulo, 0, 150);
 $slug = trim(preg_replace('/[^a-z0-9-]/', '-', strtolower(transliterator_transliterate('Any-Latin; Latin-ASCII', $titulo))), '-');
 $slug = substr($slug, 0, 70);
@@ -279,7 +323,7 @@ if (!$dryRun) {
     if ($featuredId === 0 && !empty($cfg['serper_api_key'])) {
         try {
             $sx = new SerperImages($cfg['serper_api_key']);
-            $img = $sx->melhor($titulo . ' Esporte Clube Vitoria', ['min_w' => 800, 'min_h' => 400, 'credito_generico' => false]);
+            $img = $sx->melhor($titulo . ' ' . $contextoSite['query_imagem'], ['min_w' => 800, 'min_h' => 400, 'credito_generico' => false]);
             if ($img) {
                 $mid = (int)$wp->uploadImagemPorUrl((string)$img['imageUrl'], $titulo, '');
                 if ($mid > 0) { $featuredId = $mid; $featuredUrl = (string)$img['imageUrl']; $featuredFonte = 'serper-images'; $featuredCredito = (string)($img['credito'] ?? 'divulgação'); echo "   ✓ Featured: media_id={$mid} fonte=serper-images credito={$img['credito']} score={$img['score']}\n"; }
@@ -306,14 +350,32 @@ if (!$dryRun) {
 // Categoria — resolve via CategoryMatcher (fuzzy anti-fragmentacao)
 $categoryIds = [];
 if (!$dryRun) {
-    $catsPropostas = ['Esporte Clube Vitória'];
-    // Adiciona categorias contextuais detectadas no título
+    $catsPropostas = [$contextoSite['cat_principal']];
+    // Categorias contextuais detectadas no título (por site)
     $tlow = mb_strtolower($titulo);
-    if (mb_stripos($tlow, 'copa do brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
-    if (mb_stripos($tlow, 'copa do nordeste') !== false || mb_stripos($tlow, 'nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
-    if (mb_stripos($tlow, 'brasileir') !== false || mb_stripos($tlow, 'série a') !== false) $catsPropostas[] = 'Brasileirão';
-    if (mb_stripos($tlow, 'stjd') !== false) $catsPropostas[] = 'STJD';
-    if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $catsPropostas[] = 'Arbitragem';
+    if ($siteSlug === 'leaodabarra') {
+        if (mb_stripos($tlow, 'copa do brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
+        if (mb_stripos($tlow, 'copa do nordeste') !== false || mb_stripos($tlow, 'nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
+        if (mb_stripos($tlow, 'brasileir') !== false || mb_stripos($tlow, 'série a') !== false) $catsPropostas[] = 'Brasileirão';
+        if (mb_stripos($tlow, 'stjd') !== false) $catsPropostas[] = 'STJD';
+        if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $catsPropostas[] = 'Arbitragem';
+    } elseif ($siteSlug === 'cursosenac') {
+        if (mb_stripos($tlow, 'mestrado') !== false || mb_stripos($tlow, 'doutorado') !== false) $catsPropostas[] = 'Pós-graduação';
+        if (mb_stripos($tlow, 'fies') !== false) $catsPropostas[] = 'Fies';
+        if (mb_stripos($tlow, 'enem') !== false) $catsPropostas[] = 'Enem';
+        if (mb_stripos($tlow, 'mec') !== false) $catsPropostas[] = 'MEC';
+        if (mb_stripos($tlow, 'capes') !== false) $catsPropostas[] = 'Capes';
+        if (mb_stripos($tlow, 'vestibular') !== false) $catsPropostas[] = 'Vestibular';
+        if (mb_stripos($tlow, 'bolsa') !== false || mb_stripos($tlow, 'gratui') !== false) $catsPropostas[] = 'Bolsas e Gratuidade';
+        if (mb_stripos($tlow, 'professor') !== false || mb_stripos($tlow, 'docente') !== false) $catsPropostas[] = 'Professores';
+        if (mb_stripos($tlow, 'inscriç') !== false || mb_stripos($tlow, 'inscriçao') !== false) $catsPropostas[] = 'Inscrições Abertas';
+        if (mb_stripos($tlow, 'ead') !== false || mb_stripos($tlow, 'online') !== false || mb_stripos($tlow, 'distância') !== false) $catsPropostas[] = 'EAD';
+    } elseif ($siteSlug === 'vagasebeneficios') {
+        if (mb_stripos($tlow, 'inss') !== false) $catsPropostas[] = 'INSS';
+        if (mb_stripos($tlow, 'bolsa fam') !== false || mb_stripos($tlow, 'auxílio') !== false) $catsPropostas[] = 'Auxílios';
+        if (mb_stripos($tlow, 'concurso') !== false) $catsPropostas[] = 'Concursos';
+        if (mb_stripos($tlow, 'vaga') !== false) $catsPropostas[] = 'Vagas de Emprego';
+    }
     try {
         $cm = new CategoryMatcher($wp, 70.0);
         $resolvido = $cm->resolverComMatch($catsPropostas);
