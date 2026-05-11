@@ -122,10 +122,14 @@ if ($apiPartidaIdFinal > 0) {
         $away = $partida['time_visitante']['nome_popular'] ?? '?';
         $estad = $partida['estadio']['nome_popular'] ?? '';
         $dataIso = $partida['data_realizacao_iso'] ?? '';
+        $rodada = $partida['rodada'] ?? '';
+        $compNome = $partida['campeonato']['nome_popular'] ?? $partida['campeonato']['nome'] ?? '';
+        // schema real: escalacoes.mandante / escalacoes.visitante (NÃO time_mandante.escalacao)
+        $escMandante = $partida['escalacoes']['mandante'] ?? null;
+        $escVisitante = $partida['escalacoes']['visitante'] ?? null;
         $transmissao = (array)($partida['transmissao'] ?? []);
         $arbs = (array)($partida['arbitragem'] ?? []);
-        $escMandante = $partida['time_mandante']['escalacao'] ?? null;
-        $escVisitante = $partida['time_visitante']['escalacao'] ?? null;
+
         $linhasArb = [];
         foreach ($arbs as $a) {
             if (!empty($a['nome_popular']) && !empty($a['funcao'])) {
@@ -134,26 +138,45 @@ if ($apiPartidaIdFinal > 0) {
         }
         $linhasTrans = [];
         foreach ($transmissao as $t) {
-            $nome = $t['nome'] ?? $t['canal'] ?? null;
+            $nome = is_array($t) ? ($t['nome'] ?? $t['canal'] ?? null) : (string)$t;
             if ($nome) $linhasTrans[] = (string)$nome;
         }
+
+        // Helper pra formatar escalação
+        $formatarEscalacao = function ($esc) {
+            if (!is_array($esc)) return null;
+            $tatico = $esc['esquema_tatico'] ?? '';
+            $tecnico = $esc['tecnico']['nome_popular'] ?? '';
+            $linhas = [];
+            foreach (($esc['titulares'] ?? []) as $j) {
+                $nome = $j['atleta']['nome_popular'] ?? '';
+                $pos = $j['posicao']['sigla'] ?? '';
+                if ($nome) $linhas[] = $pos ? "{$nome} ({$pos})" : $nome;
+            }
+            $out = [];
+            if ($tatico) $out[] = "Esquema: {$tatico}";
+            if ($tecnico) $out[] = "Técnico: {$tecnico}";
+            if (!empty($linhas)) $out[] = "Titulares: " . implode(', ', $linhas);
+            return implode(' | ', $out);
+        };
+
         $apiBriefing = "FONTE OFICIAL (api-futebol — verdade absoluta) [pub=" . substr($dataIso, 0, 10) . "]:\n";
         $apiBriefing .= "  Confronto: {$home} x {$away}\n";
+        if ($compNome) $apiBriefing .= "  Competição: {$compNome}" . ($rodada ? " ({$rodada})" : '') . "\n";
         $apiBriefing .= "  Local: " . ($estad ?: '?') . "\n";
         $apiBriefing .= "  Data/hora ISO: {$dataIso}\n";
         if (!empty($linhasTrans)) $apiBriefing .= "  Transmissão: " . implode(', ', $linhasTrans) . "\n";
         if (!empty($linhasArb))   $apiBriefing .= "  Arbitragem: " . implode(' | ', $linhasArb) . "\n";
-        if (is_array($escMandante) && !empty($escMandante['titulares'])) {
-            $nomes = array_map(fn($j) => (string)($j['apelido'] ?? $j['nome_popular'] ?? ''), $escMandante['titulares']);
-            $apiBriefing .= "  Escalação {$home}: " . implode(', ', array_filter($nomes)) . "\n";
-        }
-        if (is_array($escVisitante) && !empty($escVisitante['titulares'])) {
-            $nomes = array_map(fn($j) => (string)($j['apelido'] ?? $j['nome_popular'] ?? ''), $escVisitante['titulares']);
-            $apiBriefing .= "  Escalação {$away}: " . implode(', ', array_filter($nomes)) . "\n";
-        }
+
+        $escM = $formatarEscalacao($escMandante);
+        if ($escM) $apiBriefing .= "  Escalação {$home}: {$escM}\n";
+        $escV = $formatarEscalacao($escVisitante);
+        if ($escV) $apiBriefing .= "  Escalação {$away}: {$escV}\n";
         $apiBriefing .= "\n---\n\n";
         $apiOk = true;
-        echo "  ✓ api-futebol OK" . ($stale ? " (stale-cache)" : '') . " — escalações=" . (($escMandante ? 1 : 0) + ($escVisitante ? 1 : 0)) . "/2, arbs=" . count($linhasArb) . ", transm=" . count($linhasTrans) . "\n";
+
+        $countEsc = (($escMandante && !empty($escMandante['titulares'])) ? 1 : 0) + (($escVisitante && !empty($escVisitante['titulares'])) ? 1 : 0);
+        echo "  ✓ api-futebol OK" . ($stale ? " (stale-cache)" : '') . " — escalações={$countEsc}/2, arbs=" . count($linhasArb) . ", transm=" . count($linhasTrans) . "\n";
     } catch (Throwable $e) {
         echo "  ⚠ api-futebol falhou: " . $e->getMessage() . " — fallback Serper\n";
     }

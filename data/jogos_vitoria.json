@@ -1,71 +1,195 @@
 {
-  "_meta": {
-    "descricao": "Calendário de jogos do Esporte Clube Vitória. Atualizado por scripts/atualizar_jogos.php (cron 1x/dia + ad-hoc). Fonte primária: ge.globo (JSON embedado na main page do clube). Fonte fallback: Serper Knowledge Graph.",
-    "fontes_validas": ["ge.globo", "serper-kg", "manual"],
-    "atualizado_em": "2026-05-02T20:05:00-03:00",
-    "ultimo_scrape_ge": "2026-05-02T20:05:00-03:00",
-    "ultimo_scrape_status": "ok"
-  },
-  "jogos": [
-    {
-      "id": "2026-05-02-vit-cfc",
-      "data": "2026-05-02",
-      "hora": "18:30",
-      "timezone": "America/Sao_Paulo",
-      "competicao": "Brasileirão Série A",
-      "rodada": 14,
-      "mando": "casa",
-      "adversario": {
-        "nome": "Coritiba",
-        "sigla": "CFC",
-        "escudo": ""
-      },
-      "estadio": "Barradão",
-      "transmissao": null,
-      "status": "finalizado",
-      "placar": {
-        "vitoria": 4,
-        "adversario": 1
-      },
-      "destaque_editorial": "Goleada com olé — Vitória dominou e provocou nos passes finais",
-      "fonte": "manual",
-      "fonte_url": null,
-      "scraped_at": "2026-05-02T20:35:00-03:00",
-      "posts_gerados": {
-        "pre_jogo": null,
-        "pos_jogo": 810,
-        "repercussao": null
-      }
+    "_meta": {
+        "descricao": "Calendário de jogos do Esporte Clube Vitória. Atualizado por scripts/atualizar_jogos.php (cron 1x/dia + ad-hoc). Fonte primária: ge.globo (JSON embedado na main page do clube). Fonte fallback: Serper Knowledge Graph.",
+        "fontes_validas": [
+            "ge.globo",
+            "serper-kg",
+            "manual"
+        ],
+        "atualizado_em": "2026-05-08T11:00:08+00:00",
+        "ultimo_scrape_ge": "2026-05-08T11:00:08+00:00",
+        "ultimo_scrape_status": "ok",
+        "ultimo_scrape_jogos": 2,
+        "lifecycle_atualizado_em": "2026-05-08T01:18:22-03:00",
+        "posts_gerados_atualizado_em": "2026-05-09T00:04:11-03:00"
     },
-    {
-      "id": "2026-05-06-vit-cea",
-      "data": "2026-05-06",
-      "hora": "21:30",
-      "timezone": "America/Sao_Paulo",
-      "competicao": "Copa do Nordeste",
-      "fase": "Quartas de final",
-      "rodada": null,
-      "mando": "casa",
-      "adversario": {
-        "nome": "Ceará",
-        "sigla": "CEA",
-        "escudo": "https://s.sde.globo.com/media/organizations/2019/10/10/ceara-30x30.png"
-      },
-      "estadio": "Barradão",
-      "transmissao": null,
-      "status": "agendado",
-      "placar": {
-        "vitoria": null,
-        "adversario": null
-      },
-      "fonte": "ge.globo",
-      "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
-      "scraped_at": "2026-05-02T20:05:00-03:00",
-      "posts_gerados": {
-        "pre_jogo": 817,
-        "pos_jogo": null,
-        "repercussao": null
-      }
-    }
-  ]
+    "jogos": [
+        {
+            "id": "2026-05-02-vit-cfc",
+            "data": "2026-05-02",
+            "hora": "18:30",
+            "timezone": "America/Sao_Paulo",
+            "competicao": "Brasileirão Série A",
+            "rodada": 14,
+            "mando": "casa",
+            "adversario": {
+                "nome": "Coritiba",
+                "sigla": "CFC",
+                "escudo": ""
+            },
+            "estadio": "Barradão",
+            "transmissao": null,
+            "status": "finalizado",
+            "placar": {
+                "vitoria": 4,
+                "adversario": 1
+            },
+            "destaque_editorial": "Goleada com olé — Vitória dominou e provocou nos passes finais",
+            "fonte": "manual",
+            "fonte_url": null,
+            "scraped_at": "2026-05-02T20:35:00-03:00",
+            "posts_gerados": {
+                "pre_jogo": null,
+                "pos_jogo": 810,
+                "repercussao": null
+            },
+            "api_partida_id": 27783
+        },
+        {
+            "id": "2026-05-06-vit-cea",
+            "data": "2026-05-06",
+            "hora": "21:30",
+            "timezone": "America/Sao_Paulo",
+            "competicao": null,
+            "fase": "Quartas de final",
+            "rodada": null,
+            "mando": "casa",
+            "adversario": {
+                "nome": "Ceará",
+                "sigla": "CEA",
+                "escudo": "https://s.sde.globo.com/media/organizations/2019/10/10/ceara-30x30.png"
+            },
+            "estadio": "Barradão",
+            "transmissao": {
+                "broadcast": {
+                    "id": "ENCERRADA",
+                    "label": "saiba como foi"
+                },
+                "status": "Publicado",
+                "url": "https://ge.globo.com/ba/futebol/copa-do-nordeste/jogo/06-05-2026/vitoria-ceara.ghtml"
+            },
+            "status": "finalizado",
+            "placar": {
+                "vitoria": 1,
+                "adversario": 0
+            },
+            "fonte": "ge.globo",
+            "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
+            "scraped_at": "2026-05-07T11:00:08+00:00",
+            "posts_gerados": {
+                "pre_jogo": 817,
+                "pos_jogo": null,
+                "repercussao": null
+            }
+        },
+        {
+            "id": "2026-05-09-vit-flu",
+            "data": "2026-05-09",
+            "hora": "18:00",
+            "timezone": "America/Sao_Paulo",
+            "competicao": "Brasileirão Série A",
+            "rodada": 16,
+            "mando": "fora",
+            "adversario": {
+                "nome": "Fluminense",
+                "sigla": "FLU",
+                "escudo": ""
+            },
+            "estadio": "Maracanã",
+            "transmissao": "Premiere",
+            "status": "agendado",
+            "placar": null,
+            "destaque_editorial": "Clássico de tabela no Maracanã: Vitória sem Erick (suspenso STJD), Claudinho pode reaparecer",
+            "fonte": "manual",
+            "fonte_url": null,
+            "scraped_at": "2026-05-08T00:00:16+00:00",
+            "posts_gerados": {
+                "pre_jogo": 1120,
+                "pos_jogo": null,
+                "repercussao": null
+            },
+            "_lifecycle_status": "EventScheduled",
+            "_lifecycle_updated_at": "2026-05-08T01:18:22-03:00",
+            "api_partida_id": 27785
+        },
+        {
+            "id": "2026-05-20-vit-abc",
+            "data": "2026-05-20",
+            "hora": "",
+            "timezone": "America/Sao_Paulo",
+            "competicao": null,
+            "rodada": null,
+            "mando": "casa",
+            "adversario": {
+                "nome": "ABC",
+                "sigla": "ABC",
+                "escudo": "https://s.sde.globo.com/media/organizations/2022/11/14/ABC-RN_30.png"
+            },
+            "estadio": "",
+            "transmissao": null,
+            "status": "agendado",
+            "placar": {
+                "vitoria": null,
+                "adversario": null
+            },
+            "fonte": "ge.globo",
+            "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
+            "scraped_at": "2026-05-08T11:00:08+00:00"
+        },
+        {
+            "id": "2026-05-27-abc-vit",
+            "data": "2026-05-27",
+            "hora": "",
+            "timezone": "America/Sao_Paulo",
+            "competicao": null,
+            "rodada": null,
+            "mando": "fora",
+            "adversario": {
+                "nome": "ABC",
+                "sigla": "ABC",
+                "escudo": "https://s.sde.globo.com/media/organizations/2022/11/14/ABC-RN_30.png"
+            },
+            "estadio": "",
+            "transmissao": null,
+            "status": "agendado",
+            "placar": {
+                "vitoria": null,
+                "adversario": null
+            },
+            "fonte": "ge.globo",
+            "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
+            "scraped_at": "2026-05-08T11:00:08+00:00"
+        },
+        {
+            "id": "2026-05-14-vit-fla",
+            "data": "2026-05-14",
+            "hora": "21:30",
+            "timezone": "America/Sao_Paulo",
+            "competicao": "Copa do Brasil",
+            "fase": "Oitavas de final - Volta",
+            "rodada": null,
+            "mando": "casa",
+            "adversario": {
+                "nome": "Flamengo",
+                "sigla": "FLA",
+                "escudo": ""
+            },
+            "estadio": "Barradão",
+            "transmissao": null,
+            "status": "agendado",
+            "placar": {
+                "vitoria": null,
+                "adversario": null
+            },
+            "fonte": "manual",
+            "fonte_url": null,
+            "scraped_at": "2026-05-08T23:27:04+00:00",
+            "posts_gerados": {
+                "pre_jogo": 1110,
+                "preview_tatico": null,
+                "pos_jogo": null,
+                "analise_pos": null
+            }
+        }
+    ]
 }

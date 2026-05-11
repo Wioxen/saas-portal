@@ -60,10 +60,20 @@ $jsonPath = __DIR__ . '/../data/jogos_vitoria.json';
 $db = json_decode((string)file_get_contents($jsonPath), true);
 if (!is_array($db) || empty($db['jogos'])) { fwrite(STDERR, "✗ jogos_vitoria.json inválido\n"); exit(2); }
 
+// IDs reais da api-futebol (verificados via /campeonatos):
+//   10 = Brasileirão (Série A)
+//   14 = Brasileirão Série B (CUIDADO: NÃO é Copa do Brasil)
+//    2 = Copa do Brasil
+//   15 = Copa do Nordeste
+//    7 = Libertadores
+//   78 = Amistosos
 $mapaCompetCamp = [
     'Brasileirão Série A' => 10,
     'Brasileirão' => 10,
-    'Copa do Brasil' => 14,
+    'Copa do Brasil' => 2,
+    'Copa do Nordeste' => 15,
+    'Libertadores' => 7,
+    'Sul-Americana' => 73,
 ];
 $encontrados = 0;
 $ja = 0;
