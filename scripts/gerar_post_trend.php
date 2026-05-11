@@ -241,6 +241,48 @@ $contentHtml = trim((string)($resposta['content'][0]['text'] ?? ''));
 if ($contentHtml === '') { fwrite(STDERR, "✗ Sonnet vazio\n"); exit(4); }
 echo "   ✓ " . str_word_count(strip_tags($contentHtml)) . " palavras\n\n";
 
+// CTA de afiliado pra sites de consumo (comocomprar + ondecompraragora)
+$ctaAfiliado = '';
+$sitesComCTA = ['comocomprar', 'ondecompraragora'];
+if (in_array($siteSlug, $sitesComCTA, true) && !empty($cfg['amazon_affiliate_url'])) {
+    $afUrl = htmlspecialchars((string)$cfg['amazon_affiliate_url'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $ctaTxt = $siteSlug === 'ondecompraragora' ? 'Veja onde comprar com o melhor preço' : 'Veja a oferta na Amazon';
+    $ctaAfiliado = "\n<div class='cta-afiliado' style='text-align:center;margin:32px 0;padding:24px;background:#fff8e7;border:2px dashed #ff9900;border-radius:8px;'>"
+        . "<p style='margin:0 0 14px;font-size:16px;color:#333;'><strong>Encontrou o produto certo?</strong></p>"
+        . "<a href='{$afUrl}' target='_blank' rel='nofollow sponsored noopener' style='display:inline-block;background:#ff9900;color:#fff;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:6px;text-decoration:none;letter-spacing:0.3px;'>🛒 {$ctaTxt}</a>"
+        . "<p style='margin:12px 0 0;font-size:12px;color:#888;'>Link de afiliado — apoia o portal sem custo adicional pra você</p>"
+        . "</div>\n";
+}
+// Injeta CTA: após o 2º </h2> + parágrafo (meio do post pra captura)
+if ($ctaAfiliado) {
+    $h2Count = 0;
+    $contentHtml = preg_replace_callback(
+        '|</h2>|',
+        function ($m) use (&$h2Count, &$ctaAfiliado) {
+            $h2Count++;
+            if ($h2Count === 2) {
+                $tmp = $ctaAfiliado;
+                $ctaAfiliado = ''; // injeta uma vez só
+                return $m[0] . "\n[[CTA_PLACEHOLDER]]";
+            }
+            return $m[0];
+        },
+        $contentHtml,
+        2
+    );
+    // Substitui placeholder no fim do próximo </p>
+    if (strpos($contentHtml, '[[CTA_PLACEHOLDER]]') !== false) {
+        $contentHtml = preg_replace('|\[\[CTA_PLACEHOLDER\]\](.*?</p>)|s', '$1' . ($ctaAfiliado ?: ''), $contentHtml, 1) ?? $contentHtml;
+        // Pra garantir, se ainda houver placeholder, remove
+        $contentHtml = str_replace('[[CTA_PLACEHOLDER]]', '', $contentHtml);
+    }
+    // Sempre adiciona CTA também no FIM (segunda chance de conversão)
+    $ctaFimRepeat = "\n<div class='cta-afiliado cta-fim' style='text-align:center;margin:32px 0;padding:20px;background:#fff8e7;border:2px solid #ff9900;border-radius:8px;'>"
+        . "<a href='" . htmlspecialchars((string)$cfg['amazon_affiliate_url'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . "' target='_blank' rel='nofollow sponsored noopener' style='display:inline-block;background:#ff9900;color:#fff;font-weight:bold;font-size:18px;padding:16px 32px;border-radius:6px;text-decoration:none;'>🛒 " . ($siteSlug === 'ondecompraragora' ? 'Comprar agora com melhor preço' : 'Comprar agora na Amazon') . "</a></div>\n";
+    $contentHtml .= $ctaFimRepeat;
+    echo "   ✓ CTA afiliado injetado (2x: meio + fim)\n";
+}
+
 // ── 5. Validação fidelity ──────────────────────────────────────────────────
 echo "→ [5/7] Source fidelity\n";
 $validator = new SourceFidelityValidator();
