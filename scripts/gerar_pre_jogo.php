@@ -471,12 +471,34 @@ $userPrompt = $contextoTemporal . "DADOS DO JOGO (verdade absoluta — pode cita
     . "Conteúdo CURTO e VERDADEIRO > conteúdo longo e inventado. Aceitável omitir <h2> de seções sem fonte.\n\n"
     . "Saída: só HTML.";
 
-$resp = $claude->callPublic([['role' => 'user', 'content' => $userPrompt]], $systemPrompt, 3500);
-$contentHtml = trim((string)($resp['content'][0]['text'] ?? ''));
+// Tenta Claude primeiro; fallback OpenAI se billing zerou
+require_once __DIR__ . '/../lib/OpenAI.php';
+$llmUsado = 'claude';
+$forcarLlm = (string)($args['llm'] ?? '');
+$contentHtml = '';
+if ($forcarLlm !== 'openai') {
+    try {
+        $resp = $claude->callPublic([['role' => 'user', 'content' => $userPrompt]], $systemPrompt, 3500);
+        $contentHtml = trim((string)($resp['content'][0]['text'] ?? ''));
+    } catch (Throwable $e) {
+        $msg = $e->getMessage();
+        if (strpos($msg, 'credit balance') !== false || (strpos($msg, '400') !== false && strpos($msg, 'invalid_request_error') !== false)) {
+            echo "   ⚠ Claude sem crédito — fallback OpenAI\n";
+            $forcarLlm = 'openai';
+        } else { throw $e; }
+    }
+}
+if ($contentHtml === '' || $forcarLlm === 'openai') {
+    if (empty($cfg['openai_api_key'])) { fwrite(STDERR, "✗ OpenAI sem api_key\n"); exit(1); }
+    $openai = new OpenAI($cfg['openai_api_key'], $cfg['openai_model'] ?? 'gpt-4o');
+    $contentHtml = trim($openai->chat($systemPrompt, $userPrompt, 3500));
+    $llmUsado = 'openai (' . ($cfg['openai_model'] ?? 'gpt-4o') . ')';
+}
 $contentHtml = preg_replace('/^\s*```(?:html)?\s*\n?/i', '', $contentHtml);
 $contentHtml = preg_replace('/\n?\s*```\s*$/i', '', $contentHtml);
 $contentHtml = trim($contentHtml);
-if ($contentHtml === '') { fwrite(STDERR, "✗ Claude retornou vazio\n"); exit(1); }
+if ($contentHtml === '') { fwrite(STDERR, "✗ LLM vazio (tentou ambos)\n"); exit(1); }
+echo "   ✓ " . str_word_count($contentHtml) . " palavras (llm={$llmUsado})\n";
 echo "   ✓ " . str_word_count(strip_tags($contentHtml)) . " palavras geradas\n\n";
 
 // ── 6. Source-Fidelity check ───────────────────────────────────────────────

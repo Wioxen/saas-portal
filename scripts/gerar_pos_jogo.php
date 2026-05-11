@@ -37,7 +37,7 @@ require_once __DIR__ . '/../lib/AutoRevisor.php';
 require_once __DIR__ . '/../lib/SportsHighlightsExtractor.php';
 require_once __DIR__ . '/../lib/ApiFutebol.php';
 
-$opts = getopt('', ['site::', 'jogo-id::', 'urls::', 'api-partida-id::', 'dry-run', 'publicar', 'verbose']);
+$opts = getopt('', ['site::', 'jogo-id::', 'urls::', 'api-partida-id::', 'llm::', 'dry-run', 'publicar', 'verbose']);
 $siteSlug = (string)($opts['site'] ?? 'leaodabarra');
 $jogoId   = (string)($opts['jogo-id'] ?? '');
 $urlsRaw  = (string)($opts['urls'] ?? '');
@@ -317,11 +317,32 @@ if ($dryRun) {
     exit(0);
 }
 
-// Chama Claude
-echo "\n[claude] gerando...\n";
+// Tenta Claude; fallback OpenAI se billing zerou
+require_once __DIR__ . '/../lib/OpenAI.php';
+echo "\n[llm] gerando...\n";
 $claude = new Claude($cfg['anthropic_api_key'], $cfg['anthropic_model'] ?? 'claude-sonnet-4-6');
-$resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 16000);
-$texto = $resp['content'][0]['text'] ?? '';
+$texto = '';
+$llmUsado = 'claude';
+$forcarLlm = !empty($opts['llm']) ? (string)$opts['llm'] : '';
+if ($forcarLlm !== 'openai') {
+    try {
+        $resp = $claude->callPublic([['role' => 'user', 'content' => $user]], $system, 16000);
+        $texto = $resp['content'][0]['text'] ?? '';
+    } catch (Throwable $e) {
+        $msg = $e->getMessage();
+        if (strpos($msg, 'credit balance') !== false || (strpos($msg, '400') !== false && strpos($msg, 'invalid_request_error') !== false)) {
+            echo "  ⚠ Claude sem crédito — fallback OpenAI\n";
+            $forcarLlm = 'openai';
+        } else { throw $e; }
+    }
+}
+if ($texto === '' || $forcarLlm === 'openai') {
+    if (empty($cfg['openai_api_key'])) { fwrite(STDERR, "[erro] OpenAI sem api_key\n"); exit(5); }
+    $openai = new OpenAI($cfg['openai_api_key'], $cfg['openai_model'] ?? 'gpt-4o');
+    $texto = $openai->chat($system, $user, 16000);
+    $llmUsado = 'openai (' . ($cfg['openai_model'] ?? 'gpt-4o') . ')';
+    echo "  ✓ gerado via OpenAI\n";
+}
 $json = Claude::parseJsonResponse($texto);
 if (!$json || empty($json['html'])) {
     $debugPath = __DIR__ . '/../data/debug/posjogo_fail_' . date('Ymd_His') . '.txt';

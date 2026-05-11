@@ -32,6 +32,7 @@ if ($trendId <= 0) {
 $cfg = require __DIR__ . '/../config.php';
 require_once __DIR__ . '/../_site_helper.php';
 require_once __DIR__ . '/../lib/Claude.php';
+require_once __DIR__ . '/../lib/OpenAI.php';
 require_once __DIR__ . '/../lib/Wordpress.php';
 require_once __DIR__ . '/../lib/Serper.php';
 require_once __DIR__ . '/../lib/Scraper.php';
@@ -236,10 +237,41 @@ $userPrompt = "TÍTULO DA TREND CAPTURADA: {$tituloTrend}\n\n"
     . $briefingFontes
     . "Escreva uma notícia sobre {$contextoSite['tema']} seguindo as regras. Saída só HTML.";
 
-$resposta = $claude->callPublic([['role' => 'user', 'content' => $userPrompt]], $systemPrompt, 2500);
-$contentHtml = trim((string)($resposta['content'][0]['text'] ?? ''));
-if ($contentHtml === '') { fwrite(STDERR, "✗ Sonnet vazio\n"); exit(4); }
-echo "   ✓ " . str_word_count(strip_tags($contentHtml)) . " palavras\n\n";
+// Tenta Claude primeiro; fallback automático pra OpenAI se billing zerou ou erro
+$llmUsado = 'claude';
+$forcarLlm = (string)($args['llm'] ?? '');
+$contentHtml = '';
+
+if ($forcarLlm !== 'openai') {
+    try {
+        $resposta = $claude->callPublic([['role' => 'user', 'content' => $userPrompt]], $systemPrompt, 2500);
+        $contentHtml = trim((string)($resposta['content'][0]['text'] ?? ''));
+    } catch (Throwable $e) {
+        $msg = $e->getMessage();
+        $isCreditError = (strpos($msg, 'credit balance') !== false) || (strpos($msg, 'invalid_request_error') !== false && strpos($msg, '400') !== false);
+        if ($isCreditError) {
+            echo "   ⚠ Claude sem crédito — fallback OpenAI\n";
+            $forcarLlm = 'openai';
+        } else {
+            throw $e;
+        }
+    }
+}
+
+if ($contentHtml === '' || $forcarLlm === 'openai') {
+    if (empty($cfg['openai_api_key'])) {
+        fwrite(STDERR, "✗ OpenAI sem api_key configurada\n"); exit(4);
+    }
+    $openai = new OpenAI($cfg['openai_api_key'], $cfg['openai_model'] ?? 'gpt-4o');
+    $contentHtml = trim($openai->chat($systemPrompt, $userPrompt, 2500));
+    $llmUsado = 'openai (' . ($cfg['openai_model'] ?? 'gpt-4o') . ')';
+    // Strip eventual markdown code fence
+    $contentHtml = preg_replace('/^```(?:html)?\s*\n?/', '', $contentHtml) ?? $contentHtml;
+    $contentHtml = preg_replace('/\n?```\s*$/', '', $contentHtml) ?? $contentHtml;
+}
+
+if ($contentHtml === '') { fwrite(STDERR, "✗ LLM vazio (tentou ambos)\n"); exit(4); }
+echo "   ✓ " . str_word_count(strip_tags($contentHtml)) . " palavras (llm={$llmUsado})\n\n";
 
 // CTA de afiliado pra sites de consumo (comocomprar + ondecompraragora)
 $ctaAfiliado = '';
