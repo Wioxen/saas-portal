@@ -138,17 +138,29 @@ foreach ($scraped as $i => $s) {
     $briefingFontes .= "FONTE " . ($i + 1) . " [pub={$s['pub']}]: {$s['titulo']}\nURL: {$s['url']}\n{$s['texto']}\n\n---\n\n";
 }
 
+// Pré-definição do contexto por site (precisa estar ANTES do systemPrompt pra injetar marca)
+$contextoSitePre = match ($siteSlug) {
+    'cursosenac'       => ['marca' => 'CursoSenac Gratuito', 'tom' => 'jornalismo factual de serviço educacional, frases curtas, sem sensacionalismo'],
+    'guiadoscursos'    => ['marca' => 'Guia dos Cursos',     'tom' => 'jornalismo educacional informativo'],
+    'vagasebeneficios' => ['marca' => 'Vagas e Benefícios',  'tom' => 'jornalismo de serviço sobre vagas e auxílios, frases curtas'],
+    'comocomprar'      => ['marca' => 'Como Comprar',        'tom' => 'jornalismo de consumo, foco em utilidade ao leitor'],
+    'ondecompraragora' => ['marca' => 'Onde Comprar Agora',  'tom' => 'jornalismo de consumo direto, foco em onde comprar'],
+    default            => ['marca' => 'Leão da Barra',       'tom' => 'jornalismo esportivo factual, frases curtas, sem clichê de torcida'],
+};
+$marcaPrompt = $contextoSitePre['marca'];
+$tomPrompt = $contextoSitePre['tom'];
+
 $systemPrompt = <<<EOT
-Você é redator do Leão da Barra. Tom: jornalismo factual de serviço, frases curtas, sem clichê de torcida. Acentuação portuguesa completa.
+Você é redator do {$marcaPrompt}. Tom: {$tomPrompt}. Acentuação portuguesa completa.
 
 ═══ REGRA ÚNICA E ABSOLUTA ═══
 Cada FATO mencionado (nome de pessoa, decisão, valor, data, local) DEVE estar EXPLICITAMENTE escrito nas FONTES SCRAPEDAS abaixo.
 
 ═══ ATRIBUIÇÃO — VOZ DE AUTORIDADE PRÓPRIA ═══
-NÓS somos o Leão da Barra. As fontes scrapedas são INSUMOS internos da nossa apuração — NÃO citar veículos por nome no corpo.
+NÓS somos o {$marcaPrompt}. As fontes scrapedas são INSUMOS internos da nossa apuração — NÃO citar veículos por nome no corpo.
 
-PROIBIDO: "Segundo o ge.globo / Lance / Terra / [qualquer veículo]"
-USAR: "Apuração da nossa redação aponta que..." / "Levantamento da equipe do Leão da Barra mostra..." / "A redação confirmou que..." / "Conforme apurado pela redação..." / "Segundo nosso acompanhamento..."
+PROIBIDO: "Segundo o [veículo] / Lance / Terra / G1 / ge.globo / [qualquer portal externo]"
+USAR: "Apuração da nossa redação aponta que..." / "Levantamento da equipe do {$marcaPrompt} mostra..." / "A redação confirmou que..." / "Conforme apurado pela redação..." / "Segundo nosso acompanhamento..."
 
 ═══ PROIBIDO ═══
 ✗ Inventar nomes/números/datas que não aparecem nas fontes
@@ -335,7 +347,7 @@ if (!$dryRun) {
     if ($featuredId > 0) {
         try {
             $captionTxt = "{$titulo} (Foto: {$featuredCredito})";
-            $descTxt = "Imagem ilustrativa da matéria '{$titulo}' publicada no portal Leão da Barra. " . mb_substr(strip_tags($contentHtml), 0, 200);
+            $descTxt = "Imagem ilustrativa da matéria '{$titulo}' publicada no portal {$marcaPrompt}. " . mb_substr(strip_tags($contentHtml), 0, 200);
             $wp->atualizarMedia($featuredId, [
                 'caption' => $captionTxt,
                 'description' => $descTxt,
@@ -390,7 +402,7 @@ $payload = [
     'content' => $contentComSchema,
     'status' => $asDraft ? 'draft' : 'publish',
     'meta' => [
-        'rank_math_title' => "{$titulo} | Leão da Barra",
+        'rank_math_title' => "{$titulo} | {$marcaPrompt}",
         'rank_math_description' => mb_substr(strip_tags($contentHtml), 0, 155),
     ],
 ];
