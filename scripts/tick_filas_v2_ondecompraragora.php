@@ -35,7 +35,7 @@ foreach ($argv as $a) {
     if (preg_match('/^--([a-z-]+)(?:=(.*))?$/i', $a, $m)) $args[$m[1]] = $m[2] ?? true;
 }
 $maxPorRun = (int)($args['max-por-run'] ?? 2);
-$capDia = (int)($args['cap-dia'] ?? 6);
+$capDia = (int)($args['cap-dia'] ?? 12);
 $dryRun = !empty($args['dry-run']);
 $verbose = !empty($args['verbose']);
 $siteSlug = (string)($args['site'] ?? 'ondecompraragora');
@@ -50,8 +50,8 @@ aplicarSite($cfg, sitesDisponiveis(), $siteSlug);
 
 $pdo = DbConnection::pdo();
 
-// Origens ondecompraragora (2 fontes)
-$origens = ['pingo:30','pingo:41'];
+// Origens ondecompraragora (2 antigas + 1 nova: Melhores Destinos)
+$origens = ['pingo:30','pingo:41','pingo:64'];
 $qmOrig = implode(',', array_fill(0, count($origens), '?'));
 
 // Cap diário: conta posts ja gerados HOJE pelo gerar_post_trend (publicado nas ultimas 24h via origens leao)

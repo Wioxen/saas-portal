@@ -35,7 +35,7 @@ foreach ($argv as $a) {
     if (preg_match('/^--([a-z-]+)(?:=(.*))?$/i', $a, $m)) $args[$m[1]] = $m[2] ?? true;
 }
 $maxPorRun = (int)($args['max-por-run'] ?? 2);
-$capDia = (int)($args['cap-dia'] ?? 6);
+$capDia = (int)($args['cap-dia'] ?? 12);
 $dryRun = !empty($args['dry-run']);
 $verbose = !empty($args['verbose']);
 $siteSlug = (string)($args['site'] ?? 'vagasebeneficios');

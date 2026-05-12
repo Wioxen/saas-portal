@@ -35,7 +35,7 @@ foreach ($argv as $a) {
     if (preg_match('/^--([a-z-]+)(?:=(.*))?$/i', $a, $m)) $args[$m[1]] = $m[2] ?? true;
 }
 $maxPorRun = (int)($args['max-por-run'] ?? 2);
-$capDia = (int)($args['cap-dia'] ?? 6);
+$capDia = (int)($args['cap-dia'] ?? 12);
 $dryRun = !empty($args['dry-run']);
 $verbose = !empty($args['verbose']);
 $siteSlug = (string)($args['site'] ?? 'comocomprar');
@@ -50,8 +50,8 @@ aplicarSite($cfg, sitesDisponiveis(), $siteSlug);
 
 $pdo = DbConnection::pdo();
 
-// Origens comocomprar (4 fontes)
-$origens = ['pingo:22','pingo:29','pingo:35','pingo:38'];
+// Origens comocomprar (4 antigas + 3 novas: Olhar Digital, Canaltech, Meliuz)
+$origens = ['pingo:22','pingo:29','pingo:35','pingo:38','pingo:61','pingo:62','pingo:63'];
 $qmOrig = implode(',', array_fill(0, count($origens), '?'));
 
 // Cap diário: conta posts ja gerados HOJE pelo gerar_post_trend (publicado nas ultimas 24h via origens leao)
