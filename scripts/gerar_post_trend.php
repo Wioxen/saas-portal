@@ -447,41 +447,87 @@ if (!$dryRun) {
     }
 }
 
-// Categoria — resolve via CategoryMatcher (fuzzy anti-fragmentacao)
+// Categoria = COMPETIÇÃO/TEMA único (hierarquia) + Tags = ENTIDADES (jogadores/marcas/instituições)
 $categoryIds = [];
+$tagIds = [];
 if (!$dryRun) {
-    $catsPropostas = [$contextoSite['cat_principal']];
-    // Categorias contextuais detectadas no título (por site)
-    $tlow = mb_strtolower($titulo);
+    $tlow = mb_strtolower($titulo . ' ' . strip_tags($contentHtml));
+    $catProposta = $contextoSite['cat_principal']; // default por site
+    $tagsPropostas = [];
+
     if ($siteSlug === 'leaodabarra') {
-        if (mb_stripos($tlow, 'copa do brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
-        if (mb_stripos($tlow, 'copa do nordeste') !== false || mb_stripos($tlow, 'nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
-        if (mb_stripos($tlow, 'brasileir') !== false || mb_stripos($tlow, 'série a') !== false) $catsPropostas[] = 'Brasileirão';
-        if (mb_stripos($tlow, 'stjd') !== false) $catsPropostas[] = 'STJD';
-        if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $catsPropostas[] = 'Arbitragem';
+        // Categoria = competição
+        if (mb_stripos($tlow, 'copa do brasil') !== false) $catProposta = 'Copa do Brasil';
+        elseif (mb_stripos($tlow, 'copa do nordeste') !== false || mb_stripos($tlow, 'nordestão') !== false) $catProposta = 'Copa do Nordeste';
+        elseif (mb_stripos($tlow, 'brasileir') !== false || mb_stripos($tlow, 'série a') !== false) $catProposta = 'Brasileirão 2026';
+        elseif (mb_stripos($tlow, 'sub-20') !== false) $catProposta = 'Categorias de Base';
+        else $catProposta = 'Jogos do Vitória';
+        // Tags = entidades
+        $tagsPropostas[] = 'Esporte Clube Vitória';
+        $adversariosBR = ['Flamengo', 'Fluminense', 'Bragantino', 'Coritiba', 'Internacional', 'Palmeiras', 'Corinthians', 'São Paulo', 'Santos', 'Atlético-MG', 'Cruzeiro', 'Grêmio', 'Ceará', 'Bahia', 'Athletico-PR'];
+        foreach ($adversariosBR as $adv) if (mb_stripos($tlow, mb_strtolower($adv)) !== false) $tagsPropostas[] = $adv;
+        if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $tagsPropostas[] = 'Arbitragem';
+        if (mb_stripos($tlow, 'stjd') !== false) $tagsPropostas[] = 'STJD';
+        if (mb_stripos($tlow, 'var') !== false) $tagsPropostas[] = 'VAR';
+        if (mb_stripos($tlow, 'jair ventura') !== false) $tagsPropostas[] = 'Jair Ventura';
+        if (mb_stripos($tlow, 'kayzer') !== false) $tagsPropostas[] = 'Renato Kayzer';
+        if (mb_stripos($tlow, 'cacá') !== false || mb_stripos($tlow, 'caca ') !== false) $tagsPropostas[] = 'Cacá';
+
     } elseif ($siteSlug === 'cursosenac') {
-        if (mb_stripos($tlow, 'mestrado') !== false || mb_stripos($tlow, 'doutorado') !== false) $catsPropostas[] = 'Pós-graduação';
-        if (mb_stripos($tlow, 'fies') !== false) $catsPropostas[] = 'Fies';
-        if (mb_stripos($tlow, 'enem') !== false) $catsPropostas[] = 'Enem';
-        if (mb_stripos($tlow, 'mec') !== false) $catsPropostas[] = 'MEC';
-        if (mb_stripos($tlow, 'capes') !== false) $catsPropostas[] = 'Capes';
-        if (mb_stripos($tlow, 'vestibular') !== false) $catsPropostas[] = 'Vestibular';
-        if (mb_stripos($tlow, 'bolsa') !== false || mb_stripos($tlow, 'gratui') !== false) $catsPropostas[] = 'Bolsas e Gratuidade';
-        if (mb_stripos($tlow, 'professor') !== false || mb_stripos($tlow, 'docente') !== false) $catsPropostas[] = 'Professores';
-        if (mb_stripos($tlow, 'inscriç') !== false || mb_stripos($tlow, 'inscriçao') !== false) $catsPropostas[] = 'Inscrições Abertas';
-        if (mb_stripos($tlow, 'ead') !== false || mb_stripos($tlow, 'online') !== false || mb_stripos($tlow, 'distância') !== false) $catsPropostas[] = 'EAD';
+        // Categoria = tema único
+        if (mb_stripos($tlow, 'mestrado') !== false || mb_stripos($tlow, 'doutorado') !== false || mb_stripos($tlow, 'pós-graduação') !== false) $catProposta = 'Pós-graduação';
+        elseif (mb_stripos($tlow, 'fies') !== false || mb_stripos($tlow, 'prouni') !== false) $catProposta = 'Bolsas e Financiamento';
+        elseif (mb_stripos($tlow, 'enem') !== false || mb_stripos($tlow, 'vestibular') !== false) $catProposta = 'Vestibular e Enem';
+        elseif (mb_stripos($tlow, 'ead') !== false || mb_stripos($tlow, 'distância') !== false) $catProposta = 'EAD';
+        elseif (mb_stripos($tlow, 'professor') !== false || mb_stripos($tlow, 'docente') !== false) $catProposta = 'Professores';
+        else $catProposta = 'Cursos Gratuitos';
+        // Tags = instituições/temas específicos
+        $instituicoes = ['MEC', 'CAPES', 'CNPq', 'UFFS', 'UNIFESP', 'UFPB', 'UFRJ', 'UFSCar', 'UFABC', 'UFRRJ', 'IFB', 'IFSP', 'IFAC', 'Senac', 'Senai', 'CNE', 'IBGE'];
+        foreach ($instituicoes as $inst) if (mb_stripos($tlow, $inst) !== false) $tagsPropostas[] = $inst;
+        if (mb_stripos($tlow, 'inscriç') !== false) $tagsPropostas[] = 'Inscrições Abertas';
+        if (mb_stripos($tlow, 'bolsa') !== false) $tagsPropostas[] = 'Bolsa';
+        if (mb_stripos($tlow, 'gratui') !== false) $tagsPropostas[] = 'Gratuito';
+        if (mb_stripos($tlow, 'inteligência artificial') !== false || mb_stripos($tlow, ' ia ') !== false) $tagsPropostas[] = 'Inteligência Artificial';
+
+    } elseif ($siteSlug === 'comocomprar' || $siteSlug === 'ondecompraragora') {
+        // Categoria = tema do produto
+        if (mb_stripos($tlow, 'celular') !== false || mb_stripos($tlow, 'smartphone') !== false) $catProposta = 'Smartphones';
+        elseif (mb_stripos($tlow, 'notebook') !== false || mb_stripos($tlow, 'laptop') !== false) $catProposta = 'Notebooks';
+        elseif (mb_stripos($tlow, 'wi-fi') !== false || mb_stripos($tlow, 'smart') !== false || mb_stripos($tlow, 'alexa') !== false) $catProposta = 'Casa Inteligente';
+        elseif (mb_stripos($tlow, 'câmera') !== false || mb_stripos($tlow, 'camera') !== false) $catProposta = 'Câmeras e Vigilância';
+        elseif (mb_stripos($tlow, 'tv') !== false) $catProposta = 'TVs';
+        elseif (mb_stripos($tlow, 'jogo') !== false || mb_stripos($tlow, 'game') !== false || mb_stripos($tlow, 'playstation') !== false || mb_stripos($tlow, 'ps5') !== false || mb_stripos($tlow, 'xbox') !== false) $catProposta = 'Games e Consoles';
+        else $catProposta = 'Ofertas';
+        // Tags = marcas + plataformas
+        $marcas = ['Amazon', 'Mercado Livre', 'Magazine Luiza', 'Americanas', 'Shopee', 'AliExpress', 'Samsung', 'Apple', 'Xiaomi', 'Motorola', 'LG', 'Sony', 'Philips', 'Positivo', 'Yoosee', 'Multilaser'];
+        foreach ($marcas as $m) if (mb_stripos($tlow, $m) !== false) $tagsPropostas[] = $m;
+        if (mb_stripos($tlow, 'oferta') !== false) $tagsPropostas[] = 'Ofertas';
+        if (mb_stripos($tlow, 'desconto') !== false) $tagsPropostas[] = 'Desconto';
+        if (mb_stripos($tlow, 'review') !== false || mb_stripos($tlow, 'comparativo') !== false) $tagsPropostas[] = 'Review';
+
     } elseif ($siteSlug === 'vagasebeneficios') {
-        if (mb_stripos($tlow, 'inss') !== false) $catsPropostas[] = 'INSS';
-        if (mb_stripos($tlow, 'bolsa fam') !== false || mb_stripos($tlow, 'auxílio') !== false) $catsPropostas[] = 'Auxílios';
-        if (mb_stripos($tlow, 'concurso') !== false) $catsPropostas[] = 'Concursos';
-        if (mb_stripos($tlow, 'vaga') !== false) $catsPropostas[] = 'Vagas de Emprego';
+        if (mb_stripos($tlow, 'concurso') !== false) $catProposta = 'Concursos';
+        elseif (mb_stripos($tlow, 'inss') !== false || mb_stripos($tlow, 'aposentadoria') !== false) $catProposta = 'INSS e Aposentadoria';
+        elseif (mb_stripos($tlow, 'bolsa fam') !== false || mb_stripos($tlow, 'auxílio') !== false) $catProposta = 'Auxílios';
+        elseif (mb_stripos($tlow, 'vaga') !== false || mb_stripos($tlow, 'emprego') !== false) $catProposta = 'Vagas de Emprego';
+        else $catProposta = 'Benefícios';
     }
+
+    // Limpa duplicatas + limit 8 tags
+    $tagsPropostas = array_values(array_unique(array_filter($tagsPropostas)));
+    $tagsPropostas = array_slice($tagsPropostas, 0, 8);
+
     try {
         $cm = new CategoryMatcher($wp, 70.0);
-        $resolvido = $cm->resolverComMatch($catsPropostas);
-        $categoryIds = array_values(array_filter(array_map('intval', $resolvido)));
-        echo "   ✓ Categorias: " . implode(',', $categoryIds) . " (" . implode(', ', $catsPropostas) . ")\n";
-    } catch (Throwable $e) { echo "   ⚠ categoria falhou: {$e->getMessage()}\n"; }
+        $resolvidoCat = $cm->resolverComMatch([$catProposta]);
+        $categoryIds = array_values(array_filter(array_map('intval', $resolvidoCat)));
+        echo "   ✓ Categoria: " . implode(',', $categoryIds) . " ({$catProposta})\n";
+
+        if (!empty($tagsPropostas)) {
+            $tagIds = $wp->resolverTags($tagsPropostas);
+            echo "   ✓ Tags: " . implode(',', $tagIds) . " (" . implode(', ', $tagsPropostas) . ")\n";
+        }
+    } catch (Throwable $e) { echo "   ⚠ taxonomia falhou: {$e->getMessage()}\n"; }
 }
 
 $payload = [
@@ -496,6 +542,7 @@ $payload = [
 ];
 if ($featuredId > 0) $payload['featured_media'] = $featuredId;
 if (!empty($categoryIds)) $payload['categories'] = $categoryIds;
+if (!empty($tagIds)) $payload['tags'] = $tagIds;
 if (!empty($cfg['default_post_author_id'])) $payload['author'] = (int)$cfg['default_post_author_id'];
 
 if ($dryRun) {

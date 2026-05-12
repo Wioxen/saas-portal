@@ -626,20 +626,36 @@ if (!$dryRun) {
     }
 }
 
-// Categoria: detecta no contexto do jogo + competicao
+// Taxonomia: 1 categoria (competição) + tags (entidades)
 $categoryIds = [];
+$tagIds = [];
 if (!$dryRun) {
-    $catsPropostas = ['Esporte Clube Vitória'];
-    if (mb_stripos($comp, 'Copa do Brasil') !== false) $catsPropostas[] = 'Copa do Brasil';
-    if (mb_stripos($comp, 'Copa do Nordeste') !== false || mb_stripos($comp, 'Nordestão') !== false) $catsPropostas[] = 'Copa do Nordeste';
-    if (mb_stripos($comp, 'Brasileir') !== false || mb_stripos($comp, 'Série A') !== false) $catsPropostas[] = 'Brasileirão';
-    if ($adv) $catsPropostas[] = $adv; // adversario como categoria
+    $catProposta = 'Jogos do Vitória';
+    if (mb_stripos($comp, 'Copa do Brasil') !== false) $catProposta = 'Copa do Brasil';
+    elseif (mb_stripos($comp, 'Copa do Nordeste') !== false || mb_stripos($comp, 'Nordestão') !== false) $catProposta = 'Copa do Nordeste';
+    elseif (mb_stripos($comp, 'Brasileir') !== false || mb_stripos($comp, 'Série A') !== false) $catProposta = 'Brasileirão 2026';
+
+    $tagsPropostas = ['Esporte Clube Vitória'];
+    if ($adv) $tagsPropostas[] = $adv;
+    $tlow = mb_strtolower(($contentHtml ?? '') . ' ' . $titulo);
+    if (mb_stripos($tlow, 'arbitr') !== false || mb_stripos($tlow, 'árbitro') !== false) $tagsPropostas[] = 'Arbitragem';
+    if (mb_stripos($tlow, 'var') !== false) $tagsPropostas[] = 'VAR';
+    if (mb_stripos($tlow, 'jair ventura') !== false) $tagsPropostas[] = 'Jair Ventura';
+    if (mb_stripos($tlow, 'kayzer') !== false) $tagsPropostas[] = 'Renato Kayzer';
+    if (mb_stripos($tlow, 'matheuzinho') !== false) $tagsPropostas[] = 'Matheuzinho';
+    if (mb_stripos($tlow, 'cacá') !== false) $tagsPropostas[] = 'Cacá';
+    $tagsPropostas = array_values(array_unique(array_filter($tagsPropostas)));
+
     try {
         $cm = new CategoryMatcher($wpUploader, 70.0);
-        $resolvido = $cm->resolverComMatch($catsPropostas);
+        $resolvido = $cm->resolverComMatch([$catProposta]);
         $categoryIds = array_values(array_filter(array_map('intval', $resolvido)));
-        echo "   ✓ Categorias: " . implode(',', $categoryIds) . "\n";
-    } catch (Throwable $e) { echo "   ⚠ categoria: " . $e->getMessage() . "\n"; }
+        echo "   ✓ Categoria: " . implode(',', $categoryIds) . " ({$catProposta})\n";
+        if (!empty($tagsPropostas)) {
+            $tagIds = $wpUploader->resolverTags($tagsPropostas);
+            echo "   ✓ Tags: " . implode(',', $tagIds) . " (" . implode(', ', $tagsPropostas) . ")\n";
+        }
+    } catch (Throwable $e) { echo "   ⚠ taxonomia: " . $e->getMessage() . "\n"; }
 }
 
 $payload = [
@@ -658,6 +674,9 @@ if ($featuredMediaId > 0) {
 }
 if (!empty($categoryIds)) {
     $payload['categories'] = $categoryIds;
+}
+if (!empty($tagIds)) {
+    $payload['tags'] = $tagIds;
 }
 if (!empty($cfg['default_post_author_id'])) {
     $payload['author'] = (int)$cfg['default_post_author_id'];
