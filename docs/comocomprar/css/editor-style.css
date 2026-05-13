@@ -1,0 +1,72 @@
+/**
+ * Editor Styles - Gutenberg
+ *
+ * @package ComoComprar
+ */
+
+:root {
+  --cc-font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --cc-font-body: 'Source Sans 3', system-ui, sans-serif;
+  --cc-gray-700: #374151;
+  --cc-gray-900: #111827;
+  --cc-blue: #1E3A8A;
+  --cc-blue-light: #2563EB;
+  --cc-gray-100: #F3F4F6;
+  --cc-gray-200: #E5E7EB;
+  --cc-radius: 0.625rem;
+  --cc-radius-sm: 0.375rem;
+}
+
+.editor-styles-wrapper {
+  font-family: var(--cc-font-body) !important;
+  font-size: 1.0625rem !important;
+  line-height: 1.75 !important;
+  color: var(--cc-gray-700) !important;
+  max-width: 740px !important;
+  margin: 0 auto !important;
+}
+
+.editor-styles-wrapper h1,
+.editor-styles-wrapper h2,
+.editor-styles-wrapper h3,
+.editor-styles-wrapper h4,
+.editor-styles-wrapper h5,
+.editor-styles-wrapper h6 {
+  font-family: var(--cc-font-heading) !important;
+  font-weight: 700 !important;
+  color: var(--cc-gray-900) !important;
+  line-height: 1.25 !important;
+}
+
+.editor-styles-wrapper h1 { font-size: 2.25rem !important; }
+.editor-styles-wrapper h2 { font-size: 1.75rem !important; margin-top: 2.25rem !important; }
+.editor-styles-wrapper h3 { font-size: 1.375rem !important; margin-top: 1.75rem !important; }
+
+.editor-styles-wrapper p {
+  margin-bottom: 1.25rem !important;
+}
+
+.editor-styles-wrapper blockquote {
+  border-left: 4px solid var(--cc-blue) !important;
+  padding: 1rem 1.25rem !important;
+  background: var(--cc-gray-100) !important;
+  border-radius: 0 var(--cc-radius-sm) var(--cc-radius-sm) 0 !important;
+}
+
+.editor-styles-wrapper a {
+  color: var(--cc-blue-light) !important;
+}
+
+.editor-styles-wrapper table th {
+  background: var(--cc-gray-100) !important;
+}
+
+.editor-styles-wrapper table th,
+.editor-styles-wrapper table td {
+  border-bottom: 1px solid var(--cc-gray-200) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.editor-styles-wrapper img {
+  border-radius: var(--cc-radius-sm) !important;
+}
