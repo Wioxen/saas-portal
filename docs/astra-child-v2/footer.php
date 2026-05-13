@@ -130,7 +130,10 @@ function reorderNavByPreference(){
     var sc=lsGet(LS_CATSCORE,{});
     var nav=document.getElementById('navCats');
     if(!nav) return;
-    var items=Array.prototype.slice.call(nav.querySelectorAll('li')).filter(function(li){return !li.classList.contains('close-li');});
+    // `:scope > li` pega só filhos diretos. Sem isso, querySelectorAll('li') varria os <li> de dentro
+    // dos <ul class="nav-subcats">, e o appendChild abaixo os reparentava pro <ul class="nav-cats">
+    // (flex-row), achatando os dropdowns em itens inline na barra principal.
+    var items=Array.prototype.slice.call(nav.querySelectorAll(':scope > li')).filter(function(li){return !li.classList.contains('close-li');});
     if(!items.length) return;
     items.forEach(function(li){
         var a=li.querySelector('.nav-cat-link'); if(!a) return;
@@ -144,6 +147,10 @@ function reorderNavByPreference(){
         var sb=sc[(bb&&bb.getAttribute('data-cat-slug'))||'']||0;
         return sb-sa;
     });
+    // Skip o reflow se a ordem já bate — evita flicker visual em revisitas frequentes.
+    var changed=false;
+    for(var i=0;i<items.length;i++){if(items[i]!==sorted[i]){changed=true;break;}}
+    if(!changed) return;
     var closeLi=nav.querySelector('.close-li');
     sorted.forEach(function(li){nav.appendChild(li);});
     if(closeLi) nav.insertBefore(closeLi,nav.firstChild);

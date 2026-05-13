@@ -86,9 +86,40 @@ add_action('wp_enqueue_scripts', function () {
  * astra/frontend.min.js só roda interações pós-load.
  */
 add_filter('script_loader_tag', function ($tag, $handle) {
-    static $defer = ['cookie-law-info', 'astra-theme-js'];
+    static $defer = ['cookie-law-info', 'astra-theme-js', 'jquery-core', 'jquery'];
     if (in_array($handle, $defer, true) && strpos($tag, ' defer') === false) {
         return str_replace(' src=', ' defer src=', $tag);
+    }
+    return $tag;
+}, 10, 2);
+
+/**
+ * Move jQuery pro footer pra não bloquear render (Lighthouse: 1.260ms blocking, 30KB).
+ * Os inline scripts que dependem dele (cookie-law-info, snippet do plugin "Simple Custom CSS and JS")
+ * rodam DEPOIS do </body>, então jQuery em footer chega a tempo.
+ */
+add_action('wp_default_scripts', function ($scripts) {
+    if (is_admin()) return;
+    if (isset($scripts->registered['jquery-core'])) {
+        $scripts->registered['jquery-core']->extra['group'] = 1; // 1 = footer
+    }
+    if (isset($scripts->registered['jquery-migrate'])) {
+        $scripts->registered['jquery-migrate']->extra['group'] = 1;
+    }
+    if (isset($scripts->registered['jquery'])) {
+        $scripts->registered['jquery']->extra['group'] = 1;
+    }
+});
+
+/**
+ * Async load dos CSS externos não-críticos. O <style> inline no header.php já cobre o
+ * above-the-fold; esses externos podem entrar via preload+onload sem causar FOUC visível.
+ */
+add_filter('style_loader_tag', function ($tag, $handle) {
+    static $async = ['astra-theme-css', 'astra-parent-style', 'astra-child-gdc-style', 'post-views-counter-frontend'];
+    if (in_array($handle, $async, true)) {
+        // preload + onload swap. <noscript> fallback embutido via str_replace mantém compat sem JS.
+        $tag = str_replace("rel='stylesheet'", "rel='preload' as='style' onload=\"this.onload=null;this.rel='stylesheet'\"", $tag);
     }
     return $tag;
 }, 10, 2);

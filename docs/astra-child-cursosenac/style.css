@@ -1,0 +1,104 @@
+/*
+Theme Name: Astra Child Cursos SENAC Gratuito
+Theme URI: https://cursosenacgratuito.com.br
+Description: Tema filho do Astra para cursosenacgratuito.com.br — design system Discover-first paleta laranja-SENAC/branco, silos SENAC/SENAI/SEBRAE/Profissionalizantes/EAD/Idiomas, TOC automático, Salvar para Depois e Próximo Post slide-in.
+Author: Cursos SENAC Gratuito
+Author URI: https://cursosenacgratuito.com.br
+Template: astra
+Version: 1.0.7
+Text Domain: astra-child-cursosenac
+*/
+
+/* ════ DROPDOWN DE SUBCATEGORIAS NO MENU ════
+   Render: header.php → <li class="has-children"> contém <ul class="nav-subcats">.
+   Bug original: .nav-cats tem overflow-x:auto (inline em header.php) que recortava o dropdown.
+   Solução: :has() libera overflow só quando hover/focus/open numa filha (não derruba a rolagem
+   horizontal das cats no resto do tempo). :has() é suportado por Chrome/Edge 105+, Safari 15.4+,
+   Firefox 121+. Fallback pra navegadores antigos: o dropdown ainda aparece mas pode ser cortado. */
+
+/* DESKTOP */
+.nav-cats li.has-children { position: relative; }
+/* 3 caminhos pra liberar overflow do .nav-cats quando o dropdown está ativo,
+   cobrindo todos os navegadores e estados (hover, focus, click): */
+/* (a) :hover bruto — funciona em qualquer navegador, sem :has() */
+.nav-cats:hover { overflow: visible !important; }
+/* (b) :has() — Chrome/Edge 105+, Safari 15.4+, Firefox 121+ */
+.nav-cats:has(li.has-children:hover),
+.nav-cats:has(li.has-children:focus-within),
+.nav-cats:has(li.has-children.open) { overflow: visible !important; }
+/* (c) classe JS .has-active-child — adicionada em mouseenter/focusin pelo header.php */
+.nav-cats.has-active-child { overflow: visible !important; }
+
+.nav-chevron { font-size: .65em; margin-left: 4px; opacity: .7; transition: transform .18s; display: inline-block; }
+.nav-cats li.has-children:hover .nav-chevron,
+.nav-cats li.has-children:focus-within .nav-chevron,
+.nav-cats li.has-children.open .nav-chevron { transform: rotate(180deg); }
+
+.nav-cats .nav-subcats {
+    display: none !important;
+    position: absolute !important;
+    top: 100%;
+    left: 0;
+    background: #ffffff;
+    min-width: 240px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.15);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: .4rem 0;
+    z-index: 1000;
+    list-style: none;
+    margin: 0;
+}
+.nav-cats li.has-children:hover > .nav-subcats,
+.nav-cats li.has-children:focus-within > .nav-subcats,
+.nav-cats li.has-children.open > .nav-subcats { display: block !important; }
+
+.nav-subcats > li { display: block; width: 100%; margin: 0; flex-shrink: initial; }
+.nav-subcats > li > a {
+    display: block;
+    padding: .5rem 1rem;
+    font-size: .85rem;
+    color: #1f2937;
+    text-decoration: none;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    border: none !important;
+    border-bottom: none !important;
+    min-height: auto;
+    white-space: normal;
+    line-height: 1.35;
+}
+.nav-subcats > li > a:hover,
+.nav-subcats > li > a:focus { background: rgba(234,88,12,.08); color: #ea580c; }
+.nav-subcats .nav-subcat-all { border-bottom: 1px solid #e2e8f0 !important; margin-bottom: .25rem; }
+.nav-subcats .nav-subcat-all strong { color: #ea580c; font-size: .82rem; font-weight: 700; }
+
+/* MOBILE / TABLET — dropdown inline (accordion) dentro do painel lateral */
+@media (max-width: 1023px) {
+    .nav-cats li.has-children { position: static; }
+    .nav-cats .nav-subcats {
+        position: static;
+        display: none;
+        box-shadow: none;
+        border: none;
+        padding: .25rem 0 .5rem .8rem;
+        background: transparent;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+    /* No mobile hover não existe; só .open (clique) abre */
+    .nav-cats li.has-children:hover > .nav-subcats,
+    .nav-cats li.has-children:focus-within > .nav-subcats { display: none !important; }
+    .nav-cats li.has-children.open > .nav-subcats { display: block !important; }
+
+    .nav-subcats > li > a {
+        padding: .55rem .7rem;
+        font-size: .9rem;
+        border-radius: 6px;
+        border: 1px solid transparent !important;
+    }
+    .nav-subcats > li > a:hover,
+    .nav-subcats > li > a:focus { background: rgba(234,88,12,.1); }
+}

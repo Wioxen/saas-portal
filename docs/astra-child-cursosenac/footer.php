@@ -1,10 +1,10 @@
 <?php
 /**
- * Astra Child Guia dos Cursos — footer.php
+ * Astra Child Cursos SENAC Gratuito — footer.php
  */
 if (!defined('ABSPATH')) exit;
 $site_name = get_bloginfo('name');
-$all_categories = gdc_all_cats();
+$all_categories = csg_all_cats();
 
 $current_post_data = null;
 if (is_single()) {
@@ -14,9 +14,9 @@ if (is_single()) {
         'pid' => (int)$post->ID,
         'title' => get_the_title($post),
         'link' => get_permalink($post),
-        'cat' => gdc_get_cat($post->ID),
-        'cat_slug' => gdc_get_cat_slug($post->ID),
-        'thumb' => $thumb ?: gdc_fallback_img(),
+        'cat' => csg_get_cat($post->ID),
+        'cat_slug' => csg_get_cat_slug($post->ID),
+        'thumb' => $thumb ?: csg_fallback_img(),
     ];
 }
 
@@ -45,7 +45,7 @@ $single_exclude = is_single() ? (int)get_the_ID() : 0;
         <?php endforeach; ?>
     </ul></div>
     <div class="footer-col"><h3 class="footer-heading">Siga nas Redes</h3><ul>
-        <li><a href="https://www.instagram.com/_guiadoscursos" target="_blank" rel="noopener noreferrer">
+        <li><a href="https://www.instagram.com/_cursosenacgratuito" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.81.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.81-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.81-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.81.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.46.72-2.13 1.39C1.34 2.69.93 3.36.62 4.15.32 4.91.12 5.79.06 7.06.01 8.34 0 8.75 0 12s.01 3.66.07 4.94c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.39 2.13.67.67 1.34 1.08 2.13 1.39.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.66-.01 4.94-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.13-1.39.67-.67 1.08-1.34 1.39-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.94s-.01-3.66-.07-4.94c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.39-2.13C21.31 1.34 20.64.93 19.85.62 19.09.32 18.21.12 16.94.06 15.66.01 15.25 0 12 0zm0 5.84A6.16 6.16 0 1 0 12 18.16 6.16 6.16 0 0 0 12 5.84zm0 10.16A4 4 0 1 1 12 8a4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>
             Instagram
         </a></li>
@@ -60,9 +60,9 @@ $single_exclude = is_single() ? (int)get_the_ID() : 0;
 <script>
 (function(){
 'use strict';
-var LS_RECENT='gdc_recent_v1', LS_CATSCORE='gdc_catscore_v1', LS_SAVED='gdc_saved_v1', MAX_RECENT=6, MAX_SAVED=50;
+var LS_RECENT='csg_recent_v1', LS_CATSCORE='csg_catscore_v1', LS_SAVED='csg_saved_v1', MAX_RECENT=6, MAX_SAVED=50;
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
-var FB_IMG='<?php echo gdc_fallback_img(); ?>';
+var FB_IMG='<?php echo csg_fallback_img(); ?>';
 <?php if ($current_post_data): ?>
 var CURRENT_POST=<?php echo wp_json_encode($current_post_data); ?>;
 <?php else: ?>
@@ -199,11 +199,11 @@ function reorderNavByPreference(){
 
 /* MAPA DE CORES (espelha PHP) */
 function catColor(s){
-    var exact={'cursos-gratuitos':'#10b981','senac':'#059669','sebrae':'#0d9488','senai':'#047857','enem':'#dc2626','sisu':'#b91c1c','prouni':'#991b1b','fies':'#7f1d1d','vestibular':'#b91c1c','cursos-tecnicos':'#1e3a8a','etec':'#1e40af','if-federais':'#1d4ed8','profissionalizantes':'#7c3aed','informatica':'#6d28d9','programacao':'#9333ea','ead':'#0891b2','online':'#06b6d4','idiomas':'#ea580c','ingles':'#f97316','espanhol':'#fb923c','libras':'#c2410c','concursos':'#9d174d','concursos-publicos':'#9d174d','editais':'#831843','carreira':'#475569','curriculo':'#475569','primeiro-emprego':'#64748b'};
+    var exact={'cursos-gratuitos':'#10b981','senac':'#059669','sebrae':'#0d9488','senai':'#047857','enem':'#dc2626','sisu':'#b91c1c','prouni':'#991b1b','fies':'#7f1d1d','vestibular':'#b91c1c','cursos-tecnicos':'#1e3a8a','etec':'#ea580c','if-federais':'#1d4ed8','profissionalizantes':'#ea580c','informatica':'#1e3a8a','programacao':'#9333ea','ead':'#0891b2','online':'#06b6d4','idiomas':'#ea580c','ingles':'#f97316','espanhol':'#fb923c','libras':'#c2410c','concursos':'#9d174d','concursos-publicos':'#9d174d','editais':'#831843','carreira':'#475569','curriculo':'#475569','primeiro-emprego':'#64748b'};
     s=(s||'').toLowerCase(); if(exact[s]) return exact[s];
-    var part={'gratuit':'#10b981','senac':'#059669','senai':'#047857','sebrae':'#0d9488','enem':'#dc2626','sisu':'#b91c1c','prouni':'#991b1b','vestibular':'#b91c1c','tecnico':'#1e3a8a','etec':'#1e40af','federa':'#1d4ed8','profissionaliz':'#7c3aed','informatica':'#6d28d9','programacao':'#9333ea','marketing':'#7e22ce','ead':'#0891b2','online':'#06b6d4','idiom':'#ea580c','ingles':'#f97316','espanhol':'#fb923c','libras':'#c2410c','concurso':'#9d174d','edital':'#831843','carreira':'#475569','curriculo':'#475569','emprego':'#64748b','curso':'#1e40af'};
+    var part={'gratuit':'#10b981','senac':'#059669','senai':'#047857','sebrae':'#0d9488','enem':'#dc2626','sisu':'#b91c1c','prouni':'#991b1b','vestibular':'#b91c1c','tecnico':'#1e3a8a','etec':'#ea580c','federa':'#1d4ed8','profissionaliz':'#ea580c','informatica':'#1e3a8a','programacao':'#9333ea','marketing':'#7e22ce','ead':'#0891b2','online':'#06b6d4','idiom':'#ea580c','ingles':'#f97316','espanhol':'#fb923c','libras':'#c2410c','concurso':'#9d174d','edital':'#831843','carreira':'#475569','curriculo':'#475569','emprego':'#64748b','curso':'#ea580c'};
     for(var k in part){if(s.indexOf(k)!==-1) return part[k];}
-    var pal=['#1e40af','#10b981','#dc2626','#7c3aed','#0891b2','#ea580c','#9d174d','#475569','#3b82f6','#059669'];
+    var pal=['#ea580c','#10b981','#dc2626','#ea580c','#0891b2','#ea580c','#9d174d','#475569','#f97316','#059669'];
     var h=0; for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i); h|=0;}
     return pal[Math.abs(h)%pal.length];
 }
@@ -351,7 +351,7 @@ function loadMore(){
     if(loading||done||!grid) return;
     loading=true;
     if(loader) loader.style.display='block';
-    var url=AJAX_URL+'?action=gdc_load_posts&paged='+page;
+    var url=AJAX_URL+'?action=csg_load_posts&paged='+page;
     if(ARCHIVE_CAT>0) url+='&cat='+ARCHIVE_CAT;
     if(ARCHIVE_SEARCH) url+='&s='+encodeURIComponent(ARCHIVE_SEARCH);
     if(EXCLUDE_PID>0) url+='&exclude='+EXCLUDE_PID;
@@ -376,7 +376,7 @@ if(HAS_GRID && grid && !done){
 /* NEXT POST SLIDE-IN (single only) */
 var nextSlide=document.getElementById('nextPostSlide');
 if(nextSlide && CURRENT_POST){
-    var dKey='gdc_next_dismissed_'+CURRENT_POST.pid;
+    var dKey='csg_next_dismissed_'+CURRENT_POST.pid;
     var dismissed=false;
     try{dismissed=sessionStorage.getItem(dKey)==='1';}catch(e){}
     if(!dismissed){

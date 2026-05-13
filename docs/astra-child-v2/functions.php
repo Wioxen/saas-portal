@@ -76,6 +76,72 @@ add_filter('the_content', function ($content) {
     return $content;
 }, 99);
 
+/* ============================================================ PERFORMANCE — DEQUEUE/DEFER ============================================================ */
+/**
+ * Remove assets pesados que o tema-filho não usa:
+ *  - wp-block-library / wp-block-library-theme / global-styles: blocos Gutenberg. Conteúdo é gerado via REST
+ *    com HTML puro, nunca blocos.
+ *  - classic-theme-styles: estilo de fallback pré-blocos, idem.
+ *  - dashicons: só usado pela admin-bar; users logados mantêm.
+ */
+add_action('wp_enqueue_scripts', function () {
+    wp_dequeue_style('wp-block-library');
+    wp_dequeue_style('wp-block-library-theme');
+    wp_dequeue_style('global-styles');
+    wp_dequeue_style('classic-theme-styles');
+    if (!is_user_logged_in()) {
+        wp_dequeue_style('dashicons');
+        wp_deregister_style('dashicons');
+    }
+}, 100);
+
+/**
+ * Defer scripts não-críticos pro render. cookie-law-info pode aparecer 1-2s depois;
+ * astra/frontend.min.js só roda interações pós-load.
+ */
+add_filter('script_loader_tag', function ($tag, $handle) {
+    static $defer = ['cookie-law-info', 'astra-theme-js', 'jquery-core', 'jquery'];
+    if (in_array($handle, $defer, true) && strpos($tag, ' defer') === false) {
+        return str_replace(' src=', ' defer src=', $tag);
+    }
+    return $tag;
+}, 10, 2);
+
+/**
+ * Move jQuery pro footer (group=1) — tira 1.260ms blocking + 30KB do path crítico.
+ */
+add_action('wp_default_scripts', function ($scripts) {
+    if (is_admin()) return;
+    foreach (['jquery-core', 'jquery-migrate', 'jquery'] as $h) {
+        if (isset($scripts->registered[$h])) {
+            $scripts->registered[$h]->extra['group'] = 1;
+        }
+    }
+});
+
+/**
+ * Async load dos CSS externos não-críticos via preload+onload.
+ */
+add_filter('style_loader_tag', function ($tag, $handle) {
+    static $async = ['astra-theme-css', 'astra-parent-style', 'astra-child-style', 'post-views-counter-frontend'];
+    if (in_array($handle, $async, true)) {
+        $tag = str_replace("rel='stylesheet'", "rel='preload' as='style' onload=\"this.onload=null;this.rel='stylesheet'\"", $tag);
+    }
+    return $tag;
+}, 10, 2);
+
+/**
+ * Zera o astra-theme-css-inline-css (~67KB Customizer). Astra 4.12.6 não respeita
+ * o filtro `astra_dynamic_css`; remove o inline registrado via wp_add_inline_style
+ * direto do $wp_styles->registered['astra-theme-css']->extra['after'].
+ */
+add_action('wp_print_styles', function () {
+    global $wp_styles;
+    if (isset($wp_styles->registered['astra-theme-css'])) {
+        $wp_styles->registered['astra-theme-css']->extra['after'] = [];
+    }
+}, 100);
+
 /* ============================================================ HELPERS ============================================================ */
 function veb_get_cat($pid){$c=wp_get_post_categories($pid,['fields'=>'names']);return!empty($c)?$c[0]:'Geral';}
 function veb_get_cat_slug($pid){$c=wp_get_post_categories($pid,['fields'=>'all']);return!empty($c)?$c[0]->slug:'geral';}
@@ -131,14 +197,33 @@ function veb_most_read_week(){
     return $r;
 }
 
+/** Alias curto de exibição pro menu (mantém o nome canônico da categoria pra URL/arquivo). */
+function veb_silo_short_name($name){
+    static $map=[
+        'INSS e Aposentadoria'              => 'INSS',
+        'Benefícios Sociais'                => 'Benefícios',
+        'FGTS, PIS e Direitos Trabalhador'  => 'FGTS e PIS',
+        'Vagas e Empregos'                  => 'Vagas',
+        'Concursos Públicos'                => 'Concursos',
+        'MEI e Trabalho Autônomo'           => 'MEI',
+        'Imposto de Renda'                  => 'IR',
+        'Direitos Sociais e Documentos'     => 'Documentos',
+        'CLT e Direitos'                    => 'CLT',
+    ];
+    return $map[$name] ?? $name;
+}
 function veb_nav_cats(){
-    $key='veb_nav_cats_v1';
+    $key='veb_nav_cats_v2';
     $c=get_transient($key);
     if($c!==false) return $c;
     global $wpdb;
-    $r=$wpdb->get_results("SELECT t.term_id,t.name,t.slug,tt.count FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id=tt.term_id WHERE tt.taxonomy='category' AND tt.count>0 AND t.slug!='uncategorized' ORDER BY tt.count DESC LIMIT 12");
-    set_transient($key,$r,HOUR_IN_SECONDS);
-    return $r;
+    // Só silos top-level (parent=0), top 8 por contagem. Cada um leva top 10 subcategorias em dropdown.
+    $silos=$wpdb->get_results("SELECT t.term_id,t.name,t.slug,tt.count FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id=tt.term_id WHERE tt.taxonomy='category' AND tt.count>0 AND tt.parent=0 AND t.slug!='uncategorized' ORDER BY tt.count DESC LIMIT 8");
+    foreach($silos as $silo){
+        $silo->children=$wpdb->get_results($wpdb->prepare("SELECT t.term_id,t.name,t.slug,tt.count FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id=tt.term_id WHERE tt.taxonomy='category' AND tt.count>0 AND tt.parent=%d ORDER BY tt.count DESC LIMIT 10",(int)$silo->term_id));
+    }
+    set_transient($key,$silos,HOUR_IN_SECONDS);
+    return $silos;
 }
 
 function veb_all_cats(){
@@ -177,9 +262,11 @@ add_action('save_post_post', function(){
     delete_transient('veb_trending_cats_v1');
     delete_transient('veb_most_read_week_v1');
     delete_transient('veb_nav_cats_v1');
+    delete_transient('veb_nav_cats_v2');
     delete_transient('veb_home_itemlist_v1');
 });
-add_action('edited_category', function(){ delete_transient('veb_nav_cats_v1'); });
+add_action('edited_category', function(){ delete_transient('veb_nav_cats_v1');
+    delete_transient('veb_nav_cats_v2'); });
 
 /* ============================================================ RENDER CARD ============================================================ */
 function veb_render_card($p, $loading='lazy'){
