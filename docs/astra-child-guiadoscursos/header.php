@@ -8,13 +8,33 @@ $site_url = home_url('/');
 $nav_cats = gdc_nav_cats();
 $trending_cats = gdc_trending_cats();
 
-$lcp_src = $lcp_srcset = '';
+$lcp_src = $lcp_srcset = $lcp_sizes = '';
 if (is_front_page()) {
     $featured_main = get_posts(['numberposts'=>1, 'post_status'=>'publish']);
     if ($featured_main) {
         $lcp_id = get_post_thumbnail_id($featured_main[0]->ID);
-        $lcp_src = $lcp_id ? wp_get_attachment_image_url($lcp_id,'full') : '';
-        $lcp_srcset = $lcp_id ? wp_get_attachment_image_srcset($lcp_id,'full') : '';
+        if ($lcp_id) {
+            $lcp_src = wp_get_attachment_image_url($lcp_id,'large');
+            $lcp_srcset = wp_get_attachment_image_srcset($lcp_id,'large');
+            $lcp_sizes = '(max-width:768px) 100vw, 62vw';
+        }
+    }
+} elseif (is_singular('post')) {
+    $lcp_id = get_post_thumbnail_id(get_queried_object_id());
+    if ($lcp_id) {
+        $lcp_src = wp_get_attachment_image_url($lcp_id,'large');
+        $lcp_srcset = wp_get_attachment_image_srcset($lcp_id,'large');
+        $lcp_sizes = '(max-width:768px) 100vw, 800px';
+    }
+} elseif (is_archive() || is_category() || is_search()) {
+    global $wp_query;
+    if (!empty($wp_query->posts)) {
+        $lcp_id = get_post_thumbnail_id($wp_query->posts[0]->ID);
+        if ($lcp_id) {
+            $lcp_src = wp_get_attachment_image_url($lcp_id,'medium');
+            $lcp_srcset = wp_get_attachment_image_srcset($lcp_id,'medium');
+            $lcp_sizes = '(max-width:480px) 115px, (max-width:768px) 33vw, 280px';
+        }
     }
 }
 ?>
@@ -30,8 +50,8 @@ if (is_front_page()) {
 <link rel="manifest" href="<?php echo esc_attr(gdc_pwa_manifest_uri()); ?>">
 <link rel="apple-touch-icon" href="<?php echo esc_url(get_site_icon_url(180) ?: home_url('/favicon.ico')); ?>">
 <?php wp_head(); ?>
-<?php if (is_front_page() && $lcp_src): ?>
-<link rel="preload" as="image" href="<?php echo esc_url($lcp_src); ?>" <?php if($lcp_srcset):?>imagesrcset="<?php echo esc_attr($lcp_srcset); ?>" imagesizes="(max-width:768px) 100vw, 62vw"<?php endif;?> fetchpriority="high">
+<?php if ($lcp_src): ?>
+<link rel="preload" as="image" href="<?php echo esc_url($lcp_src); ?>" <?php if($lcp_srcset):?>imagesrcset="<?php echo esc_attr($lcp_srcset); ?>" imagesizes="<?php echo esc_attr($lcp_sizes); ?>"<?php endif;?> fetchpriority="high">
 <?php endif; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,12 +129,13 @@ input,textarea{font-family:inherit;font-size:16px}
 .nav-cats{display:flex;justify-content:center;gap:2px;list-style:none;padding:0 1.5rem;margin:0 auto;max-width:var(--max-w);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .nav-cats::-webkit-scrollbar{display:none}
 .nav-cats li{flex-shrink:0;list-style:none}
-.nav-cat-link{display:inline-flex;align-items:center;gap:6px;padding:.7rem 1rem;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--texto);text-decoration:none;border-bottom:3px solid transparent;transition:color .18s,border-color .18s,background .18s;white-space:nowrap;min-height:44px}
+.nav-cat-link{display:inline-flex;align-items:center;gap:4px;padding:.6rem .7rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em;color:var(--texto);text-decoration:none;border-bottom:3px solid transparent;transition:color .18s,border-color .18s,background .18s;white-space:nowrap;min-height:44px}
 .nav-cat-link:hover,.nav-cat-link:focus{color:var(--azul);border-bottom-color:var(--azul);background:rgba(30,64,175,.06)}
 .nav-cat-link[data-active="1"]{color:var(--azul);border-bottom-color:var(--azul)}
 .nav-cat-link .hot-dot{width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block;animation:pulse-dot 1.5s ease-in-out infinite}
 @keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}}
 .nav-cats-close{display:none}
+/* dropdown de subcategorias: regras em style.css (.nav-subcats, .has-children, .nav-chevron) */
 
 .container{max-width:var(--max-w);width:100%;margin:0 auto;padding:0 1.5rem}
 
@@ -410,6 +431,7 @@ input,textarea{font-family:inherit;font-size:16px}
     .nav-cats li{display:block;width:100%}
     .nav-cat-link{display:block;padding:.85rem;border-radius:var(--radius-sm);font-size:.95rem;width:100%;text-align:left;border:1px solid var(--borda);text-transform:none;letter-spacing:0;border-bottom:1px solid var(--borda);min-height:48px}
     .nav-cat-link:hover,.nav-cat-link:focus{background:var(--azul);color:#fff;border-color:var(--azul)}
+    /* dropdown mobile (accordion): regras em style.css */
     /* TOC mobile colapsado */
     .post-toc-toggle{display:inline-flex;align-items:center;gap:.3rem}
     .post-toc[data-collapsed="1"] .toc-list{display:none}
@@ -473,6 +495,23 @@ input,textarea{font-family:inherit;font-size:16px}
     .next-post-slide-img{width:50px;height:50px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+/* ═════ EMERGENCY DROPDOWN — última regra do <head>, vence qualquer cascata stale ═════ */
+.nav-cats .nav-subcats{display:none !important;position:absolute !important;top:100% !important;left:0 !important;min-width:240px;background:#fff !important;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.15);padding:.4rem 0;z-index:1000;list-style:none;margin:0;flex-direction:column !important;flex-wrap:nowrap !important}
+.nav-cats li.has-children:hover>.nav-subcats,
+.nav-cats li.has-children:focus-within>.nav-subcats,
+.nav-cats li.has-children.open>.nav-subcats{display:block !important}
+.nav-cats .nav-subcats>li{display:block !important;width:100% !important;flex:none !important;flex-shrink:initial !important;margin:0 !important;float:none !important}
+.nav-cats .nav-subcats>li>a{display:block !important;padding:.5rem 1rem !important;width:100% !important;font-size:.85rem !important;color:#1f2937;text-decoration:none;text-transform:none !important;letter-spacing:0;font-weight:600;white-space:normal;line-height:1.35;min-height:auto !important;border:none !important;border-bottom:none !important;border-radius:0 !important;background:transparent !important}
+.nav-cats .nav-subcats>li>a:hover{background:rgba(30,64,175,.08) !important;color:#1e40af !important}
+.nav-cats .nav-subcats>li>a.nav-subcat-all{border-bottom:1px solid #e2e8f0 !important;margin-bottom:.25rem}
+.nav-cats .nav-subcats>li>a.nav-subcat-all strong{color:#1e40af;font-size:.82rem;font-weight:700}
+.nav-cats:hover{overflow:visible !important}
+@media(max-width:1023px){
+    .nav-cats .nav-subcats{position:static !important;box-shadow:none !important;border:none !important;background:transparent !important;padding:.25rem 0 .5rem .8rem !important;width:100% !important;min-width:0 !important}
+    .nav-cats li.has-children:hover>.nav-subcats,
+    .nav-cats li.has-children:focus-within>.nav-subcats{display:none !important}
+    .nav-cats li.has-children.open>.nav-subcats{display:block !important}
+}
 </style>
 </head>
 <body <?php body_class(); ?>>
@@ -489,9 +528,71 @@ input,textarea{font-family:inherit;font-size:16px}
 <nav class="nav-wrap" id="navWrap" aria-label="Categorias">
 <ul class="nav-cats" id="navCats">
 <li style="display:none" class="close-li"><button class="nav-cats-close" id="navClose" aria-label="Fechar menu">&times;</button></li>
-<?php foreach ($nav_cats as $c): $is_hot = in_array((int)$c->term_id, $trending_cats, true); ?>
-<li><a href="<?php echo esc_url(get_category_link($c->term_id)); ?>" class="nav-cat-link" data-cat-slug="<?php echo esc_attr($c->slug); ?>"><?php echo esc_html($c->name); ?><?php if ($is_hot): ?> <span class="hot-dot" aria-label="em alta"></span><?php endif; ?></a></li>
+<?php foreach ($nav_cats as $c): $is_hot = in_array((int)$c->term_id, $trending_cats, true); $has_children = !empty($c->children); ?>
+<li class="<?php echo $has_children ? 'has-children' : ''; ?>">
+  <a href="<?php echo esc_url(get_category_link($c->term_id)); ?>" class="nav-cat-link" data-cat-slug="<?php echo esc_attr($c->slug); ?>"<?php if($has_children): ?> aria-haspopup="true" aria-expanded="false"<?php endif; ?>><?php echo esc_html(gdc_silo_short_name($c->name)); ?><?php if ($is_hot): ?> <span class="hot-dot" aria-label="em alta"></span><?php endif; ?><?php if ($has_children): ?> <span class="nav-chevron" aria-hidden="true">▾</span><?php endif; ?></a>
+  <?php if ($has_children): ?>
+    <ul class="nav-subcats" aria-label="Subcategorias de <?php echo esc_attr($c->name); ?>">
+      <li><a href="<?php echo esc_url(get_category_link($c->term_id)); ?>" class="nav-subcat-all"><strong>Ver todos os posts de <?php echo esc_html(gdc_silo_short_name($c->name)); ?> →</strong></a></li>
+      <?php foreach ($c->children as $sub): ?>
+        <li><a href="<?php echo esc_url(get_category_link($sub->term_id)); ?>"><?php echo esc_html($sub->name); ?></a></li>
+      <?php endforeach; ?>
+    </ul>
+  <?php endif; ?>
+</li>
 <?php endforeach; ?>
 </ul>
 </nav>
 </div></header>
+<script>
+(function(){
+  // BUG bfcache: quando o usuário clica num post e volta com Back, o navegador restaura o
+  // DOM inteiro (incluindo classes .open, .has-active-child) → menu fica "preso" no estado
+  // anterior. pageshow com event.persisted === true detecta o restore e zera tudo.
+  function resetMenuState(){
+    document.querySelectorAll('.nav-cats li.has-children.open').forEach(function(li){ li.classList.remove('open'); });
+    document.querySelectorAll('.nav-cats li.has-children > .nav-cat-link[aria-expanded="true"]').forEach(function(a){ a.setAttribute('aria-expanded','false'); });
+    var nc = document.querySelector('.nav-cats'); if (nc) nc.classList.remove('has-active-child');
+    var nw = document.getElementById('navWrap'); if (nw) nw.classList.remove('open');
+    var mt = document.getElementById('menuToggle'); if (mt){ mt.classList.remove('active'); mt.setAttribute('aria-expanded','false'); }
+    document.body.style.overflow = '';
+  }
+  window.addEventListener('pageshow', function(e){ if (e.persisted) resetMenuState(); });
+
+  // Fallback pra navegadores sem :has() — adiciona/remove .has-active-child em .nav-cats
+  // no hover/focus dos itens com filhos, pra liberar overflow.
+  var navCats = document.querySelector('.nav-cats');
+  if (navCats) {
+    document.querySelectorAll('.nav-cats li.has-children').forEach(function(li){
+      li.addEventListener('mouseenter', function(){ navCats.classList.add('has-active-child'); });
+      li.addEventListener('mouseleave', function(){ navCats.classList.remove('has-active-child'); });
+      li.addEventListener('focusin',    function(){ navCats.classList.add('has-active-child'); });
+      li.addEventListener('focusout',   function(){ if(!li.matches(':focus-within')) navCats.classList.remove('has-active-child'); });
+    });
+  }
+  // Mobile: o link do silo-pai SEMPRE toggle (abre/fecha) o dropdown — nunca navega.
+  // Pra ir pro arquivo do silo no mobile, o usuário toca em "Ver todos os posts de X →"
+  // dentro do dropdown. Sub-categorias (.nav-subcats a) navegam normal.
+  // stopImmediatePropagation cancela o cN() do footer.php que fechava o painel inteiro.
+  document.querySelectorAll('.nav-cats li.has-children > .nav-cat-link').forEach(function(a){
+    a.addEventListener('click', function(e){
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var li = a.parentElement;
+        var isOpen = li.classList.contains('open');
+        if (isOpen) {
+          // 2º toque: FECHA
+          li.classList.remove('open');
+          a.setAttribute('aria-expanded','false');
+        } else {
+          // 1º toque: ABRE (e fecha outros)
+          document.querySelectorAll('.nav-cats li.has-children.open').forEach(function(o){ if(o!==li){ o.classList.remove('open'); var aa=o.querySelector('.nav-cat-link'); if(aa)aa.setAttribute('aria-expanded','false'); } });
+          li.classList.add('open');
+          a.setAttribute('aria-expanded','true');
+        }
+      }
+    }, true); // capture phase
+  });
+})();
+</script>
