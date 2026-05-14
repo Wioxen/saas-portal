@@ -104,11 +104,24 @@ foreach ($posts as $p) {
     ]);
     $front = curl_exec($ch);
     curl_close($ch);
-    if ($front && preg_match_all('/"@type":"([A-Za-z]+)"/', $front, $typeM)) {
-        $counts = array_count_values($typeM[1]);
-        foreach (['NewsArticle', 'Article', 'BreadcrumbList', 'WebPage', 'Organization', 'Person', 'PostalAddress'] as $tipo) {
-            $n = $counts[$tipo] ?? 0;
-            if ($n > 1) $issues[] = "schema duplicado: {$tipo} aparece {$n}x no front";
+    // Conta @type top-level POR BLOCO JSON-LD (não na HTML inteira).
+    // Schema-org permite mesmo @type aparecer múltiplas vezes dentro de um @graph
+    // (Place.address + Organization.address ambos com PostalAddress é VÁLIDO).
+    // Duplicação real = mesmo @type top-level em 2+ blocos <script> separados.
+    // Sub-nós aninhados (PostalAddress, Person dentro de author/publisher) excluídos
+    // da watchlist por serem inerentemente nested.
+    if ($front && preg_match_all('#<script[^>]+application/ld\+json[^>]*>(.*?)</script>#is', $front, $blocks)) {
+        $tipoEntreBlocos = [];
+        foreach ($blocks[1] as $blockRaw) {
+            if (preg_match_all('/"@type":"([A-Za-z]+)"/', $blockRaw, $tm)) {
+                foreach (array_unique($tm[1]) as $t) {
+                    $tipoEntreBlocos[$t] = ($tipoEntreBlocos[$t] ?? 0) + 1;
+                }
+            }
+        }
+        foreach (['NewsArticle', 'Article', 'BreadcrumbList', 'WebPage', 'Organization', 'FAQPage', 'BroadcastEvent', 'SportsEvent'] as $tipo) {
+            $n = $tipoEntreBlocos[$tipo] ?? 0;
+            if ($n > 1) $issues[] = "schema duplicado: {$tipo} aparece em {$n} blocos JSON-LD distintos";
         }
     }
 

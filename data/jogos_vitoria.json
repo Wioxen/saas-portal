@@ -6,8 +6,8 @@
             "serper-kg",
             "manual"
         ],
-        "atualizado_em": "2026-05-08T11:00:08+00:00",
-        "ultimo_scrape_ge": "2026-05-08T11:00:08+00:00",
+        "atualizado_em": "2026-05-13T20:57:52-03:00",
+        "ultimo_scrape_ge": "2026-05-14T01:48:36+02:00",
         "ultimo_scrape_status": "ok",
         "ultimo_scrape_jogos": 2,
         "lifecycle_atualizado_em": "2026-05-08T01:18:22-03:00",
@@ -115,7 +115,7 @@
         {
             "id": "2026-05-20-vit-abc",
             "data": "2026-05-20",
-            "hora": "",
+            "hora": "21:00",
             "timezone": "America/Sao_Paulo",
             "competicao": null,
             "rodada": null,
@@ -125,7 +125,7 @@
                 "sigla": "ABC",
                 "escudo": "https://s.sde.globo.com/media/organizations/2022/11/14/ABC-RN_30.png"
             },
-            "estadio": "",
+            "estadio": "Barradão",
             "transmissao": null,
             "status": "agendado",
             "placar": {
@@ -134,12 +134,12 @@
             },
             "fonte": "ge.globo",
             "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
-            "scraped_at": "2026-05-08T11:00:08+00:00"
+            "scraped_at": "2026-05-14T01:48:36+02:00"
         },
         {
             "id": "2026-05-27-abc-vit",
             "data": "2026-05-27",
-            "hora": "",
+            "hora": "21:30",
             "timezone": "America/Sao_Paulo",
             "competicao": null,
             "rodada": null,
@@ -149,8 +149,15 @@
                 "sigla": "ABC",
                 "escudo": "https://s.sde.globo.com/media/organizations/2022/11/14/ABC-RN_30.png"
             },
-            "estadio": "",
-            "transmissao": null,
+            "estadio": "Casa de Apostas Arena das Dunas",
+            "transmissao": {
+                "broadcast": {
+                    "id": "PRE_DIA",
+                    "label": "fique por dentro"
+                },
+                "status": "Publicado",
+                "url": "https://ge.globo.com/rn/futebol/copa-do-nordeste/jogo/27-05-2026/abc-vitoria.ghtml"
+            },
             "status": "agendado",
             "placar": {
                 "vitoria": null,
@@ -158,7 +165,7 @@
             },
             "fonte": "ge.globo",
             "fonte_url": "https://ge.globo.com/ba/futebol/times/vitoria/",
-            "scraped_at": "2026-05-08T11:00:08+00:00"
+            "scraped_at": "2026-05-14T01:48:36+02:00"
         },
         {
             "id": "2026-05-14-vit-fla",
@@ -166,7 +173,7 @@
             "hora": "21:30",
             "timezone": "America/Sao_Paulo",
             "competicao": "Copa do Brasil",
-            "fase": "Oitavas de final - Volta",
+            "fase": "Volta da 5ª fase",
             "rodada": null,
             "mando": "casa",
             "adversario": {
@@ -175,7 +182,13 @@
                 "escudo": ""
             },
             "estadio": "Barradão",
-            "transmissao": null,
+            "transmissao": {
+                "canais": [
+                    "SporTV",
+                    "Premiere"
+                ],
+                "tipo": "fechada+ppv"
+            },
             "status": "agendado",
             "placar": {
                 "vitoria": null,
@@ -183,12 +196,19 @@
             },
             "fonte": "manual",
             "fonte_url": null,
-            "scraped_at": "2026-05-08T23:27:04+00:00",
+            "scraped_at": "2026-05-13T20:57:52-03:00",
             "posts_gerados": {
                 "pre_jogo": 1110,
                 "preview_tatico": null,
                 "pos_jogo": null,
                 "analise_pos": null
+            },
+            "placar_ida": {
+                "mando_ida": "fora",
+                "vitoria": 1,
+                "adversario": 2,
+                "data_ida": "2026-04-22",
+                "local_ida": "Maracanã"
             }
         }
     ]
