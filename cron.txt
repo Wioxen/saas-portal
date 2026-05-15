@@ -8,17 +8,23 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-# ─── Pipelines de geração ──────────────────────────────────────────────────
+# ─── Pipelines de geração — DESABILITADOS 2026-05-15 ───────────────────────
+# Razão: pipeline gerando drafts off-topic em cursosenac (mito ariano, peixe
+# merenda, livros). 15 drafts deletados. Filtro de nicho endurecido (commit
+# daef97f), mas geração automática suspensa até validação manual de qualidade.
+# Re-habilitar: remover # das 3 linhas + 'systemctl reload cron' no host.
 
 # Tick filas (a cada 2 min) — orquestrador de geração + publicação
-*/2 * * * * root /usr/local/bin/run-in-app php /app/scripts/tick_filas.php --quiet >> /var/log/tick.log 2>&1
+# DESABILITADO 2026-05-15
+#*/2 * * * * root /usr/local/bin/run-in-app php /app/scripts/tick_filas.php --quiet >> /var/log/tick.log 2>&1
 
 # Auto-enqueue (a cada 15 min) — promove trends aprovados → fila de geração
-*/15 * * * * root /usr/local/bin/run-in-app php /app/scripts/auto_enqueue.php --quiet >> /var/log/fila.log 2>&1
+# DESABILITADO 2026-05-15
+#*/15 * * * * root /usr/local/bin/run-in-app php /app/scripts/auto_enqueue.php --quiet >> /var/log/fila.log 2>&1
 
 # Pingo sequencial (a cada 10 min) — captura trends pra vagas+leao+cursosenac
-# Editar /app/scripts/pingo_sequencial.sh pra adicionar mais sites no array SITES
-*/10 * * * * root /usr/local/bin/run-in-app /app/scripts/pingo_sequencial.sh >> /var/log/pingo.log 2>&1
+# DESABILITADO 2026-05-15
+#*/10 * * * * root /usr/local/bin/run-in-app /app/scripts/pingo_sequencial.sh >> /var/log/pingo.log 2>&1
 
 # ─── Calendário do Vitória (Camada 1 pós-jogo) ─────────────────────────────
 
