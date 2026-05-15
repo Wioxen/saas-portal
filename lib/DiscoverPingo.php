@@ -441,14 +441,37 @@ class DiscoverPingo
             $siteTarget = self::roteamentoPorCluster($clusterPraRota);
         }
 
-        // FILTRO DE NICHO (sites.php → nicho_required_terms)
-        // Se o site alvo tem lista de termos exigidos, trend só passa quando contém 1+ deles
-        // (no termo OU nos relacionados). Caso #leaodabarra (pivot 2026-05-02): site nicho
-        // exclusivo do Esporte Clube Vitória — trends de outros clubes/esportes ficam
-        // status='fora_escopo_nicho' em vez de poluir a fila.
+        // FILTRO DE NICHO (sites.php → nicho_required_terms + nicho_blocked_terms)
+        // Dois passos:
+        //  1) BLOCK: se trend contém termo de nicho_blocked_terms → rejeita imediatamente (anti-topic)
+        //  2) REQUIRE: trend só passa se contém 1+ termo de nicho_required_terms
+        // Caso #leaodabarra (pivot 2026-05-02): mono-nicho EC Vitória; caso #cursosenac (15/05):
+        // "mito ariano", "merenda escolar", "livros lidos" estavam passando pela palavra solta
+        // ("escola"/"leitura"), agora bloqueia em camadas.
+        $haystack = mb_strtolower($termo . ' ' . implode(' ', $relacionados), 'UTF-8');
+
+        // (1) BLOCK
+        $blockedTerms = self::nichoBlockedTerms($siteTarget);
+        if (!empty($blockedTerms)) {
+            foreach ($blockedTerms as $t) {
+                $tNorm = mb_strtolower(trim($t), 'UTF-8');
+                if ($tNorm === '') continue;
+                if (mb_strpos($haystack, $tNorm) !== false) {
+                    $this->logRejeicao($termo, $fonte, [
+                        'rejeitar' => true,
+                        'modo'     => 'block',
+                        'motivo'   => 'nicho_blocked_term',
+                        'pontos'   => 0,
+                        'detalhes' => ['site' => $siteTarget, 'termo_bloqueado' => $tNorm],
+                    ]);
+                    return null;
+                }
+            }
+        }
+
+        // (2) REQUIRE
         $nichoTerms = self::nichoRequiredTerms($siteTarget);
         if (!empty($nichoTerms)) {
-            $haystack = mb_strtolower($termo . ' ' . implode(' ', $relacionados), 'UTF-8');
             $bateu = false;
             foreach ($nichoTerms as $t) {
                 $tNorm = mb_strtolower(trim($t), 'UTF-8');
@@ -456,8 +479,6 @@ class DiscoverPingo
                 if (mb_strpos($haystack, $tNorm) !== false) { $bateu = true; break; }
             }
             if (!$bateu) {
-                // Não bate com nenhum termo do nicho — rejeita silenciosamente.
-                // Loga pra debug (logRejeicao espera modo/motivo/pontos/detalhes).
                 $this->logRejeicao($termo, $fonte, [
                     'rejeitar' => true,
                     'modo'     => 'block',
@@ -547,6 +568,25 @@ class DiscoverPingo
         $cfg = $sites[$siteSlug] ?? [];
         $terms = (array)($cfg['nicho_required_terms'] ?? []);
         self::$nichoCache[$siteSlug] = $terms;
+        return $terms;
+    }
+
+    /**
+     * Carrega lista nicho_blocked_terms do sites.php (anti-topic).
+     * Trend com qualquer um desses termos é rejeitada imediatamente — aplicada ANTES
+     * do REQUIRE pra cortar matérias claramente fora de escopo.
+     */
+    private static array $blockedCache = [];
+    public static function nichoBlockedTerms(string $siteSlug): array
+    {
+        if (array_key_exists($siteSlug, self::$blockedCache)) return self::$blockedCache[$siteSlug];
+        if (!function_exists('sitesDisponiveis')) {
+            require_once dirname(__DIR__) . '/_site_helper.php';
+        }
+        $sites = sitesDisponiveis();
+        $cfg = $sites[$siteSlug] ?? [];
+        $terms = (array)($cfg['nicho_blocked_terms'] ?? []);
+        self::$blockedCache[$siteSlug] = $terms;
         return $terms;
     }
 
@@ -782,6 +822,39 @@ class DiscoverPingo
             'detalhes' => [],
             'modo'     => $modo,
         ];
+
+        // ═══ OFF-POLICY GATE (AdSense) ═══
+        // Quando o site tem offpolicy_strict=true em sites.php, qualquer match em
+        // gambling/adult/drugs/violence/hate descarta o candidato ANTES de gerar.
+        // Roda primeiro pra cortar custo: trend rejeitado aqui nem chega no scoring.
+        // Bypass por fonte/cluster NÃO contorna off-policy — AdSense é zero-tolerance.
+        if (!empty($this->cfg['offpolicy_strict'])) {
+            if (!class_exists('OffPolicyDetector')) {
+                $opPath = __DIR__ . '/OffPolicyDetector.php';
+                if (file_exists($opPath)) require_once $opPath;
+            }
+            if (class_exists('OffPolicyDetector')) {
+                $opR = OffPolicyDetector::analisar($termo, '', []);
+                if (!$opR['ok']) {
+                    $resultado['rejeitar'] = true;
+                    $resultado['motivo']   = 'off_policy:' . $opR['category'];
+                    $resultado['detalhes']['off_policy_matched'] = $opR['matched'];
+                    $this->statsFiltro['rejeitados']++;
+                    $this->statsFiltro['motivos'][$resultado['motivo']] =
+                        ($this->statsFiltro['motivos'][$resultado['motivo']] ?? 0) + 1;
+                    // Append em log estruturado pra revisão
+                    $logLine = json_encode([
+                        'ts'      => date('c'),
+                        'termo'   => $termo,
+                        'site'    => $this->cfg['_site_slug'] ?? '',
+                        'category'=> $opR['category'],
+                        'matched' => $opR['matched'],
+                    ], JSON_UNESCAPED_UNICODE);
+                    @file_put_contents(__DIR__ . '/../data/offpolicy_blocked.jsonl', $logLine . "\n", FILE_APPEND);
+                    return $resultado;
+                }
+            }
+        }
 
         // Bypass por fonte específica (feeds curados)
         $fid = (int)($fonte['id'] ?? 0);

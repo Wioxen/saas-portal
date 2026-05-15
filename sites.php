@@ -102,8 +102,15 @@ return [
         'whatsapp_group_url'=> '',
         'whatsapp_cta_text' => 'Receba ofertas no WhatsApp',
         'pretty_links_prefix' => 'go',
-        // og:image da fonte original (autenticidade + E-E-A-T). Fallback Pexels/DALL-E só se og inválido.
-        'imagem_featured_estrategia' => 'og_first',
+        // Serper Google Images BR como Tier 1 (2026-05-13 AdSense readiness):
+        // 1. Serper → 2. og:image → 3. Unsplash → 4. Pexels → 5. DALL-E
+        // SERPER_API_KEY lido do .env; sem chave o pipeline degrada pra og_first.
+        'imagem_featured_estrategia' => 'serper_first',
+        'serper_api_key' => Env::get('SERPER_API_KEY', ''),
+        // Off-policy gate (AdSense): bloqueia gambling/adult/drugs/violence/hate
+        // ANTES de gerar artigo (DiscoverPingo) e ANTES de chamar Sonnet (DebateBuilder).
+        // Log: data/offpolicy_blocked.jsonl. Apenas regex puro, zero custo de API.
+        'offpolicy_strict' => true,
 		// Facebook Page "Maria Gusmão" — token vem do .env (FB_PAGE_TOKEN_MARIA)
         'fb_page_id'        => '101766412913237',
         'fb_page_token'     => Env::get('FB_PAGE_TOKEN_MARIA', ''),
@@ -221,30 +228,74 @@ return [
         // que esporte/política. Default global é 7.0; aqui 5.0 captura trends gold tipo "Enem isenção".
         'trend_scoring_threshold' => 5.0,
         'trend_scoring_enabled'   => true,
-        // Filtro de nicho — trend só é aprovado se contém 1+ termo desta lista (educação/cursos).
-        // Bloqueia vazamentos como "F1 GP Miami" pontuando alto.
+        // Filtro de nicho cursosenac — endurecido em 2026-05-15.
+        // Requisito: trend precisa conter 1+ termo desta lista (curso-centric, SEO-friendly).
+        // Bloqueia vazamentos como mito ariano, peixe na merenda, jovens leitores etc.
+        // Termos pensados pra mecanismos de busca + autocomplete (Google/Bing).
         'nicho_required_terms' => [
-            // Cursos e qualificação
-            'curso', 'cursos', 'capacitação', 'qualificação', 'formação', 'especialização',
-            'técnico', 'técnica', 'profissionalizante', 'ead', 'a distância', 'tutorial',
-            'senac', 'senai', 'sebrae', 'sesc', 'sesi', 'if ', 'instituto federal',
-            'instituição', 'escola técnica', 'escola profissionalizante',
-            // Vestibulares e bolsas
-            'enem', 'sisu', 'prouni', 'fies', 'fuvest', 'unicamp', 'vestibular',
-            'bolsa', 'bolsas', 'isenção', 'inscrição', 'edital', 'inscrições',
+            // ─── CURSO + TIPOS (curso-centric) ───
+            'curso', 'cursos',
+            'curso livre', 'cursos livres',
+            'curso técnico', 'cursos técnicos', 'curso tecnico', 'cursos tecnicos',
+            'curso profissionalizante', 'cursos profissionalizantes',
+            'curso gratuito', 'cursos gratuitos',
+            'curso ead', 'cursos ead', 'curso a distância', 'cursos a distância',
+            'curso online', 'cursos online', 'curso presencial', 'cursos presenciais',
+            'curso superior', 'cursos superiores',
+            'curso de qualificação', 'curso de capacitação', 'curso de formação',
+            'curso com certificado', 'cursos com certificado',
+            // ─── GRADUAÇÃO E ENSINO SUPERIOR ───
+            'graduação', 'graduacao', 'graduado', 'graduada',
+            'pós-graduação', 'pos-graduacao', 'pos graduacao', 'mestrado', 'doutorado',
+            'especialização', 'especializacao', 'mba',
+            'ensino superior', 'ensino médio', 'ensino tecnico', 'ensino técnico',
+            'tecnólogo', 'tecnologo', 'bacharelado', 'licenciatura',
+            // ─── INSTITUIÇÕES DE CURSO ───
+            'senac', 'senai', 'sebrae', 'sesc', 'sesi', 'senar',
+            'instituto federal', 'institutos federais', 'if sertão', 'ifsp', 'ifrj', 'ifmg',
+            'ifrs', 'ifba', 'ifce', 'ifrn', 'ifpe', 'ifg', 'ifpr', 'ifsc',
+            'escola técnica', 'escolas técnicas', 'escola profissionalizante',
+            'fundação bradesco', 'escola virtual', 'fgv online', 'coursera', 'edx',
+            'aprenda mais', 'capes', 'cefet',
+            'universidade', 'universidades', 'faculdade', 'faculdades',
+            // ─── VESTIBULAR + BOLSAS + ENEM ───
+            'enem', 'sisu', 'prouni', 'fies', 'fuvest', 'unicamp',
+            'vestibular', 'vestibulares', 'pré-vestibular', 'cursinho',
+            'bolsa de estudos', 'bolsas de estudo', 'bolsa integral', 'bolsa parcial',
             'pé-de-meia', 'pe-de-meia', 'pé de meia',
-            // MEC e contexto educacional
-            'mec', 'inep', 'cnpq', 'capes',
-            'estudante', 'estudantes', 'aluno', 'alunos', 'universitário', 'universitária',
-            'graduando', 'graduandos', 'vestibulando', 'vestibulandos',
-            'professor', 'professores', 'docente', 'pedagogo',
-            'escola', 'escolas', 'colégio', 'colégios', 'universidade', 'faculdade',
-            'ensino médio', 'ensino fundamental', 'ensino superior', 'ensino básico',
-            'olimpíada', 'olimpíadas', 'concurso', 'concursos',
-            // Educação geral
-            'educação', 'educacional', 'pedagógico', 'pedagogia', 'didática',
-            'aprendizagem', 'leitura', 'alfabetização', 'letramento',
-            'pesquisa científica', 'iniciação científica',
+            'isenção da taxa', 'isenção enem', 'isenção do enem',
+            // ─── PROCESSO DE CURSO ───
+            'matrícula', 'matrículas', 'inscrição em curso', 'inscrições em curso',
+            'edital de curso', 'editais de curso', 'edital senac', 'edital senai',
+            'certificado', 'certificação', 'certificado em pdf',
+            // ─── MEC (só quando relacionado a curso/política educacional) ───
+            'mec curso', 'mec cursos', 'mec senac', 'inep enem',
+            // ─── PSG E PROGRAMAS SOCIAIS DE QUALIFICAÇÃO ───
+            'psg', 'pronatec', 'programa nacional de qualificação',
+            'qualificação profissional', 'capacitação profissional',
+        ],
+        // Anti-topic — trend com QUALQUER um desses termos é rejeitada antes do REQUIRE.
+        // Adicionado em 2026-05-15 após drafts off-topic (mito ariano, peixe merenda, livros).
+        'nicho_blocked_terms' => [
+            // História antiga / política / mitos
+            'mito ariano', 'mito racista', 'nazismo', 'fascismo',
+            'história antiga', 'antiguidade', 'civilização antiga',
+            'ideologia política', 'partido político', 'eleição', 'eleições',
+            'racismo científico', 'raça humana',
+            // Cultura / lifestyle
+            'merenda escolar', 'alimentação escolar',
+            'livros lidos', 'leitores no brasil', 'alta de livros', 'mercado editorial',
+            'ciência refutou', 'ciência prova', 'estudo aponta que', 'pesquisa mostra que',
+            'curiosidade', 'curiosidades',
+            // Outros nichos da rede (canibalismo cross-site)
+            'inss aposentadoria', 'bpc loas', 'fgts saque', 'pis pasep',
+            'auxílio gás', 'auxílio-doença', 'auxílio reclusão', 'bolsa família',
+            'gás do povo',
+            'concurso público', 'concursos públicos', 'vaga clt',
+            // Esportes / entretenimento
+            'brasileirão', 'libertadores', 'copa do brasil', 'copa nordeste',
+            'fórmula 1', 'mma', 'nba', 'futebol', 'jogo de futebol',
+            'novela', 'fofoca', 'celebridade',
         ],
      ],
 	 'guiadoscursos' => [
