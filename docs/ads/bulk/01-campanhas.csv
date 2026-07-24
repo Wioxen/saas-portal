@@ -1,0 +1,4 @@
+﻿Campaign,"Campaign Type","Campaign Status","Campaign Daily Budget","Budget Type","Bid Strategy Type","Maximum CPC Bid Limit","Search Network","Search Partners","Display Network",Location,Language,"Final URL Suffix"
+"CC | Perfume Árabe Masc | Search | BR",Search,Paused,25.00,Daily,"Maximize clicks",1.00,Enabled,Disabled,Disabled,Brazil,Portuguese,utm_source=google&utm_medium=cpc&utm_campaign=perfume_arabe&utm_content={adgroupid}&utm_term={keyword}
+"CC | Extratora Estofado | Search | BR",Search,Paused,25.00,Daily,"Maximize clicks",1.20,Enabled,Disabled,Disabled,Brazil,Portuguese,utm_source=google&utm_medium=cpc&utm_campaign=extratora&utm_content={adgroupid}&utm_term={keyword}
+"CC | Depilador Luz Pulsada | Search | BR",Search,Paused,25.00,Daily,"Maximize clicks",1.20,Enabled,Disabled,Disabled,Brazil,Portuguese,utm_source=google&utm_medium=cpc&utm_campaign=depilador_ipl&utm_content={adgroupid}&utm_term={keyword}
