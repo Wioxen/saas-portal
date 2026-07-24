@@ -29,11 +29,43 @@ keyword não existe sem grupo:
 | 02 | `02-grupos.csv` | 10 grupos de anúncios com teto de CPC |
 | 03 | `03-palavras-chave.csv` | 57 palavras-chave (só frase e exata, nada de ampla) |
 | 04 | `04-negativas.csv` | 75 negativas em nível de campanha |
-| 05 | `05-anuncios-rsa.csv` | 10 anúncios responsivos |
+| 05 | `05-anuncios-rsa.csv` | 10 anúncios responsivos (12 títulos nos grupos ligados, 8 nos pausados; 4 descrições) |
+| 06 | `06-sitelinks.csv` | 12 sitelinks com duas linhas de descrição |
+| 07 | `07-frases-destaque.csv` | 18 frases de destaque |
+| 08 | `08-snippets.csv` | 3 snippets estruturados |
 
 No Editor: **Conta → Importar → Do arquivo**, um de cada vez, conferindo o preview antes de
 `Publicar`. Se algum nome de coluna não casar com a sua versão do Editor, o próprio importador
 oferece o mapeamento manual — os cabeçalhos usados aqui são os padrão.
+
+## O que foi feito por CTR (arquivos 05 a 08)
+
+- **Volume de ativos no RSA.** 12 títulos e 4 descrições nos grupos que sobem ligados. Mais ativos
+  = mais combinações que o Google testa = mais CTR, e é o que leva o Ad Strength a "Excelente".
+- **Diversidade obrigatória.** Títulos que repetem a mesma ideia fazem o Google descartar
+  combinações. Cada grupo cobre ângulos distintos: keyword exata, benefício, objeção, prova,
+  comparação, ocasião e chamada para ação. O gerador recusa título repetido dentro do mesmo RSA.
+- **Sem fixar posição (pinning).** Fixar título corta as combinações possíveis e costuma derrubar
+  o CTR justamente onde se queria controlar a mensagem.
+- **Extensões, que não existiam.** Sitelink com descrição, frase de destaque e snippet aumentam a
+  área ocupada no resultado e sobem o CTR sem custo adicional. É a alavanca mais barata que havia
+  sobrando.
+- **Só frase e exata.** Correspondência ampla derruba CTR ao trazer busca que não é a sua.
+
+## Lint de política (o gerador aborta)
+
+A rede já tomou duas reprovações automáticas (campanha de manutenção de celular, 14/07), então o
+gerador recusa gravar se algum termo de risco voltar ao texto de anúncio ou extensão:
+
+- promessa absoluta em estética: `permanente`, `garantido`, `100%`, `sem dor`, `definitivo`;
+- marca de terceiro que não vendemos: `Creed`, `Dior`, `Sauvage`, `Paco Rabanne`, `One Million`,
+  `Bleu de Chanel`, `Aventus` — essas entram como **negativa**, nunca como criativo.
+
+Marcas que **podem** aparecer, porque são os produtos anunciados: Lattafa, Afnan, Armaf, WAP,
+Karcher, Vonder, Ulike e MLAY.
+
+Testado: injetando "Resultado Permanente 100%" num título, o gerador aponta os dois termos e não
+grava nenhum arquivo.
 
 ## Decisões embutidas nos arquivos
 
