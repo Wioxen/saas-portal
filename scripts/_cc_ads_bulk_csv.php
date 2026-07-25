@@ -35,6 +35,10 @@ $OUT = $ROOT . '/docs/ads/bulk';
 
 $UTM = 'utm_source=google&utm_medium=cpc&utm_campaign=%s&utm_content={adgroupid}&utm_term={keyword}';
 
+// Valores monetários com VÍRGULA decimal. A conta é pt-BR e o uploader lê o número no idioma do
+// arquivo: com "25.00" ele recusa ("não foi possível analisar o valor"). Confirmado na
+// pré-visualização de 24/07. fputcsv cuida de aspear o campo por causa da vírgula.
+
 /** termos que não podem aparecer em NENHUM texto de anúncio/extensão */
 $BANIDOS = [
   'permanente','garantid','100%','sem dor','definitiv','milagr','cura ',
@@ -45,8 +49,8 @@ $CAMPANHAS = [
   [
     'nome'      => 'CC | Perfume Árabe Masc | Search | BR',
     'lp'        => 'https://comocomprar.com.br/melhor-perfume-arabe-masculino/',
-    'orcamento' => '25.00',
-    'teto_cpc'  => '1.00',
+    'orcamento' => '25,00',
+    'teto_cpc'  => '1,00',
     'utm'       => 'perfume_arabe',
     'path1'     => 'perfume-arabe',
     'path2'     => 'comparativo',
@@ -128,8 +132,8 @@ $CAMPANHAS = [
   [
     'nome'      => 'CC | Extratora Estofado | Search | BR',
     'lp'        => 'https://comocomprar.com.br/comprar-extratora-de-estofado/',
-    'orcamento' => '25.00',
-    'teto_cpc'  => '1.20',
+    'orcamento' => '25,00',
+    'teto_cpc'  => '1,20',
     'utm'       => 'extratora',
     'path1'     => 'extratora',
     'path2'     => 'comparativo',
@@ -194,8 +198,8 @@ $CAMPANHAS = [
   [
     'nome'      => 'CC | Depilador Luz Pulsada | Search | BR',
     'lp'        => 'https://comocomprar.com.br/melhor-depilador-de-luz-pulsada/',
-    'orcamento' => '25.00',
-    'teto_cpc'  => '1.20',
+    'orcamento' => '25,00',
+    'teto_cpc'  => '1,20',
     'utm'       => 'depilador_ipl',
     'path1'     => 'depilador-ipl',
     'path2'     => 'comparativo',
@@ -335,12 +339,22 @@ $put = function(string $arquivo, array $linhas) use ($OUT, $bom) {
 
 echo "\n=== GRAVANDO em docs/ads/bulk/ ===\n";
 
-$rows = [['Campaign','Campaign Type','Campaign Status','Campaign Daily Budget','Budget Type',
+// Cabeçalhos ajustados pelo que o uploader web REALMENTE aceitou na pré-visualização de 24/07
+// (3 alterações, 3 erros, nenhuma aplicada):
+//  · "Campaign Daily Budget" NÃO foi mapeado -> o Ads acusou "Está faltando um valor em Orçamento".
+//    O nome que ele reconhece é "Budget".
+//  · "Language: Portuguese" foi recusado ("um idioma não é reconhecido"). Coluna REMOVIDA: idioma
+//    não é obrigatório e sem ela a campanha nasce em todos os idiomas, o que para busca no Brasil
+//    não atrapalha. Melhor isso do que adivinhar o rótulo aceito.
+//  · "Anúncios políticos na UE" é campo OBRIGATÓRIO novo e não existia no arquivo.
+// Colunas desconhecidas são ignoradas em silêncio (o arquivo tinha várias e só estes 3 erros
+// apareceram), então as de rede seguem no arquivo.
+$rows = [['Campaign','Campaign Type','Campaign Status','Budget','Budget Type',
           'Bid Strategy Type','Maximum CPC Bid Limit','Search Network','Search Partners','Display Network',
-          'Location','Language','Final URL Suffix']];
+          'Location','EU political ads','Final URL Suffix']];
 foreach ($CAMPANHAS as $c) {
   $rows[] = [$c['nome'],'Search','Paused',$c['orcamento'],'Daily','Maximize clicks',$c['teto_cpc'],
-             'Enabled','Disabled','Disabled','Brazil','Portuguese',sprintf($UTM,$c['utm'])];
+             'Enabled','Disabled','Disabled','Brazil','No',sprintf($UTM,$c['utm'])];
 }
 $put('01-campanhas.csv', $rows);
 
@@ -348,14 +362,21 @@ $rows = [['Campaign','Ad Group','Ad Group Status','Max CPC']];
 foreach ($CAMPANHAS as $c) foreach ($c['grupos'] as $g) $rows[] = [$c['nome'],$g['nome'],$g['status'],$c['teto_cpc']];
 $put('02-grupos.csv', $rows);
 
+// O uploader web é LOCALIZADO: recusou "Phrase" com "O valor 'Phrase' na coluna 'Criterion Type'
+// é inválido". Internamente seguimos usando os nomes em inglês (a validação depende deles);
+// a tradução acontece só na hora de escrever o CSV.
+$CORRESP = ['Exact'=>'Exata', 'Phrase'=>'Frase', 'Broad'=>'Ampla'];
+
 $rows = [['Campaign','Ad Group','Keyword','Criterion Type','Final URL']];
 foreach ($CAMPANHAS as $c) foreach ($c['grupos'] as $g) foreach ($g['kws'] as $k)
-  $rows[] = [$c['nome'],$g['nome'],$k[0],$k[1],$c['lp']];
+  $rows[] = [$c['nome'],$g['nome'],$k[0],$CORRESP[$k[1]],$c['lp']];
 $put('03-palavras-chave.csv', $rows);
 
+// Idem para a negativa de campanha: "Campaign Negative Phrase" foi recusado pelo mesmo motivo
+// que "Phrase". O valor localizado é "Frase negativa da campanha".
 $rows = [['Campaign','Keyword','Criterion Type']];
 foreach ($CAMPANHAS as $c) foreach ($c['negativas'] as $n)
-  $rows[] = [$c['nome'],$n,'Campaign Negative Phrase'];
+  $rows[] = [$c['nome'],$n,'Frase negativa da campanha'];
 $put('04-negativas.csv', $rows);
 
 $maxTit = 15; $maxDesc = 4;
