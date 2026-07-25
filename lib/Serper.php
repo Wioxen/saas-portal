@@ -8,9 +8,17 @@ class Serper
     private string $apiKey;
     private string $base = 'https://google.serper.dev';
 
-    public function __construct(string $apiKey)
+    /** @var string|null Chave secundária usada automaticamente se a primária retornar 401/402/403/429. */
+    private ?string $fallbackKey = null;
+    public function __construct(string $apiKey, ?string $fallbackKey = null)
     {
         $this->apiKey = $apiKey;
+        // BUG ATÉ 2026-07-22: o parâmetro era aceito e descartado, então o fallback só
+        // funcionava quando a chave secundária estava em SERPER_API_KEY_FALLBACK (ver o
+        // getenv() no post()). Chamador que passasse a chave por parâmetro caía sem
+        // fallback, justo no cenário "chave primária sem crédito".
+        $fallbackKey = $fallbackKey !== null ? trim($fallbackKey) : null;
+        $this->fallbackKey = ($fallbackKey === '' ) ? null : $fallbackKey;
     }
 
     /** Busca orgânica do Google (BR/PT). */
@@ -22,6 +30,24 @@ class Serper
             'hl' => 'pt-br',
             'num' => $num,
         ]);
+    }
+
+    /**
+     * Uma chamada /search com os blocos RICOS do SERP normalizados (pra planejamento de
+     * hub/cluster): organic, People Also Ask, relatedSearches, knowledgeGraph, answerBox
+     * (featured snippet) e topStories. Tudo num único request (cacheado).
+     */
+    public function searchRich(string $query, int $num = 10): array
+    {
+        $r = $this->search($query, $num);
+        return [
+            'organic'         => $r['organic'] ?? [],
+            'peopleAlsoAsk'   => $r['peopleAlsoAsk'] ?? [],
+            'relatedSearches' => $r['relatedSearches'] ?? [],
+            'knowledgeGraph'  => $r['knowledgeGraph'] ?? null,
+            'answerBox'       => $r['answerBox'] ?? null,
+            'topStories'      => $r['topStories'] ?? [],
+        ];
     }
 
     /**
@@ -110,17 +136,30 @@ class Serper
         ]);
     }
 
+    /**
+     * Scrape de uma página (endpoint scrape.serper.dev) — retorna texto/markdown + metadata.
+     * Útil p/ grounding factual direto da fonte oficial (ex.: lista de cursos na página da FGV).
+     * @return array{text?:string,markdown?:string,metadata?:array}
+     */
+    public function webpage(string $url, bool $markdown = true): array
+    {
+        $payload = ['url' => $url];
+        if ($markdown) $payload['includeMarkdown'] = true;
+        return $this->post('/', $payload, 'https://scrape.serper.dev');
+    }
+
     /** TTL do cache em segundos (default 24h). Override via env SERPER_CACHE_TTL. */
     private const CACHE_TTL_DEFAULT = 86400;
 
     /** Endpoints que NÃO devem ser cacheados (real-time relevante). */
     private const NO_CACHE_PATHS = ['/news']; // notícias precisam ser fresh
 
-    private function post(string $path, array $payload): array
+    private function post(string $path, array $payload, ?string $baseOverride = null): array
     {
+        $base = $baseOverride ?? $this->base;
         // Cache hit-or-miss
         $useCache = !in_array($path, self::NO_CACHE_PATHS, true);
-        $cacheKey = $useCache ? self::cacheKey($path, $payload) : null;
+        $cacheKey = $useCache ? self::cacheKey($base . $path, $payload) : null;
         $cacheFile = $useCache ? self::cacheFilePath($cacheKey) : null;
         $ttl = (int)(getenv('SERPER_CACHE_TTL') ?: self::CACHE_TTL_DEFAULT);
 
@@ -136,22 +175,34 @@ class Serper
             }
         }
 
-        $ch = curl_init($this->base . $path);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            CURLOPT_HTTPHEADER     => [
-                'X-API-KEY: ' . $this->apiKey,
-                'Content-Type: application/json',
-            ],
-            CURLOPT_TIMEOUT        => 15,
-            CURLOPT_SSL_VERIFYPEER => false, // XAMPP Windows
-        ]);
-        $resp = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err  = curl_error($ch);
-        curl_close($ch);
+        // Helper p/ tentar com uma chave específica (permite fallback transparente)
+        $tryWithKey = function (string $key) use ($base, $path, $payload) {
+            $ch = curl_init($base . $path);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                CURLOPT_HTTPHEADER     => ['X-API-KEY: ' . $key, 'Content-Type: application/json'],
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+            $resp = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err  = curl_error($ch);
+            curl_close($ch);
+            return ['resp'=>$resp, 'code'=>$code, 'err'=>$err];
+        };
+
+        $r = $tryWithKey($this->apiKey);
+        // Fallback automático se a chave primária esgotou/foi rejeitada.
+        // Serper devolve HTTP 400 {"message":"Not enough credits"} quando o crédito acaba — por isso checamos 400+"credit" além de 401/402/403/429.
+        $fb = $this->fallbackKey ?: ((string)(getenv('SERPER_API_KEY_FALLBACK') ?: ''));
+        $semCredito = ($r['code'] === 400 && stripos((string)$r['resp'], 'credit') !== false);
+        if ($fb !== '' && $fb !== $this->apiKey && (in_array($r['code'], [401, 402, 403, 429], true) || $semCredito)) {
+            error_log("Serper: chave primária HTTP {$r['code']} (".($semCredito?'sem crédito':'rejeitada').") — usando fallback");
+            $r = $tryWithKey($fb);
+        }
+        $resp = $r['resp']; $code = $r['code']; $err = $r['err'];
 
         if ($resp === false) {
             throw new RuntimeException("Serper cURL erro: $err");
