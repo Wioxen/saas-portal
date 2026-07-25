@@ -409,7 +409,10 @@ $rows = [['Campaign','Asset action','Callout Text']];
 foreach ($CAMPANHAS as $c) foreach ($c['destaques'] as $d) $rows[] = [$c['nome'],$ACAO_RECURSO,$d];
 $put('07-frases-destaque.csv', $rows);
 
-$rows = [['Campaign','Asset action','Header','Snippet Values']];
+// "Header"/"Snippet Values" NÃO foram reconhecidos: a pré-visualização voltou 0 alterações e
+// 0 erros — falha silenciosa, o pior tipo. Os nomes específicos do recurso são
+// "Structured snippet header" e "Structured snippet values".
+$rows = [['Campaign','Asset action','Structured snippet header','Structured snippet values']];
 foreach ($CAMPANHAS as $c) $rows[] = [$c['nome'],$ACAO_RECURSO,$c['snippet'][0],implode('; ',$c['snippet'][1])];
 $put('08-snippets.csv', $rows);
 
