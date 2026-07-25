@@ -4,15 +4,46 @@ Levantado em 24-25/07/2026. Dados em `data/_cc_serp_oportunidade.json` (1ª pág
 
 ## O que foi medido, e o que não foi
 
-**Medido:** composição real da 1ª página de cada um dos 50 termos (quantos resultados são marketplace, mídia gigante, site de nicho ou fórum) e o autocomplete do Google das sementes que sobreviveram ao filtro.
+**Medido:** composição real da 1ª página dos 50 termos (Serper), autocomplete das sementes prioritárias (281 sugestões) e — na segunda rodada — **volume, variação anual, concorrência e faixa de lance de topo direto do Planejador de Palavras-chave** (plano `1428279237`, Brasil, jul/2025–jun/2026, CSV em `Downloads/Keyword Stats 2026-07-25 at 00_07_32.csv`).
 
-**Não medido, e é honesto dizer:** volume de busca e CPC não vieram do Planejador — a interface do Ads estava instável e o Serper deste plano não devolve volume. Também **não** consegui medir presença de AI Overview: o plano do Serper retorna apenas `organic`, sem os blocos de AI Overview, People Also Ask e related searches. O autocomplete supriu a falta de PAA como fonte de pauta.
+**Não medido:** presença de AI Overview. O plano do Serper retorna apenas `organic`, sem os blocos de AI Overview, People Also Ask e related searches. O autocomplete supriu a falta de PAA como fonte de pauta.
+
+> ⚠️ **Armadilha do CSV do Planejador, para quem for repetir:** ele mistura dois formatos numéricos na mesma linha. Volume vem em formato americano e sem aspas (`12100.0`, ponto decimal); CPC vem em formato brasileiro e entre aspas (`"0,16"`, vírgula decimal). Tratar os dois igual infla o volume em 10×. `scripts/_cc_merge_planner_serp.php` tem uma função para cada caso e um comentário explicando.
 
 ## A descoberta que muda a leitura
 
 **Quase nenhum desses termos tem marketplace na 1ª página.** Em 50 termos, Amazon/Mercado Livre/Magalu aparecem no top 10 em apenas 12, e quase sempre com 1 ou 2 posições. Quem ocupa é **site de nicho e fórum**.
 
 Isso é ótimo e contraintuitivo: são SERPs disputáveis por conteúdo editorial. O gargalo não é a concorrência — **é a comissão**. Volume alto com comissão de 2% é trabalho de graça.
+
+## 🔁 Revisão com os dados do Planejador — o que mudou
+
+A primeira versão deste estudo ordenou os nichos só pela liberdade da SERP e pela comissão. Com volume real na mão, **três conclusões mudaram**. Índice abaixo = volume × comissão (comparativo, não R$).
+
+| # | Termo | Vol/mês | YoY | CPC topo | Com. | Índice | SERP n/m/mk |
+|---|---|---:|---:|---|---:|---:|---|
+| 1 | melhores creatinas | 14.800 | −45% | R$ 0,14–1,30 | 13% | **1924** | 6/1/0 |
+| 2 | melhores perfumes femininos | 12.100 | −33% | R$ 0,17–1,19 | 13% | **1573** | 6/1/0 |
+| 3 | melhores creatinas do mercado | 8.100 | −19% | R$ 0,15–1,23 | 13% | **1053** | 4/1/0 |
+| 4 | melhores marcas de notebook | 12.100 | −18% | R$ 0,16–1,53 | 3% | 363 | 3/2/0 |
+| 5 | melhores fones bluetooth | 9.900 | 0% | R$ 0,15–0,59 | 3% | 297 | 3/3/2 |
+| 8 | melhores hidratantes faciais | 1.600 | **+50%** | R$ 0,32–2,90 | 13% | 208 | **8/0/0** |
+| 12 | melhores rações para gato | 1.600 | −16% | R$ 0,08–1,21 | 11% | 176 | 5/0/0 |
+| 13 | melhores oleos capilares | 1.300 | 0% | R$ 0,14–0,92 | 13% | 169 | 4/0/1 |
+
+**Correção 1 — perfume feminino sobe para o 2º lugar.** Eu havia colocado em "segunda onda". São 12.100/mês a 13% com CPC baixo. Ressalva real: o cc já tem cluster de perfume árabe; o recorte feminino precisa nascer como silo próprio para não canibalizar.
+
+**Correção 2 — ração pet cai da 2ª posição.** Minha empolgação vinha da SERP livre (5-9 de 10 são nicho, zero mídia), não da demanda. Os números: `rações para gato` 1.600, `rações cachorros` 720, `rações para cães` 110. E as quatro variações de cauda que você listou — super premium, porte grande, custo-benefício cão e gato — deram **volume 0 no Planejador**. Continua sendo nicho bom (recompra, comissão 11%, página livre), mas não é o segundo lugar.
+
+**Correção 3 — kimono e quadro de bike saem da lista dos cinco.** 110 e 140 buscas/mês. SERP livre não compensa demanda que não existe.
+
+### Três leituras que só o CPC revelou
+
+- **Jogos de console têm CPC de fundo de poço** — PS4 R$0,04–0,73, Xbox 360 R$0,01–1,08. Anunciante não paga por esse tráfego. É a confirmação numérica de que não há intenção de compra ali, apesar dos 66.000/mês.
+- **Ketchup tem o CPC mais caro de toda a lista: R$ 2,55–5,92.** Alguém disputa forte (provável marca). Mas 5% sobre um ketchup não paga um clique de R$3. Volume e CPC alto não significam oportunidade de afiliado.
+- **Hidratante facial paga até R$ 2,90** com apenas 1.600 buscas — sinal de intenção comercial densa. Somado ao +50% YoY e à SERP mais livre de todo o levantamento (8/0/0, zero mídia), é a melhor aposta de **trajetória**, ainda que não de volume atual.
+
+⚠️ **Atenção ao YoY negativo dos dois primeiros** (creatina −45%, perfume feminino −33%). Os termos-semente estão encolhendo — provavelmente porque a busca se fragmenta em cauda longa (o autocomplete de creatina tem 54 variações). Isso reforça a estratégia de **hub + cluster** em vez de apostar tudo no termo-cabeça.
 
 ## Veredito por bloco
 
@@ -92,6 +123,14 @@ Vira negativa obrigatória em qualquer campanha desses nichos: `eua`, `estados u
 
 Câmera Wi-Fi 360°, mini impressora térmica, aspirador portátil, bebedouro pet e fechadura digital são **produto**, não consulta — jogam no outro tabuleiro. São candidatos a **LP BoFu paga**, no molde das 3 já criadas, não a hub orgânico. Antes de construir qualquer uma, passar pelo filtro que este estudo usou: comissão da categoria × quem ocupa a 1ª página. Bebedouro pet herda os 11% de pet e o SERP livre do nicho — é o mais promissor da lista. Fechadura digital tem ticket alto mas é compra de confiança, com ciclo longo.
 
-## Próximo passo sugerido
+## Próximo passo sugerido (revisado com o Planejador)
 
-Começar por **creatina** (maior cluster, 13%, SERP de nicho) e **ração pet** (dois hubs, recorrência, 11%), nesta ordem. Um hub cada, com 4-6 satélites saídos das sugestões acima, seguindo `reference_hub_autoridade_padrao`. As LPs pagas desses nichos só depois que o orgânico mostrar quais células convertem — assim a verba entra onde já há sinal.
+Ordem final, agora com demanda medida:
+
+1. **Creatina** — 14.800 + 8.100 no termo irmão, 13%, SERP de nicho, 54 variações de autocomplete. É o único que combina volume, comissão e cauda longa rica.
+2. **Perfume feminino** — 12.100 a 13%, CPC baixo. Nascer como silo separado do perfume árabe.
+3. **Hidratante facial** — volume modesto (1.600) mas +50% ao ano, CPC até R$2,90 e a SERP mais livre de todas. Aposta de trajetória.
+4. **Óleo capilar** (1.300, e "para cacheados" cresce +200%) — junta com kit shampoo no mesmo hub de rotina capilar.
+5. **Ração pet** — mantém, por recompra e página livre, mas sem a pressa que eu havia sugerido.
+
+Um hub cada, 4-6 satélites saídos do autocomplete, seguindo `reference_hub_autoridade_padrao`. As LPs pagas desses nichos só depois que o orgânico mostrar qual célula converte — assim a verba entra onde já existe sinal.
