@@ -394,17 +394,23 @@ foreach ($CAMPANHAS as $c) foreach ($c['grupos'] as $g) {
 }
 $put('05-anuncios-rsa.csv', $rows);
 
-$rows = [['Campaign','Sitelink Text','Sitelink Description 1','Sitelink Description 2','Final URL']];
+// Extensões são "recursos" (assets). Sem dizer o contrário, o uploader assume "Ação do recurso:
+// Usar existente" e falha com «Valores incompatíveis em "Ação do recurso: Usar existente" e
+// "ID do item: null"» — ele procura um recurso que ainda não existe. A coluna "Asset action" com
+// valor "Criar novo" instrui a criar. Padrão já observado: nome de coluna em inglês, VALOR em pt-BR.
+$ACAO_RECURSO = 'Create new';
+
+$rows = [['Campaign','Asset action','Sitelink Text','Sitelink Description 1','Sitelink Description 2','Final URL']];
 foreach ($CAMPANHAS as $c) foreach ($c['sitelinks'] as $s)
-  $rows[] = [$c['nome'],$s[0],$s[1],$s[2],$c['lp']];
+  $rows[] = [$c['nome'],$ACAO_RECURSO,$s[0],$s[1],$s[2],$c['lp']];
 $put('06-sitelinks.csv', $rows);
 
-$rows = [['Campaign','Callout Text']];
-foreach ($CAMPANHAS as $c) foreach ($c['destaques'] as $d) $rows[] = [$c['nome'],$d];
+$rows = [['Campaign','Asset action','Callout Text']];
+foreach ($CAMPANHAS as $c) foreach ($c['destaques'] as $d) $rows[] = [$c['nome'],$ACAO_RECURSO,$d];
 $put('07-frases-destaque.csv', $rows);
 
-$rows = [['Campaign','Header','Snippet Values']];
-foreach ($CAMPANHAS as $c) $rows[] = [$c['nome'],$c['snippet'][0],implode('; ',$c['snippet'][1])];
+$rows = [['Campaign','Asset action','Header','Snippet Values']];
+foreach ($CAMPANHAS as $c) $rows[] = [$c['nome'],$ACAO_RECURSO,$c['snippet'][0],implode('; ',$c['snippet'][1])];
 $put('08-snippets.csv', $rows);
 
 echo "\nPronto. Revise os arquivos antes de importar no Google Ads Editor.\n";
